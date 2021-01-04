@@ -173,6 +173,7 @@ def main(
         ]
     )
 
+
 def default_argument_parser(program: str):
     """This factory method returns a vanilla `argparse.ArgumentParser` with the
     minimum subset of arguments that should be supported.
@@ -226,6 +227,6 @@ if __name__ == "__main__":
         evaluation_scenarios=[args.evaluation_scenario],
         sim_name=args.sim_name,
         headless=args.headless,
-    num_episodes=args.episodes,
+        num_episodes=args.episodes,
         seed=args.seed,
     )

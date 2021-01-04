@@ -6,6 +6,7 @@ from smarts.core.agent_interface import AgentInterface, AgentType
 from smarts.core.agent import AgentSpec, Agent
 from smarts.core.utils.episodes import episodes
 
+
 class KeepLaneAgent(Agent):
     def act(self, obs):
         return "keep_lane"
@@ -55,6 +56,7 @@ def main(scenarios, sim_name, headless, num_episodes, seed, max_episode_steps=No
 
     env.close()
 
+
 def default_argument_parser(program: str):
     """This factory method returns a vanilla `argparse.ArgumentParser` with the
     minimum subset of arguments that should be supported.
@@ -91,6 +93,7 @@ def default_argument_parser(program: str):
         default=10,
     )
     return parser
+
 
 if __name__ == "__main__":
     parser = default_argument_parser("multi-agent-example")

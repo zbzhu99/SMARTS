@@ -29,9 +29,7 @@ scenario = Scenario(
         "basic": Traffic(
             flows=[
                 Flow(
-                    route=RandomRoute(),
-                    rate=1,
-                    actors={TrafficActor(name="car"): 1.0},
+                    route=RandomRoute(), rate=1, actors={TrafficActor(name="car"): 1.0},
                 )
                 for i in range(social_vehicle_num)
             ]
@@ -40,6 +38,4 @@ scenario = Scenario(
     ego_missions=ego_missions,
 )
 
-gen_scenario(
-    scenario=scenario, output_dir=Path(__file__).parent, ovewrite=True
-)
+gen_scenario(scenario=scenario, output_dir=Path(__file__).parent, ovewrite=True)
