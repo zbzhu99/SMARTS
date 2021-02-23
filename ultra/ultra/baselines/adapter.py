@@ -24,11 +24,11 @@ from scipy.spatial import distance
 import random, math, gym
 from sys import path
 from collections import OrderedDict
-from ultra.baselines.common.state_preprocessor import *
-from ultra.baselines.common.social_vehicle_config import get_social_vehicle_configs
+from ultra.ultra.baselines.common.state_preprocessor import *
+from ultra.ultra.baselines.common.social_vehicle_config import get_social_vehicle_configs
 
 path.append("./ultra")
-from ultra.utils.common import (
+from ultra.ultra.utils.common import (
     get_closest_waypoint,
     get_path_to_goal,
     ego_social_safety,

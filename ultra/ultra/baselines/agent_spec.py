@@ -30,9 +30,9 @@ from smarts.core.agent_interface import (
     NeighborhoodVehicles,
 )
 
-from ultra.baselines.common.yaml_loader import load_yaml
+from ultra.ultra.baselines.common.yaml_loader import load_yaml
 from smarts.core.agent import AgentSpec
-from ultra.baselines.adapter import BaselineAdapter
+from ultra.ultra.baselines.adapter import BaselineAdapter
 
 
 class BaselineAgentSpec(AgentSpec):

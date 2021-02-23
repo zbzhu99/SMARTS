@@ -30,20 +30,20 @@ import random
 import numpy as np
 import torch.optim as optim
 
-from ultra.baselines.ddpg.ddpg.fc_model import (
+from ultra.ultra.baselines.ddpg.ddpg.fc_model import (
     ActorNetwork,
     CriticNetwork,
 )
 from smarts.core.agent import Agent
-from ultra.baselines.ddpg.ddpg.noise import (
+from ultra.ultra.baselines.ddpg.ddpg.noise import (
     OrnsteinUhlenbeckProcess,
     LinearSchedule,
 )
-from ultra.utils.common import compute_sum_aux_losses, to_3d_action, to_2d_action
-from ultra.baselines.common.replay_buffer import ReplayBuffer
-from ultra.baselines.common.social_vehicle_config import get_social_vehicle_configs
-from ultra.baselines.common.yaml_loader import load_yaml
-from ultra.baselines.common.state_preprocessor import *
+from ultra.ultra.utils.common import compute_sum_aux_losses, to_3d_action, to_2d_action
+from ultra.ultra.baselines.common.replay_buffer import ReplayBuffer
+from ultra.ultra.baselines.common.social_vehicle_config import get_social_vehicle_configs
+from ultra.ultra.baselines.common.yaml_loader import load_yaml
+from ultra.ultra.baselines.common.state_preprocessor import *
 
 
 class TD3Policy(Agent):

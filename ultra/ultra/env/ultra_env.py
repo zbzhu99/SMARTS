@@ -31,10 +31,10 @@ from scipy.spatial import distance
 
 from smarts.core.scenario import Scenario
 from smarts.env.hiway_env import HiWayEnv
-from ultra.baselines.adapter import BaselineAdapter
+from ultra.ultra.baselines.adapter import BaselineAdapter
 
-path.append("./ultra")
-from ultra.utils.common import ego_social_safety, get_closest_waypoint, get_path_to_goal
+# path.append("./ultra")
+from ultra.ultra.utils.common import ego_social_safety, get_closest_waypoint, get_path_to_goal
 
 
 class UltraEnv(HiWayEnv):
@@ -192,10 +192,10 @@ class UltraEnv(HiWayEnv):
         task["test"] = os.path.join(base_dir, task["test"])
         return task
 
-    @property
-    def info(self):
-        return {
-            "scenario_info": self.scenario_info,
-            "timestep_sec": self.timestep_sec,
-            "headless": self.headless,
-        }
+    # @property
+    # def info(self):
+    #     return {
+    #         # "scenario_info": self.scenario_info,
+    #         # "timestep_sec": self.timestep_sec,
+    #         "headless": self.headless,
+    #     }

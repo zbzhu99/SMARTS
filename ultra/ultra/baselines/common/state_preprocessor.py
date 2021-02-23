@@ -20,16 +20,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import torch
-from ultra.utils.common import normalize_im, to_2d_action, to_3d_action
+from ultra.ultra.utils.common import normalize_im, to_2d_action, to_3d_action
 from collections.abc import Iterable
 import numpy as np
 from smarts.core.sensors import VehicleObservation
-from ultra.baselines.common.social_vehicle_extraction import get_social_vehicles
-from ultra.utils.common import (
+from ultra.ultra.baselines.common.social_vehicle_extraction import get_social_vehicles
+from ultra.ultra.utils.common import (
     get_closest_waypoint,
     rotate2d_vector,
 )
-from ultra.scenarios.common.visualization import draw_intersection
+from ultra.ultra.scenarios.common.visualization import draw_intersection
 
 identity_func = lambda x, *args, **kwargs: x
 

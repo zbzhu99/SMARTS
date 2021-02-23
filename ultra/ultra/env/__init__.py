@@ -23,5 +23,5 @@ from gym.envs.registration import register
 
 register(
     id="ultra-v0",
-    entry_point="ultra.env.ultra_env:UltraEnv",
+    entry_point="ultra.ultra.env.ultra_env:UltraEnv",
 )

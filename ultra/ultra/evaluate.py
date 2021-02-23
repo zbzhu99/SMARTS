@@ -27,10 +27,10 @@ import sys
 # Set environment to better support Ray
 os.environ["MKL_NUM_THREADS"] = "1"
 import argparse
-import glob
+import glob, pickle, yaml
 import time
 from pydoc import locate
-
+from ray.util.queue import Queue 
 import gym
 import numpy as np
 import psutil
@@ -39,127 +39,133 @@ import torch
 import yaml
 
 from smarts.zoo.registry import make
-from ultra.utils.episode import LogInfo, episodes
-from ultra.utils.ray import default_ray_kwargs
+from ultra.ultra.utils.episode import LogInfo, episodes
+from ultra.ultra.utils.ray import default_ray_kwargs
 
 num_gpus = 1 if torch.cuda.is_available() else 0
 
-
-def evaluation_check(
-    agent,
-    episode,
-    agent_id,
-    policy_class,
-    eval_rate,
-    eval_episodes,
-    max_episode_steps,
-    scenario_info,
-    timestep_sec,
-    headless,
-    log_dir,
-):
-    agent_itr = episode.get_itr(agent_id)
-
-    print(
-        f"Agent iteration : {agent_itr}, Eval rate : {eval_rate}, last_eval_iter : {episode.last_eval_iteration}"
-    )
-    if (agent_itr + 1) % eval_rate == 0 and episode.last_eval_iteration != agent_itr:
-        checkpoint_dir = episode.checkpoint_dir(agent_itr)
-        agent.save(checkpoint_dir)
-        episode.eval_mode()
-        episode.info[episode.active_tag][agent_id] = ray.get(
-            [
-                evaluate.remote(
-                    experiment_dir=episode.experiment_dir,
-                    agent_id=agent_id,
-                    policy_class=policy_class,
-                    seed=episode.eval_count,
-                    itr_count=agent_itr,
-                    checkpoint_dir=checkpoint_dir,
-                    scenario_info=scenario_info,
-                    num_episodes=eval_episodes,
-                    max_episode_steps=max_episode_steps,
-                    headless=headless,
-                    timestep_sec=timestep_sec,
-                    log_dir=log_dir,
-                )
-            ]
-        )[0]
-        episode.eval_count += 1
-        episode.last_eval_iteration = agent_itr
-        episode.record_tensorboard()
-        episode.train_mode()
-
-
 # Number of GPUs should be splited between remote functions.
 @ray.remote(num_gpus=num_gpus / 2)
-def evaluate(
-    experiment_dir,
-    seed,
-    agent_id,
-    policy_class,
-    itr_count,
-    checkpoint_dir,
-    scenario_info,
-    num_episodes,
-    max_episode_steps,
-    headless,
-    timestep_sec,
-    log_dir,
-):
+class Evaluation:
+    def __init__(self, scenario_info, max_episode_steps, eval_rate, num_episodes, timestep_sec, headless):
+        self.max_episode_steps = max_episode_steps
+        self.eval_rate = eval_rate
+        self.timestep_sec = timestep_sec
+        self.headless = headless
+        self.scenario_info = scenario_info
+        self.num_episodes = num_episodes
+        self.q = Queue()
 
-    torch.set_num_threads(1)
-    spec = make(
-        locator=policy_class,
-        checkpoint_dir=checkpoint_dir,
-        experiment_dir=experiment_dir,
-        max_episode_steps=max_episode_steps,
-    )
+    def check(
+        self,
+        # agent,
+        episode,
+        agent_id,
+        policy_class,
+        log_dir,
+        experiment_dir,
+        save_info,
+    ):
+        agent_itr = episode.get_itr(agent_id)
 
-    env = gym.make(
-        "ultra.env:ultra-v0",
-        agent_specs={agent_id: spec},
-        scenario_info=scenario_info,
-        headless=headless,
-        timestep_sec=timestep_sec,
-        seed=seed,
-        eval_mode=True,
-    )
+        if (agent_itr + 1) % self.eval_rate == 0 and episode.last_eval_iteration != agent_itr:
+            print(
+                f"Agent iteration : {agent_itr}, Eval rate : {self.eval_rate}, last_eval_iter : {episode.last_eval_iteration}"
+            )
+            checkpoint_dir = episode.checkpoint_dir(agent_itr)
+            # agent.save(checkpoint_dir)
+            for name, data in save_info.items():
+                if name=='params.yaml':
+                    with open(f'{checkpoint_dir}/{name}', "w") as file:
+                        yaml.dump(data, file)
+                else:
+                    torch.save(pickle.loads(data), f'{checkpoint_dir}/{name}')
+            episode.eval_mode()
+            # episode.info[episode.active_tag][agent_id] = ray.get(
+            #     [
+            #
+            #     ]
+            # )[0]
+            x = self.run(
+                agent_id=agent_id,
+                policy_class=policy_class,
+                seed=episode.eval_count,
+                itr_count=agent_itr,
+                checkpoint_dir=checkpoint_dir,
+                log_dir=log_dir,
+                experiment_dir=experiment_dir
+            )
+            print(x)
+            episode.eval_count += 1
+            episode.last_eval_iteration = agent_itr
+            episode.record_tensorboard()
+            episode.train_mode()
+            #
 
-    agent = spec.build_agent()
-    summary_log = LogInfo()
-    logs = []
 
-    for episode in episodes(num_episodes, etag=policy_class, log_dir=log_dir):
-        observations = env.reset()
-        state = observations[agent_id]
-        dones, infos = {"__all__": False}, None
+    def run(
+        self,
+        experiment_dir,
+        seed,
+        agent_id,
+        policy_class,
+        itr_count,
+        checkpoint_dir,
+        log_dir,
+    ):
 
-        episode.reset(mode="Evaluation")
-        while not dones["__all__"]:
-            action = agent.act(state, explore=False)
-            observations, rewards, dones, infos = env.step({agent_id: action})
+        torch.set_num_threads(1)
+        spec = make(
+            locator=policy_class,
+            checkpoint_dir=checkpoint_dir,
+            experiment_dir=experiment_dir,
+            max_episode_steps=self.max_episode_steps,
+        )
 
-            next_state = observations[agent_id]
+        env = gym.make(
+            "ultra.ultra.env:ultra-v0",
+            agent_specs={agent_id: spec},
+            scenario_info=self.scenario_info,
+            headless=self.headless,
+            timestep_sec=self.timestep_sec,
+            seed=seed,
+            eval_mode=True,
+        )
 
-            state = next_state
+        agent = spec.build_agent()
+        summary_log = LogInfo()
+        logs = []
 
-            episode.record_step(agent_id=agent_id, infos=infos, rewards=rewards)
+        for episode in episodes(self.num_episodes, etag=policy_class, log_dir=log_dir):
+            observations = env.reset()
+            state = observations[agent_id]
+            dones, infos = {"__all__": False}, None
 
-        episode.record_episode()
-        logs.append(episode.info[episode.active_tag][agent_id].data)
+            episode.reset(mode="Evaluation")
+            while not dones["__all__"]:
+                action = agent.act(state, explore=False)
+                observations, rewards, dones, infos = env.step({agent_id: action})
 
-        for key, value in episode.info[episode.active_tag][agent_id].data.items():
-            if not isinstance(value, (list, tuple, np.ndarray)):
-                summary_log.data[key] += value
+                next_state = observations[agent_id]
 
-    for key, val in summary_log.data.items():
-        if not isinstance(val, (list, tuple, np.ndarray)):
-            summary_log.data[key] /= num_episodes
+                state = next_state
 
-    env.close()
+                episode.record_step(agent_id=agent_id, infos=infos, rewards=rewards)
 
-    return summary_log
+            episode.record_episode()
+            logs.append(episode.info[episode.active_tag][agent_id].data)
+
+            for key, value in episode.info[episode.active_tag][agent_id].data.items():
+                if not isinstance(value, (list, tuple, np.ndarray)):
+                    summary_log.data[key] += value
+
+        for key, val in summary_log.data.items():
+            if not isinstance(val, (list, tuple, np.ndarray)):
+                summary_log.data[key] /= self.num_episodes
+
+        env.close()
+
+        return summary_log
 
 
 if __name__ == "__main__":

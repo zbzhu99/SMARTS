@@ -24,15 +24,15 @@ import torch
 import numpy as np
 import torch.nn as nn
 from sys import path
-from ultra.baselines.sac.sac.network import SACNetwork
+from ultra.ultra.baselines.sac.sac.network import SACNetwork
 import torch.nn.functional as F
-import pathlib, os, yaml, copy
-from ultra.utils.common import compute_sum_aux_losses, to_3d_action, to_2d_action
+import pathlib, os, yaml, copy, pickle
+from ultra.ultra.utils.common import compute_sum_aux_losses, to_3d_action, to_2d_action
 from smarts.core.agent import Agent
-from ultra.baselines.common.replay_buffer import ReplayBuffer
-from ultra.baselines.common.social_vehicle_config import get_social_vehicle_configs
-from ultra.baselines.common.yaml_loader import load_yaml
-from ultra.baselines.common.state_preprocessor import *
+from ultra.ultra.baselines.common.replay_buffer import ReplayBuffer
+from ultra.ultra.baselines.common.social_vehicle_config import get_social_vehicle_configs
+from ultra.ultra.baselines.common.yaml_loader import load_yaml
+from ultra.ultra.baselines.common.state_preprocessor import *
 
 
 class SACPolicy(Agent):
@@ -309,17 +309,30 @@ class SACPolicy(Agent):
         self.sac_net.critic.load_state_dict(
             torch.load(model_dir / "critic.pth", map_location=map_location)
         )
-        print("<<<<<<< MODEL LOADED >>>>>>>>>", model_dir)
 
-    def save(self, model_dir):
-        model_dir = pathlib.Path(model_dir)
+        print("<<<<<<< MODEL LOADED >>>>>>>>>")
+
+    # def save(self, model_dir):
+    #     model_dir = pathlib.Path(model_dir)
+    #     # with open(model_dir / "params.yaml", "w") as file:
+    #     #     yaml.dump(policy_params, file)
+    #
+    #     torch.save(self.sac_net.actor.state_dict(), model_dir / "actor.pth")
+    #     torch.save(self.sac_net.target.state_dict(), model_dir / "target.pth")
+    #     torch.save(self.sac_net.critic.state_dict(), model_dir / "critic.pth")
+    #     print("<<<<<<< MODEL SAVED >>>>>>>>>", model_dir)
+
+    @property
+    def save_info(self):
+        # model_dir = pathlib.Path(model_dir)
         # with open(model_dir / "params.yaml", "w") as file:
         #     yaml.dump(policy_params, file)
-
-        torch.save(self.sac_net.actor.state_dict(), model_dir / "actor.pth")
-        torch.save(self.sac_net.target.state_dict(), model_dir / "target.pth")
-        torch.save(self.sac_net.critic.state_dict(), model_dir / "critic.pth")
-        print("<<<<<<< MODEL SAVED >>>>>>>>>", model_dir)
+        return {
+            f'actor.pth':pickle.dumps(self.sac_net.actor.state_dict()),
+            f'target.pth':pickle.dumps(self.sac_net.target.state_dict()),
+            f'critic.pth':pickle.dumps(self.sac_net.critic.state_dict()),
+            'params.yaml':self.policy_params,
+        }
 
     def reset(self):
         pass

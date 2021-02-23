@@ -22,17 +22,17 @@
 import torch
 from torch import nn
 import numpy as np
-from ultra.baselines.bdqn.bdqn.network import *
+from ultra.ultra.baselines.bdqn.bdqn.network import *
 from smarts.core.agent import Agent
-from ultra.utils.common import merge_discrete_action_spaces, to_3d_action, to_2d_action
+from ultra.ultra.utils.common import merge_discrete_action_spaces, to_3d_action, to_2d_action
 import pathlib, os, copy
-from ultra.baselines.dqn.dqn.policy import DQNPolicy
-from ultra.baselines.bdqn.bdqn.network import DQNWithSocialEncoder
-from ultra.baselines.bdqn.bdqn.explore import EpsilonExplore
-from ultra.baselines.common.replay_buffer import ReplayBuffer
-from ultra.baselines.common.social_vehicle_config import get_social_vehicle_configs
-from ultra.baselines.common.yaml_loader import load_yaml
-from ultra.baselines.common.state_preprocessor import *
+from ultra.ultra.baselines.dqn.dqn.policy import DQNPolicy
+from ultra.ultra.baselines.bdqn.bdqn.network import DQNWithSocialEncoder
+from ultra.ultra.baselines.bdqn.bdqn.explore import EpsilonExplore
+from ultra.ultra.baselines.common.replay_buffer import ReplayBuffer
+from ultra.ultra.baselines.common.social_vehicle_config import get_social_vehicle_configs
+from ultra.ultra.baselines.common.yaml_loader import load_yaml
+from ultra.ultra.baselines.common.state_preprocessor import *
 
 
 class BehavioralDQNPolicy(DQNPolicy):

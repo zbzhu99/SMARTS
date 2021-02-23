@@ -31,8 +31,8 @@ from collections import defaultdict
 import dill
 import numpy as np
 import tableprint as tp
-from ultra.utils.log_info import LogInfo
-from ultra.utils.common import gen_experiment_name
+from ultra.ultra.utils.log_info import LogInfo
+from ultra.ultra.utils.common import gen_experiment_name
 
 import tempfile
 from ray.rllib.agents.callbacks import DefaultCallbacks
@@ -151,13 +151,13 @@ class Episode:
         if loss_output:
             self.log_loss(step=total_step, agent_id=agent_id, loss_output=loss_output)
         self.info[self.active_tag][agent_id].add(infos[agent_id], rewards[agent_id])
-        self.info[self.active_tag][agent_id].step()
+        # self.info[self.active_tag][agent_id].step()
         self.steps += 1
         self.agents_itr[agent_id] += 1
 
     def record_episode(self):
         for _, agent_info in self.info[self.active_tag].items():
-            agent_info.normalize()
+            agent_info.normalize(self.steps)
 
     def initialize_tb_writer(self):
         if self.tb_writer is None:

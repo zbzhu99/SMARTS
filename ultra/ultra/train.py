@@ -23,7 +23,7 @@ import json
 import os
 import sys
 
-from ultra.utils.ray import default_ray_kwargs
+from ultra.ultra.utils.ray import default_ray_kwargs
 
 # Set environment to better support Ray
 os.environ["MKL_NUM_THREADS"] = "1"
@@ -38,8 +38,8 @@ import ray
 import torch
 
 from smarts.zoo.registry import make
-from ultra.evaluate import evaluation_check
-from ultra.utils.episode import episodes
+from ultra.ultra.evaluate import Evaluation
+from ultra.ultra.utils.episode import episodes
 
 num_gpus = 1 if torch.cuda.is_available() else 0
 
@@ -56,6 +56,7 @@ def train(
     headless,
     seed,
     log_dir,
+    evaluation
 ):
     torch.set_num_threads(1)
     total_step = 0
@@ -65,7 +66,7 @@ def train(
 
     spec = make(locator=policy_class, max_episode_steps=max_episode_steps)
     env = gym.make(
-        "ultra.env:ultra-v0",
+        "ultra.ultra.env:ultra-v0",
         agent_specs={AGENT_ID: spec},
         scenario_info=scenario_info,
         headless=headless,
@@ -93,16 +94,16 @@ def train(
             if episode.get_itr(AGENT_ID) >= 1000000:
                 finished = True
                 break
-            evaluation_check(
-                agent=agent,
+            evaluation.check.remote(
+                # agent=agent,
                 agent_id=AGENT_ID,
                 policy_class=policy_class,
                 episode=episode,
                 log_dir=log_dir,
-                max_episode_steps=max_episode_steps,
-                **eval_info,
-                **env.info,
+                experiment_dir=experiment_dir,
+                save_info=agent.save_info
             )
+
             action = agent.act(state, explore=True)
             observations, rewards, dones, infos = env.step({AGENT_ID: action})
             next_state = observations[AGENT_ID]
@@ -203,6 +204,15 @@ if __name__ == "__main__":
     policy_class = str(policy_path) + ":" + str(policy_locator)
 
     ray.init()
+    evaluation = Evaluation.remote(
+        eval_rate= float(args.eval_rate),
+        num_episodes = int(args.eval_episodes),
+        scenario_info=(args.task, args.level),
+        max_episode_steps=int(args.max_episode_steps),
+        timestep_sec=float(args.timestep),
+        headless=args.headless,
+    )
+
     ray.wait(
         [
             train.remote(
@@ -217,6 +227,7 @@ if __name__ == "__main__":
                 headless=args.headless,
                 policy_class=policy_class,
                 seed=args.seed,
+                evaluation = evaluation,
                 log_dir=args.log_dir,
             )
         ]

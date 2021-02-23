@@ -23,7 +23,7 @@ from itertools import cycle
 import glob, yaml
 from smarts.core.scenario import Scenario
 from smarts.env.rllib_hiway_env import RLlibHiWayEnv
-from ultra.baselines.adapter import BaselineAdapter
+from ultra.ultra.baselines.adapter import BaselineAdapter
 import numpy as np
 from scipy.spatial import distance
 import math, os
