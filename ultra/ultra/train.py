@@ -24,7 +24,7 @@ import os
 import sys
 
 from ultra.ultra.utils.ray import default_ray_kwargs
-
+# from multiprocessing import Manager, Process
 # Set environment to better support Ray
 os.environ["MKL_NUM_THREADS"] = "1"
 import argparse
@@ -43,9 +43,8 @@ from ultra.ultra.utils.episode import episodes
 
 num_gpus = 1 if torch.cuda.is_available() else 0
 
-
+procs = []
 # @ray.remote(num_gpus=num_gpus / 2, max_calls=1)
-@ray.remote(num_gpus=num_gpus / 2)
 def train(
     scenario_info,
     num_episodes,
@@ -75,7 +74,7 @@ def train(
     )
 
     agent = spec.build_agent()
-
+    print('train started')
     for episode in episodes(num_episodes, etag=policy_class, log_dir=log_dir):
         observations = env.reset()
         state = observations[AGENT_ID]
@@ -94,14 +93,14 @@ def train(
             if episode.get_itr(AGENT_ID) >= 1000000:
                 finished = True
                 break
-            evaluation.check.remote(
+            evaluation.check(
                 # agent=agent,
                 agent_id=AGENT_ID,
                 policy_class=policy_class,
                 episode=episode,
                 log_dir=log_dir,
                 experiment_dir=experiment_dir,
-                save_info=agent.save_info
+                save_info=agent.save_info,
             )
 
             action = agent.act(state, explore=True)
@@ -203,8 +202,8 @@ if __name__ == "__main__":
     # Required string for smarts' class registry
     policy_class = str(policy_path) + ":" + str(policy_locator)
 
-    ray.init()
-    evaluation = Evaluation.remote(
+    # ray.init()
+    evaluation = Evaluation(
         eval_rate= float(args.eval_rate),
         num_episodes = int(args.eval_episodes),
         scenario_info=(args.task, args.level),
@@ -213,22 +212,42 @@ if __name__ == "__main__":
         headless=args.headless,
     )
 
-    ray.wait(
-        [
-            train.remote(
-                scenario_info=(args.task, args.level),
-                num_episodes=int(args.episodes),
-                max_episode_steps=int(args.max_episode_steps),
-                eval_info={
-                    "eval_rate": float(args.eval_rate),
-                    "eval_episodes": int(args.eval_episodes),
-                },
-                timestep_sec=float(args.timestep),
-                headless=args.headless,
-                policy_class=policy_class,
-                seed=args.seed,
-                evaluation = evaluation,
-                log_dir=args.log_dir,
-            )
-        ]
+    # ray.wait(
+    #     [
+
+    scenario_info=(args.task, args.level)
+    eval_info={
+        "eval_rate": float(args.eval_rate),
+        "eval_episodes": int(args.eval_episodes),
+    }
+    # train_process = Process(
+    #     target=train,
+    #     args=(
+    #         scenario_info,
+    #         int(args.episodes),
+    #         int(args.max_episode_steps),
+    #         policy_class,
+    #         eval_info,
+    #         float(args.timestep),
+    #         args.headless,
+    #         args.seed,
+    #         args.log_dir,
+    #         evaluation
+    #     )
+    # )
+    train(scenario_info,
+        int(args.episodes),
+        int(args.max_episode_steps),
+        policy_class,
+        eval_info,
+        float(args.timestep),
+        args.headless,
+        args.seed,
+        args.log_dir,
+        evaluation
     )
+    print('***')
+    # train_process.start()
+    # train_process.join()
+    #     ]
+    # )

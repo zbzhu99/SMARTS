@@ -30,14 +30,14 @@ import argparse
 import glob, pickle, yaml
 import time
 from pydoc import locate
-from ray.util.queue import Queue 
 import gym
 import numpy as np
 import psutil
 import ray
 import torch
 import yaml
-
+import multiprocessing
+from multiprocessing import Manager, Process
 from smarts.zoo.registry import make
 from ultra.ultra.utils.episode import LogInfo, episodes
 from ultra.ultra.utils.ray import default_ray_kwargs
@@ -45,7 +45,7 @@ from ultra.ultra.utils.ray import default_ray_kwargs
 num_gpus = 1 if torch.cuda.is_available() else 0
 
 # Number of GPUs should be splited between remote functions.
-@ray.remote(num_gpus=num_gpus / 2)
+# @ray.remote(num_gpus=num_gpus / 2)
 class Evaluation:
     def __init__(self, scenario_info, max_episode_steps, eval_rate, num_episodes, timestep_sec, headless):
         self.max_episode_steps = max_episode_steps
@@ -54,7 +54,12 @@ class Evaluation:
         self.headless = headless
         self.scenario_info = scenario_info
         self.num_episodes = num_episodes
-        self.q = Queue()
+        manager = multiprocessing.Manager()
+        self.results = manager.dict()
+        self.jobs = {}
+        self.job_id = 0
+        self.current_job_id = 0
+        # multiprocessing.set_start_method('spawn')
 
     def check(
         self,
@@ -67,7 +72,7 @@ class Evaluation:
         save_info,
     ):
         agent_itr = episode.get_itr(agent_id)
-
+        print('eval check')
         if (agent_itr + 1) % self.eval_rate == 0 and episode.last_eval_iteration != agent_itr:
             print(
                 f"Agent iteration : {agent_itr}, Eval rate : {self.eval_rate}, last_eval_iter : {episode.last_eval_iteration}"
@@ -86,21 +91,46 @@ class Evaluation:
             #
             #     ]
             # )[0]
-            x = self.run(
-                agent_id=agent_id,
-                policy_class=policy_class,
-                seed=episode.eval_count,
-                itr_count=agent_itr,
-                checkpoint_dir=checkpoint_dir,
-                log_dir=log_dir,
-                experiment_dir=experiment_dir
+            eval_proc = multiprocessing.Process(
+                target = self.run,
+                args=(
+                experiment_dir,
+                episode.eval_count,
+                agent_id,
+                policy_class,
+                agent_itr,
+                checkpoint_dir,
+                log_dir,
+                episode)
             )
-            print(x)
-            episode.eval_count += 1
+            self.jobs[self.job_id] = (eval_proc, False)
+            eval_proc.start()
+            self.job_id+=1
+
+            # print(x)
+            # episode.eval_count += 1
             episode.last_eval_iteration = agent_itr
-            episode.record_tensorboard()
+            # episode.record_tensorboard()
             episode.train_mode()
+            # print(episode.eval_count)
             #
+
+        # initiating the first process
+        print(self.current_job_id, len(self.jobs), self.results)
+        if self.jobs:
+            if self.current_job_id == 0 and not self.jobs[self.current_job_id]:
+                self.jobs[self.current_job_id][0].join()
+                self.jobs[self.current_job_id][1] = True
+                print(' job 0 started')
+            # print(self.results)
+        if self.current_job_id in self.results:
+            episode.info[episode.active_tag][agent_id] = self.results[self.current_job_id]
+            episode.record_tensorboard()
+            episode.eval_count+=1
+            self.current_job_id+=1
+            if self.current_job_id in self.job and not self.jobs[self.current_job_id]:
+                self.jobs[self.current_job_id].join()
+                self.jobs[self.current_job_id][1] = True
 
 
     def run(
@@ -112,6 +142,7 @@ class Evaluation:
         itr_count,
         checkpoint_dir,
         log_dir,
+        episode
     ):
 
         torch.set_num_threads(1)
@@ -136,12 +167,12 @@ class Evaluation:
         summary_log = LogInfo()
         logs = []
 
-        for episode in episodes(self.num_episodes, etag=policy_class, log_dir=log_dir):
+        for eval_episode in episodes(self.num_episodes, etag=policy_class, log_dir=log_dir):
             observations = env.reset()
             state = observations[agent_id]
             dones, infos = {"__all__": False}, None
 
-            episode.reset(mode="Evaluation")
+            eval_episode.reset(mode="Evaluation")
             while not dones["__all__"]:
                 action = agent.act(state, explore=False)
                 observations, rewards, dones, infos = env.step({agent_id: action})
@@ -150,12 +181,12 @@ class Evaluation:
 
                 state = next_state
 
-                episode.record_step(agent_id=agent_id, infos=infos, rewards=rewards)
+                eval_episode.record_step(agent_id=agent_id, infos=infos, rewards=rewards)
 
-            episode.record_episode()
-            logs.append(episode.info[episode.active_tag][agent_id].data)
+            eval_episode.record_episode()
+            logs.append(eval_episode.info[eval_episode.active_tag][agent_id].data)
 
-            for key, value in episode.info[episode.active_tag][agent_id].data.items():
+            for key, value in episode.info[eval_episode.active_tag][agent_id].data.items():
                 if not isinstance(value, (list, tuple, np.ndarray)):
                     summary_log.data[key] += value
 
@@ -164,8 +195,10 @@ class Evaluation:
                 summary_log.data[key] /= self.num_episodes
 
         env.close()
-
-        return summary_log
+        self.results[job_id] = summary_log
+        # episode.eval_count += 1
+        # episode.record_tensorboard()
+        # return summary_log
 
 
 if __name__ == "__main__":
