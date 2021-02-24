@@ -83,6 +83,25 @@ class Episode:
         self.last_eval_iteration = last_eval_iteration
         self.agents_itr = agents_itr
 
+    # def details(self):
+    #     print('')
+    #     print('info: ', self.info)
+    #     print('data: ', self.all_data)
+    #     print('index: ',self.index)
+    #     print('eval_count: ', self.eval_count)
+    #     print('experiment_name:  ', self.experiment_name)
+    #     print('log_dir: ', self.log_dir)
+    #     print('model_dir: ', self.model_dir)
+    #     print('code_dir: ',self.code_dir)
+    #     print('pkls: ',self.pkls)
+    #     print('self.start_time)
+    #     self.timestep_sec = 0.1
+    #     self.steps = 1
+    #     self.active_tag = None
+    #     self.tb_writer = tb_writer
+    #     self.last_eval_iteration = last_eval_iteration
+    #     self.agents_itr = agents_itr
+
     @property
     def sim2wall_ratio(self):
         return self.sim_time / self.wall_time

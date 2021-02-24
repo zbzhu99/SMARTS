@@ -192,10 +192,10 @@ class UltraEnv(HiWayEnv):
         task["test"] = os.path.join(base_dir, task["test"])
         return task
 
-    # @property
-    # def info(self):
-    #     return {
-    #         # "scenario_info": self.scenario_info,
-    #         # "timestep_sec": self.timestep_sec,
-    #         "headless": self.headless,
-    #     }
+    @property
+    def info(self):
+        return {
+            "scenario_info": self.scenario_info,
+            "timestep_sec": self.timestep_sec,
+            "headless": self.headless,
+        }

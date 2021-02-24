@@ -30,7 +30,7 @@ os.environ["MKL_NUM_THREADS"] = "1"
 import argparse
 import pickle
 import time
-
+from ray.experimental.queue import Queue
 import dill
 import gym
 import psutil
@@ -44,7 +44,13 @@ from ultra.ultra.utils.episode import episodes
 num_gpus = 1 if torch.cuda.is_available() else 0
 
 procs = []
+from io import BytesIO
+
+evaluation = None
+ray.init()
+queue = Queue()
 # @ray.remote(num_gpus=num_gpus / 2, max_calls=1)
+@ray.remote(num_gpus=num_gpus / 2)
 def train(
     scenario_info,
     num_episodes,
@@ -55,7 +61,7 @@ def train(
     headless,
     seed,
     log_dir,
-    evaluation
+    queue
 ):
     torch.set_num_threads(1)
     total_step = 0
@@ -74,7 +80,7 @@ def train(
     )
 
     agent = spec.build_agent()
-    print('train started')
+    x=0
     for episode in episodes(num_episodes, etag=policy_class, log_dir=log_dir):
         observations = env.reset()
         state = observations[AGENT_ID]
@@ -89,20 +95,27 @@ def train(
             with open(f"{experiment_dir}/spec.pkl", "wb") as spec_output:
                 dill.dump(spec, spec_output, pickle.HIGHEST_PROTOCOL)
 
+        stream = BytesIO()
+        x+=1
+
+        # evaluation.set_episode.remote(episode)
         while not dones["__all__"]:
             if episode.get_itr(AGENT_ID) >= 1000000:
                 finished = True
                 break
-            evaluation.check(
-                # agent=agent,
+            print(x)
+            ray.get([evaluation.check.remote(
+                save_info=agent.save_info,
+                agent_itr = episode.get_itr(AGENT_ID),
                 agent_id=AGENT_ID,
                 policy_class=policy_class,
-                episode=episode,
                 log_dir=log_dir,
-                experiment_dir=experiment_dir,
-                save_info=agent.save_info,
-            )
-
+                experiment_dir = episode.experiment_dir,
+                max_episode_steps=max_episode_steps,
+                checkpoint_dir = episode.checkpoint_dir(episode.get_itr(AGENT_ID)),
+                **eval_info,
+                **env.info)])
+            print(queue)
             action = agent.act(state, explore=True)
             observations, rewards, dones, infos = env.step({AGENT_ID: action})
             next_state = observations[AGENT_ID]
@@ -202,52 +215,23 @@ if __name__ == "__main__":
     # Required string for smarts' class registry
     policy_class = str(policy_path) + ":" + str(policy_locator)
 
-    # ray.init()
-    evaluation = Evaluation(
-        eval_rate= float(args.eval_rate),
-        num_episodes = int(args.eval_episodes),
-        scenario_info=(args.task, args.level),
-        max_episode_steps=int(args.max_episode_steps),
-        timestep_sec=float(args.timestep),
-        headless=args.headless,
+    evaluation = Evaluation.remote(queue)
+    ray.get(
+        [
+            train.remote(
+                scenario_info=(args.task, args.level),
+                num_episodes=int(args.episodes),
+                max_episode_steps=int(args.max_episode_steps),
+                eval_info={
+                    "eval_rate": float(args.eval_rate),
+                    "eval_episodes": int(args.eval_episodes),
+                },
+                timestep_sec=float(args.timestep),
+                headless=args.headless,
+                policy_class=policy_class,
+                seed=args.seed,
+                log_dir=args.log_dir,
+                queue=queue
+            )
+        ]
     )
-
-    # ray.wait(
-    #     [
-
-    scenario_info=(args.task, args.level)
-    eval_info={
-        "eval_rate": float(args.eval_rate),
-        "eval_episodes": int(args.eval_episodes),
-    }
-    # train_process = Process(
-    #     target=train,
-    #     args=(
-    #         scenario_info,
-    #         int(args.episodes),
-    #         int(args.max_episode_steps),
-    #         policy_class,
-    #         eval_info,
-    #         float(args.timestep),
-    #         args.headless,
-    #         args.seed,
-    #         args.log_dir,
-    #         evaluation
-    #     )
-    # )
-    train(scenario_info,
-        int(args.episodes),
-        int(args.max_episode_steps),
-        policy_class,
-        eval_info,
-        float(args.timestep),
-        args.headless,
-        args.seed,
-        args.log_dir,
-        evaluation
-    )
-    print('***')
-    # train_process.start()
-    # train_process.join()
-    #     ]
-    # )
