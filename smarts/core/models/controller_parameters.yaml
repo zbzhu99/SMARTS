@@ -3,7 +3,7 @@ sedan:
             final_heading_gain: .015
             final_lateral_gain: .3065
             final_steering_filter_constant: 23.5
-            throttle_filter_constant: 2.5
+            throttle_filter_constant: 22.5
             velocity_gain: 5.1
             velocity_integral_gain: 0
             traction_gain: 6
