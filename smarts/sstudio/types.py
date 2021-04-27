@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import collections.abc as collections_abc
+from enum import IntEnum
 import logging
 import random
 from dataclasses import dataclass, field
@@ -32,22 +33,36 @@ from smarts.core.sumo_road_network import SumoRoadNetwork
 from smarts.core.utils.id import SocialAgentId
 
 
+class _SUMO_PARAMS_MODE(IntEnum):
+    TITLE_CASE=0
+    KEEP_SNAKE_CASE=1
+    
 class _SumoParams(collections_abc.Mapping):
     """For some Sumo params (e.x. LaneChangingModel) the arguments are in title case
     with a given prefix. Subclassing this class allows for an automatic way to map
     between PEP8-compatible naming and Sumo's.
     """
 
-    def __init__(self, prefix, whitelist=[], **kwargs):
-        def snake_to_title(word):
+    def __init__(self, prefix, whitelist=[], mode=_SUMO_PARAMS_MODE.TITLE_CASE, **kwargs):
+        def snake_to_title(word: str):
             return "".join(x.capitalize() or "_" for x in word.split("_"))
 
+        def keep_snake_case(word: str):
+            w = word[0].upper() + word[1:]
+            return "".join(x or "_" for x in w.split("_"))
+
+        func:function = snake_to_title
+        if mode == _SUMO_PARAMS_MODE.TITLE_CASE:
+            pass
+        elif mode == _SUMO_PARAMS_MODE.KEEP_SNAKE_CASE:
+            func = keep_snake_case
+            
         # XXX: On rare occasions sumo doesn't respect their own conventions
         #      (e.x. junction model's impatience).
         self._params = {key: kwargs.pop(key) for key in whitelist if key in kwargs}
 
         for key, value in kwargs.items():
-            self._params[f"{prefix}{snake_to_title(key)}"] = value
+            self._params[f"{prefix}{func(key)}"] = value
 
     def __iter__(self):
         return iter(self._params)
@@ -69,7 +84,7 @@ class LaneChangingModel(_SumoParams):
     """Models how the actor acts with respect to lane changes."""
 
     def __init__(self, **kwargs):
-        super().__init__("lc", **kwargs)
+        super().__init__("lc", mode=_SUMO_PARAMS_MODE.KEEP_SNAKE_CASE, **kwargs)
 
 
 class JunctionModel(_SumoParams):
