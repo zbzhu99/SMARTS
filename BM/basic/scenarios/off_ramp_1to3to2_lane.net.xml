@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on Thu 22 Apr 2021 10:33:51 AM EDT by Eclipse SUMO netedit Version 1.9.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <sumo-net-file value="/home/dev/Desktop/BM_Scenarios/basic/off_ramp_1to2_lane.net.xml"/>
+    </input>
+
+    <output>
+        <output-file value="/home/dev/Desktop/BM_Scenarios/basic/off_ramp_1to3to2_lane.net.xml"/>
+    </output>
+
+    <processing>
+        <geometry.min-radius.fix.railways value="false"/>
+        <geometry.max-grade.fix value="false"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="false"/>
+    </processing>
+
+    <junctions>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="5"/>
+        <junctions.limit-turn-speed value="5.5"/>
+        <rectangular-lane-cut value="false"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="false"/>
+    </pedestrian>
+
+    <report>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+-->
+
+<net version="1.9" junctionCornerDetail="5" limitTurnSpeed="5.50" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/net_file.xsd">
+
+    <location netOffset="0.00,0.00" convBoundary="136.30,-59.58,361.23,-27.08" origBoundary="-10000000000.00,-10000000000.00,10000000000.00,10000000000.00" projParameter="!"/>
+
+    <edge id=":gneJ8_0" function="internal">
+        <lane id=":gneJ8_0_0" index="0" speed="13.89" length="8.27" shape="271.31,-35.19 273.77,-34.69 275.31,-33.59 276.85,-32.49 279.31,-31.99"/>
+        <lane id=":gneJ8_0_1" index="1" speed="13.89" length="8.27" shape="271.31,-31.99 279.31,-31.99"/>
+        <lane id=":gneJ8_0_2" index="2" speed="13.89" length="8.27" shape="271.31,-28.79 279.31,-28.79"/>
+    </edge>
+    <edge id=":on_ramp_junction_0" function="internal">
+        <lane id=":on_ramp_junction_0_0" index="0" speed="10.39" length="3.71" shape="219.83,-36.02 220.82,-35.55 221.54,-35.30 222.29,-35.21 223.38,-35.19"/>
+    </edge>
+    <edge id=":on_ramp_junction_1" function="internal">
+        <lane id=":on_ramp_junction_1_0" index="0" speed="13.89" length="3.71" shape="219.67,-31.97 223.38,-31.99"/>
+        <lane id=":on_ramp_junction_1_1" index="1" speed="13.89" length="3.71" shape="219.67,-28.77 223.38,-28.79"/>
+    </edge>
+
+    <edge id="on_ramp" from="on_ramp_start" to="on_ramp_junction" priority="-1">
+        <lane id="on_ramp_0" index="0" speed="13.89" length="56.46" shape="169.20,-61.01 219.83,-36.02"/>
+    </edge>
+    <edge id="straight_ahead_1" from="west_end" to="on_ramp_junction" priority="-1">
+        <lane id="straight_ahead_1_0" index="0" speed="13.89" length="83.37" shape="136.29,-31.88 219.67,-31.97"/>
+        <lane id="straight_ahead_1_1" index="1" speed="13.89" length="83.37" shape="136.30,-28.68 219.67,-28.77"/>
+    </edge>
+    <edge id="straight_ahead_2" from="on_ramp_junction" to="gneJ8" priority="-1">
+        <lane id="straight_ahead_2_0" index="0" speed="13.89" length="47.93" shape="223.38,-35.19 271.31,-35.19"/>
+        <lane id="straight_ahead_2_1" index="1" speed="13.89" length="47.93" shape="223.38,-31.99 271.31,-31.99"/>
+        <lane id="straight_ahead_2_2" index="2" speed="13.89" length="47.93" shape="223.38,-28.79 271.31,-28.79"/>
+    </edge>
+    <edge id="straight_ahead_2.41" from="gneJ8" to="east_end" priority="-1">
+        <lane id="straight_ahead_2.41_0" index="0" speed="13.89" length="81.92" shape="279.31,-31.99 361.23,-32.00"/>
+        <lane id="straight_ahead_2.41_1" index="1" speed="13.89" length="81.92" shape="279.31,-28.79 361.23,-28.80"/>
+    </edge>
+
+    <junction id="east_end" type="dead_end" x="361.23" y="-27.20" incLanes="straight_ahead_2.41_0 straight_ahead_2.41_1" intLanes="" shape="361.23,-33.60 361.23,-27.20"/>
+    <junction id="gneJ8" type="priority" x="275.31" y="-27.19" incLanes="straight_ahead_2_0 straight_ahead_2_1 straight_ahead_2_2" intLanes=":gneJ8_0_0 :gneJ8_0_1 :gneJ8_0_2" shape="279.31,-27.19 279.31,-33.59 276.28,-34.42 274.34,-35.96 273.10,-36.55 271.31,-36.79 271.31,-27.19">
+        <request index="0" response="010" foes="010" cont="0"/>
+        <request index="1" response="000" foes="001" cont="0"/>
+        <request index="2" response="000" foes="000" cont="0"/>
+    </junction>
+    <junction id="on_ramp_junction" type="priority" x="234.10" y="-27.19" incLanes="on_ramp_0 straight_ahead_1_0 straight_ahead_1_1" intLanes=":on_ramp_junction_0_0 :on_ramp_junction_1_0 :on_ramp_junction_1_1" shape="223.38,-27.19 223.38,-36.79 222.29,-36.82 221.90,-36.88 221.53,-36.99 221.10,-37.18 220.54,-37.45 219.12,-34.58 220.09,-34.02 220.28,-33.83 220.27,-33.69 220.07,-33.60 219.67,-33.57 219.67,-27.17">
+        <request index="0" response="000" foes="000" cont="0"/>
+        <request index="1" response="000" foes="000" cont="0"/>
+        <request index="2" response="000" foes="000" cont="0"/>
+    </junction>
+    <junction id="on_ramp_start" type="dead_end" x="168.49" y="-59.58" incLanes="" intLanes="" shape="168.49,-59.58 169.91,-62.45"/>
+    <junction id="west_end" type="dead_end" x="136.30" y="-27.08" incLanes="" intLanes="" shape="136.30,-27.08 136.29,-33.48"/>
+
+    <connection from="on_ramp" to="straight_ahead_2" fromLane="0" toLane="0" via=":on_ramp_junction_0_0" dir="s" state="M"/>
+    <connection from="straight_ahead_1" to="straight_ahead_2" fromLane="0" toLane="1" via=":on_ramp_junction_1_0" dir="s" state="M"/>
+    <connection from="straight_ahead_1" to="straight_ahead_2" fromLane="1" toLane="2" via=":on_ramp_junction_1_1" dir="s" state="M"/>
+    <connection from="straight_ahead_2" to="straight_ahead_2.41" fromLane="0" toLane="0" via=":gneJ8_0_0" dir="s" state="m"/>
+    <connection from="straight_ahead_2" to="straight_ahead_2.41" fromLane="1" toLane="0" keepClear="0" via=":gneJ8_0_1" dir="s" state="M"/>
+    <connection from="straight_ahead_2" to="straight_ahead_2.41" fromLane="2" toLane="1" keepClear="0" via=":gneJ8_0_2" dir="s" state="M"/>
+
+    <connection from=":gneJ8_0" to="straight_ahead_2.41" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":gneJ8_0" to="straight_ahead_2.41" fromLane="1" toLane="0" dir="s" state="M"/>
+    <connection from=":gneJ8_0" to="straight_ahead_2.41" fromLane="2" toLane="1" dir="s" state="M"/>
+    <connection from=":on_ramp_junction_0" to="straight_ahead_2" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":on_ramp_junction_1" to="straight_ahead_2" fromLane="0" toLane="1" dir="s" state="M"/>
+    <connection from=":on_ramp_junction_1" to="straight_ahead_2" fromLane="1" toLane="2" dir="s" state="M"/>
+
+</net>

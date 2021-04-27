@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on Thu 22 Apr 2021 12:53:53 PM EDT by Eclipse SUMO netedit Version 1.9.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <sumo-net-file value="/home/dev/Desktop/BM_Scenarios/basic/off_ramp_1to4_lane_to3_lane.net.xml"/>
+    </input>
+
+    <output>
+        <output-file value="/home/dev/Desktop/BM_Scenarios/basic/off_ramp_1to4_lane_to3_lane.net.xml"/>
+    </output>
+
+    <processing>
+        <geometry.min-radius.fix.railways value="false"/>
+        <geometry.max-grade.fix value="false"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="false"/>
+    </processing>
+
+    <junctions>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="5"/>
+        <junctions.limit-turn-speed value="5.5"/>
+        <rectangular-lane-cut value="false"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="false"/>
+    </pedestrian>
+
+    <report>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+-->
+
+<net version="1.9" junctionCornerDetail="5" limitTurnSpeed="5.50" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/net_file.xsd">
+
+    <location netOffset="0.00,0.00" convBoundary="136.30,-78.92,389.56,-27.08" origBoundary="-10000000000.00,-10000000000.00,10000000000.00,10000000000.00" projParameter="!"/>
+
+    <edge id=":gneJ7_0" function="internal">
+        <lane id=":gneJ7_0_0" index="0" speed="13.89" length="8.20" shape="305.84,-38.39 308.30,-37.89 309.84,-36.79 311.38,-35.69 313.84,-35.19"/>
+        <lane id=":gneJ7_0_1" index="1" speed="13.89" length="8.20" shape="305.84,-35.19 313.84,-35.19"/>
+        <lane id=":gneJ7_0_2" index="2" speed="13.89" length="8.20" shape="305.84,-31.99 313.84,-31.99"/>
+        <lane id=":gneJ7_0_3" index="3" speed="13.89" length="8.20" shape="305.84,-28.79 313.84,-28.79"/>
+    </edge>
+    <edge id=":on_ramp_end_0" function="internal">
+        <lane id=":on_ramp_end_0_0" index="0" speed="8.17" length="3.93" shape="219.15,-39.53 220.12,-38.89 220.85,-38.55 221.64,-38.42 222.80,-38.39"/>
+    </edge>
+    <edge id=":on_ramp_end_1" function="internal">
+        <lane id=":on_ramp_end_1_0" index="0" speed="13.89" length="3.98" shape="218.82,-35.17 222.80,-35.19"/>
+        <lane id=":on_ramp_end_1_1" index="1" speed="13.89" length="3.98" shape="218.82,-31.97 222.80,-31.99"/>
+        <lane id=":on_ramp_end_1_2" index="2" speed="13.89" length="3.98" shape="218.83,-28.77 222.80,-28.79"/>
+    </edge>
+
+    <edge id="on_ramp" from="on_ramp_start" to="on_ramp_end" priority="-1">
+        <lane id="on_ramp_0" index="0" speed="13.89" length="71.29" shape="160.62,-80.23 219.15,-39.53"/>
+    </edge>
+    <edge id="straight_ahead_1" from="west_end" to="on_ramp_end" priority="-1">
+        <lane id="straight_ahead_1_0" index="0" speed="13.89" length="82.53" shape="136.29,-35.08 218.82,-35.17"/>
+        <lane id="straight_ahead_1_1" index="1" speed="13.89" length="82.53" shape="136.29,-31.88 218.82,-31.97"/>
+        <lane id="straight_ahead_1_2" index="2" speed="13.89" length="82.53" shape="136.30,-28.68 218.83,-28.77"/>
+    </edge>
+    <edge id="straight_ahead_2" from="on_ramp_end" to="gneJ7" priority="-1">
+        <lane id="straight_ahead_2_0" index="0" speed="13.89" length="83.04" shape="222.80,-38.39 305.84,-38.39"/>
+        <lane id="straight_ahead_2_1" index="1" speed="13.89" length="83.04" shape="222.80,-35.19 305.84,-35.19"/>
+        <lane id="straight_ahead_2_2" index="2" speed="13.89" length="83.04" shape="222.80,-31.99 305.84,-31.99"/>
+        <lane id="straight_ahead_2_3" index="3" speed="13.89" length="83.04" shape="222.80,-28.79 305.84,-28.79"/>
+    </edge>
+    <edge id="straight_ahead_2.75" from="gneJ7" to="east_end" priority="-1">
+        <lane id="straight_ahead_2.75_0" index="0" speed="13.89" length="75.72" shape="313.84,-35.19 389.56,-35.20"/>
+        <lane id="straight_ahead_2.75_1" index="1" speed="13.89" length="75.72" shape="313.84,-31.99 389.56,-32.00"/>
+        <lane id="straight_ahead_2.75_2" index="2" speed="13.89" length="75.72" shape="313.84,-28.79 389.56,-28.80"/>
+    </edge>
+
+    <junction id="east_end" type="dead_end" x="389.56" y="-27.20" incLanes="straight_ahead_2.75_0 straight_ahead_2.75_1 straight_ahead_2.75_2" intLanes="" shape="389.56,-36.80 389.56,-27.20"/>
+    <junction id="gneJ7" type="priority" x="309.84" y="-27.19" incLanes="straight_ahead_2_0 straight_ahead_2_1 straight_ahead_2_2 straight_ahead_2_3" intLanes=":gneJ7_0_0 :gneJ7_0_1 :gneJ7_0_2 :gneJ7_0_3" shape="313.84,-27.19 313.84,-36.79 310.81,-37.62 308.87,-39.16 307.63,-39.75 305.84,-39.99 305.84,-27.19">
+        <request index="0" response="0010" foes="0010" cont="0"/>
+        <request index="1" response="0000" foes="0001" cont="0"/>
+        <request index="2" response="0000" foes="0000" cont="0"/>
+        <request index="3" response="0000" foes="0000" cont="0"/>
+    </junction>
+    <junction id="on_ramp_end" type="priority" x="234.10" y="-27.19" incLanes="on_ramp_0 straight_ahead_1_0 straight_ahead_1_1 straight_ahead_1_2" intLanes=":on_ramp_end_0_0 :on_ramp_end_1_0 :on_ramp_end_1_1 :on_ramp_end_1_2" shape="222.80,-27.19 222.80,-39.99 221.71,-40.03 221.34,-40.11 220.98,-40.26 220.58,-40.50 220.07,-40.85 218.24,-38.22 219.23,-37.42 219.42,-37.14 219.42,-36.93 219.22,-36.81 218.82,-36.77 218.83,-27.17">
+        <request index="0" response="0000" foes="0000" cont="0"/>
+        <request index="1" response="0000" foes="0000" cont="0"/>
+        <request index="2" response="0000" foes="0000" cont="0"/>
+        <request index="3" response="0000" foes="0000" cont="0"/>
+    </junction>
+    <junction id="on_ramp_start" type="dead_end" x="159.71" y="-78.92" incLanes="" intLanes="" shape="159.71,-78.92 161.54,-81.55"/>
+    <junction id="west_end" type="dead_end" x="136.30" y="-27.08" incLanes="" intLanes="" shape="136.30,-27.08 136.29,-36.68"/>
+
+    <connection from="on_ramp" to="straight_ahead_2" fromLane="0" toLane="0" via=":on_ramp_end_0_0" dir="s" state="M"/>
+    <connection from="straight_ahead_1" to="straight_ahead_2" fromLane="0" toLane="1" via=":on_ramp_end_1_0" dir="s" state="M"/>
+    <connection from="straight_ahead_1" to="straight_ahead_2" fromLane="1" toLane="2" via=":on_ramp_end_1_1" dir="s" state="M"/>
+    <connection from="straight_ahead_1" to="straight_ahead_2" fromLane="2" toLane="3" via=":on_ramp_end_1_2" dir="s" state="M"/>
+    <connection from="straight_ahead_2" to="straight_ahead_2.75" fromLane="0" toLane="0" via=":gneJ7_0_0" dir="s" state="m"/>
+    <connection from="straight_ahead_2" to="straight_ahead_2.75" fromLane="1" toLane="0" keepClear="0" via=":gneJ7_0_1" dir="s" state="M"/>
+    <connection from="straight_ahead_2" to="straight_ahead_2.75" fromLane="2" toLane="1" keepClear="0" via=":gneJ7_0_2" dir="s" state="M"/>
+    <connection from="straight_ahead_2" to="straight_ahead_2.75" fromLane="3" toLane="2" keepClear="0" via=":gneJ7_0_3" dir="s" state="M"/>
+
+    <connection from=":gneJ7_0" to="straight_ahead_2.75" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":gneJ7_0" to="straight_ahead_2.75" fromLane="1" toLane="0" dir="s" state="M"/>
+    <connection from=":gneJ7_0" to="straight_ahead_2.75" fromLane="2" toLane="1" dir="s" state="M"/>
+    <connection from=":gneJ7_0" to="straight_ahead_2.75" fromLane="3" toLane="2" dir="s" state="M"/>
+    <connection from=":on_ramp_end_0" to="straight_ahead_2" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":on_ramp_end_1" to="straight_ahead_2" fromLane="0" toLane="1" dir="s" state="M"/>
+    <connection from=":on_ramp_end_1" to="straight_ahead_2" fromLane="1" toLane="2" dir="s" state="M"/>
+    <connection from=":on_ramp_end_1" to="straight_ahead_2" fromLane="2" toLane="3" dir="s" state="M"/>
+
+</net>
