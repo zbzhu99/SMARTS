@@ -104,13 +104,13 @@ class Heading(float):
         >>> Heading(math.pi/4).relative_to(Heading(math.pi))
         Heading(-2.356194490192345)
         """
-        assert isinstance(other, Heading)
+        assert isinstance(other, float)
 
         rel_heading = Heading(self - other)
 
         assert -math.pi <= rel_heading <= math.pi, f"{rel_heading}"
 
-        return Heading(rel_heading)
+        return rel_heading
 
     # 2D directional vector that aligns with Cartesian Coordinate System
     def direction_vector(self):
