@@ -33,7 +33,7 @@ from shapely.geometry.base import CAP_STYLE, JOIN_STYLE
 from shapely.ops import snap, triangulate
 from trimesh.exchange import gltf
 
-from .utils.math import rotate_around_point
+from .utils.math import normalize, rotate_around_point
 
 from smarts.core.utils.sumo import sumolib  # isort:skip
 from sumolib.net.edge import Edge  # isort:skip
@@ -250,20 +250,14 @@ class SumoRoadNetwork:
     def lane_vector_at_offset(self, lane: Lane, start_offset: float) -> np.ndarray:
         """Computes the lane direction vector at the given offset into the road."""
 
-        add_offset = 1
-        end_offset = start_offset + add_offset  # a little further down the lane
         lane_length = lane.getLength()
-
-        if end_offset > lane_length + add_offset:
-            raise ValueError(
-                f"Offset={end_offset} goes out further than the end of "
-                f"lane=({lane.getID()}, length={lane_length})"
-            )
+        add_offset = min(1, lane_length - start_offset)
+        end_offset = start_offset + add_offset  # a little further down the lane
 
         p1 = self.world_coord_from_offset(lane, start_offset)
         p2 = self.world_coord_from_offset(lane, end_offset)
 
-        return p2 - p1
+        return normalize(p2 - p1)
 
     @classmethod
     def buffered_lane_or_edge(cls, lane_or_edge: Union[Edge, Lane], width: float = 1.0):

@@ -89,6 +89,12 @@ def squared_dist(a, b) -> float:
     delta = b - a
     return np.dot(delta, delta)
 
+def normalize(a) -> np.array:
+    """Convert a vector to a unit vector"""
+    sq_dist = squared_dist(np.array([0,0]), a)
+    dist = math.sqrt(sq_dist) if sq_dist != 0 else 1
+
+    return a/dist
 
 def signed_dist_to_line(point, line_point, line_dir_vec) -> float:
     """Computes the signed distance to a directed line
