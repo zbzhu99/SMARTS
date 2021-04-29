@@ -738,7 +738,7 @@ class MissionPlanner:
             self._log.info(f"U-turn activated at distance: {uturn_activated_distance}")
             self._first_uturn = False
 
-        return [trajectory]
+        return []
 
     def paths_of_lane_at(self, lane, offset, lookahead=30):
         wp_start = self._road_network.world_coord_from_offset(lane, offset)

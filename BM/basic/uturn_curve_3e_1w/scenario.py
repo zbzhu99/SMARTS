@@ -3,6 +3,7 @@ from pathlib import Path
 
 from smarts.sstudio import gen_scenario
 from smarts.sstudio import types as t
+from smarts.sstudio.types import Mission, Route, UTurn
 
 from sys import path
 
@@ -21,7 +22,12 @@ except Exception as e:
     logger.error(f"Scenario {scenario_map_file} failed to copy")
     raise e
 
-ego_missions = [t.EndlessMission(begin=("-curve_ahead", 0, 20),)]
+ego_missions = [
+        Mission(
+            Route(begin=("-curve_ahead", 0, 30), end=("-curve_ahead", 0, "300")),
+            task=UTurn(initial_speed=20),
+        ),
+    ]
 
 traffic = t.Traffic(
     flows=[
