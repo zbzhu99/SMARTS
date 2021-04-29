@@ -2,6 +2,7 @@ from smarts.core.controllers import ActionSpaceType
 from checker_cutin import CutinChecker
 from check_uturn import UTurnChecker
 from checker_host import CheckerConfig, CheckerHost
+from examples.single_agent import UTurnAgent
 import logging
 import os
 import gym
@@ -38,13 +39,20 @@ class ChaseViaPointsAgent(Agent):
 def main(scenarios, sim_name, headless, num_episodes, seed, max_episode_steps=None):
     agent_spec = AgentSpec(
         interface=AgentInterface(
+            max_episode_steps=max_episode_steps,
             waypoints=True,
             action=ActionSpaceType.LaneWithContinuousSpeed,
             neighborhood_vehicles=True,
         ),
         agent_builder=ChaseViaPointsAgent,
     )
-
+    # agent_spec = AgentSpec(
+    #     interface=AgentInterface.from_type(
+    #         AgentType.StandardWithAbsoluteSteering, 
+    #         max_episode_steps=max_episode_steps
+    #     ),
+    #     agent_builder=UTurnAgent,
+    # )
     env = gym.make(
         "smarts.env:hiway-v0",
         scenarios=scenarios,
@@ -69,7 +77,7 @@ def main(scenarios, sim_name, headless, num_episodes, seed, max_episode_steps=No
         ch.add_checkers(CheckerConfig(CutinChecker(bm_id=AGENT_ID)))
 
         dones = {"__all__": False}
-        while not dones["__all__"] and not ch.done:
+        while not dones["__all__"]: # and not ch.done:
             agent_obs = observations[AGENT_ID]
             agent_action = agent.act(agent_obs)
             observations, rewards, dones, infos = env.step({AGENT_ID: agent_action})
