@@ -27,24 +27,33 @@ AGENT_ID = "Agent-007"
 
 class ChaseViaPointsAgent(Agent):
     def __init__(self):
-        self.lane_index=1
-        self._task_is_triggered=False
+        self.lane_index = 1
+        self._task_is_triggered = False
+
     def act(self, obs: Observation):
-        aggressiveness = 10        
-        print(self.sim._vehicle_index.agent_vehicle_ids(),"OOOOO")
+        from smarts.core.smarts import SMARTS
+        from smarts.core.vehicle import Vehicle
+
+        sim: SMARTS = self.sim
+        aggressiveness = 10
+        print(sim._vehicle_index.agent_vehicle_ids(), "OOOOO")
         # input("kkkk")
         # print(obs.ego_vehicle_state.linear_velocity[1])
-        vehicle=self.sim._vehicle_index.vehicle_by_id('Agent-007-07a0ca6e')
-       
-        miss=self.sim._vehicle_index.sensor_state_for_vehicle_id('Agent-007-07a0ca6e').mission_planner
-        
-        neighborhood_vehicles = self.sim.neighborhood_vehicles_around_vehicle(
+        vehicles = sim._vehicle_index.vehicles_by_actor_id(AGENT_ID)
+
+        vehicle: Vehicle = vehicles[0]
+
+        miss = sim._vehicle_index.sensor_state_for_vehicle_id(
+            vehicle.id
+        ).mission_planner
+
+        neighborhood_vehicles = sim.neighborhood_vehicles_around_vehicle(
             vehicle=vehicle, radius=850
         )
-        pose=vehicle.pose
+        pose = vehicle.pose
 
         position = pose.position[:2]
-        lane = self.sim.scenario.road_network.nearest_lane(position)
+        lane = sim.scenario.road_network.nearest_lane(position)
 
         # if not neighborhood_vehicles or self.sim.elapsed_sim_time < 1:
         #     return (0,0,0)
@@ -154,10 +163,6 @@ class ChaseViaPointsAgent(Agent):
         # # return [trajectory]
         # print(self.lane_index)
 
-
-
-
-
         # if (
         #     len(obs.via_data.near_via_points) < 1
         #     or obs.ego_vehicle_state.edge_id != obs.via_data.near_via_points[0].edge_id
@@ -202,29 +207,50 @@ class ChaseViaPointsAgent(Agent):
         # print("lat_error: ", error_lat)
         # # self.lane_index=0
         # # print(self.sim,"||||||||||||||||||||||||||||||||")
-                                    
+
         # # if abs(distant-25)<2:
         # #     self.lane_index=0
         # aaa=np.dot(obs.neighborhood_vehicle_states[1].position[0:2]-obs.ego_vehicle_state.position[0:2],radians_to_vec(obs.ego_vehicle_state.heading))
-        sw=np.linalg.norm(obs.neighborhood_vehicle_states[0].position[0:2]-obs.ego_vehicle_state.position[0:2])
+        sw = np.linalg.norm(
+            obs.neighborhood_vehicle_states[0].position[0:2]
+            - obs.ego_vehicle_state.position[0:2]
+        )
         # aaa=1000/aaa
         # error_lat=np.sign(error_lat)*abs(aaa)
         # if sw>5:
         #     aaa=0
         #     error_lat=0
-        error_lat=[]
-        aaa=[]
+        error_lat = []
+        aaa = []
         for ii in range(len(neighborhood_vehicles)):
-            sw=np.linalg.norm(obs.neighborhood_vehicle_states[ii].position[0:2]-obs.ego_vehicle_state.position[0:2])
-            relative1=obs.neighborhood_vehicle_states[ii].position-obs.ego_vehicle_state.position
+            sw = np.linalg.norm(
+                obs.neighborhood_vehicle_states[ii].position[0:2]
+                - obs.ego_vehicle_state.position[0:2]
+            )
+            relative1 = (
+                obs.neighborhood_vehicle_states[ii].position
+                - obs.ego_vehicle_state.position
+            )
             # error_lat=1*np.cross(radians_to_vec(obs.ego_vehicle_state.heading),relative1[0:2])
-            if sw>25:
+            if sw > 25:
                 aaa.append(0)
                 error_lat.append(0)
 
             else:
-                aaa.append((1/(np.linalg.norm(relative1))**2)*np.dot(obs.neighborhood_vehicle_states[ii].position[0:2]-obs.ego_vehicle_state.position[0:2],radians_to_vec(obs.ego_vehicle_state.heading)))
-                error_lat.append((1/(np.linalg.norm(relative1))**2)*np.cross(radians_to_vec(obs.ego_vehicle_state.heading),relative1[0:2]))
+                aaa.append(
+                    (1 / (np.linalg.norm(relative1)) ** 2)
+                    * np.dot(
+                        obs.neighborhood_vehicle_states[ii].position[0:2]
+                        - obs.ego_vehicle_state.position[0:2],
+                        radians_to_vec(obs.ego_vehicle_state.heading),
+                    )
+                )
+                error_lat.append(
+                    (1 / (np.linalg.norm(relative1)) ** 2)
+                    * np.cross(
+                        radians_to_vec(obs.ego_vehicle_state.heading), relative1[0:2]
+                    )
+                )
 
         # aaa1=np.dot(obs.neighborhood_vehicle_states[0].position[0:2]-obs.ego_vehicle_state.position[0:2],radians_to_vec(obs.ego_vehicle_state.heading))
 
@@ -232,7 +258,7 @@ class ChaseViaPointsAgent(Agent):
         # aaa1=1000/aaa1
         # if sw1>5:
         #     aaa1=0
-        
+
         # print(aaa,"::::::::::::",aaa1)
         start_lane = miss._road_network.nearest_lane(
             miss._mission.start.position,
@@ -244,40 +270,33 @@ class ChaseViaPointsAgent(Agent):
         oncoming_lanes = oncoming_edge.getLanes()
         target_lane_index = miss._mission.task.target_lane_index
         target_lane_index = min(target_lane_index, len(oncoming_lanes) - 1)
-        target_lane = oncoming_lanes[target_lane_index+0]
-        
+        target_lane = oncoming_lanes[target_lane_index + 0]
 
         offset = miss._road_network.offset_into_lane(start_lane, pose.position[:2])
         oncoming_offset = max(0, target_lane.getLength() - offset)
-        target_p=neighborhood_vehicles[0].pose.position[0:2]
-        target_l=miss._road_network.nearest_lane(target_p)
-        target_offset = miss._road_network.offset_into_lane(
-            target_l, target_p
-        )
-        fq=target_lane.getLength() - offset-target_offset
+        target_p = neighborhood_vehicles[0].pose.position[0:2]
+        target_l = miss._road_network.nearest_lane(target_p)
+        target_offset = miss._road_network.offset_into_lane(target_l, target_p)
+        fq = target_lane.getLength() - offset - target_offset
 
         paths = miss.paths_of_lane_at(target_lane, oncoming_offset, lookahead=30)
 
-
-
-
-        self.lane_index=0
-        fff=obs.waypoint_paths[self.lane_index]
-        if sw<(aggressiveness/10)*30+(1-aggressiveness/10)*100:
-            self._task_is_triggered=True
-            fff=paths[0]
-
+        self.lane_index = 0
+        fff = obs.waypoint_paths[self.lane_index]
+        if sw < (aggressiveness / 10) * 30 + (1 - aggressiveness / 10) * 100:
+            self._task_is_triggered = True
+            fff = paths[0]
 
         target = paths[0][-1]
-        print(fq,"[][][][][][][][][]")
-        
+        print(fq, "[][][][][][][][][]")
 
-
-        look_ahead_wp_num=3
-        look_ahead_dist=3
+        look_ahead_wp_num = 3
+        look_ahead_dist = 3
         vehicle_look_ahead_pt = [
-            obs.ego_vehicle_state.position[0] - look_ahead_dist * math.sin(obs.ego_vehicle_state.heading),
-            obs.ego_vehicle_state.position[1] + look_ahead_dist * math.cos(obs.ego_vehicle_state.heading),
+            obs.ego_vehicle_state.position[0]
+            - look_ahead_dist * math.sin(obs.ego_vehicle_state.heading),
+            obs.ego_vehicle_state.position[1]
+            + look_ahead_dist * math.cos(obs.ego_vehicle_state.heading),
         ]
         # print(obs.waypoint_paths[lane_index][look_ahead_wp_num],"<<<<<<<<<<<<<<<,")
         reference_heading = fff[look_ahead_wp_num].heading
@@ -287,26 +306,39 @@ class ChaseViaPointsAgent(Agent):
         controller_lat_error = fff[look_ahead_wp_num].signed_lateral_error(
             vehicle_look_ahead_pt
         )
-        trig=1
-        steer=0.34*controller_lat_error+1.2*heading_error-trig*100*sum(error_lat)
+        trig = 1
+        steer = (
+            0.34 * controller_lat_error
+            + 1.2 * heading_error
+            - trig * 100 * sum(error_lat)
+        )
         # print(trajectory[look_ahead_wp_num].speed_limit,"<<<<<<<<<<<<<<")
-        throttle=-0.23*(obs.ego_vehicle_state.speed-12)-1.1*abs(obs.ego_vehicle_state.linear_velocity[1])-trig*100*sum(aaa)
-        
+        throttle = (
+            -0.23 * (obs.ego_vehicle_state.speed - 12)
+            - 1.1 * abs(obs.ego_vehicle_state.linear_velocity[1])
+            - trig * 100 * sum(aaa)
+        )
 
         # if sw<5:
         #     steer=1
         #     print("FFFFFFFFFFFFFFFFFF")
-        if throttle>=0:
-            brake=0
+        if throttle >= 0:
+            brake = 0
         else:
-            brake=abs(throttle)
-            throttle=0
+            brake = abs(throttle)
+            throttle = 0
         # if abs(obs.ego_vehicle_state.linear_velocity[1])>.4:
         #     brake=0.5
         #     throttle=0
         # print(obs.ego_vehicle_state.speed,"KKKKKKKKKKKKK")
-        print(sum(aaa),sum(error_lat),relative1,"TTTTTHHHHRRRRROOOTTTTKLLLLE",(throttle,brake,steer))
-        return (throttle,brake,steer)
+        print(
+            sum(aaa),
+            sum(error_lat),
+            relative1,
+            "TTTTTHHHHRRRRROOOTTTTKLLLLE",
+            (throttle, brake, steer),
+        )
+        return (throttle, brake, steer)
 
 
 def main(scenarios, sim_name, headless, num_episodes, seed, max_episode_steps=None):
@@ -332,8 +364,8 @@ def main(scenarios, sim_name, headless, num_episodes, seed, max_episode_steps=No
         # envision_record_data_replay_path="./data_replay",
     )
     global vvv
-    ChaseViaPointsAgent.sim=env._smarts
-    print(env._smarts,"::::::::::::::::::::::::::")
+    ChaseViaPointsAgent.sim = env._smarts
+    print(env._smarts, "::::::::::::::::::::::::::")
 
     for episode in episodes(n=num_episodes):
         agent = agent_spec.build_agent()
