@@ -230,8 +230,8 @@ class TrajectoryTrackingController:
         # print(trajectory[0][-1]-trajectory[0][0],"<><><><><><><><><><><><><>",min_angles_difference_signed(
         #     trajectory[2][-1], trajectory[2][0]
         # ))
-        if abs(min_angles_difference_signed(trajectory[2][-1], trajectory[2][0]))>2:
-            throttle_filter_constant=2.5
+        if abs(min_angles_difference_signed(trajectory[2][-1], trajectory[2][0])) > 2:
+            throttle_filter_constant = 2.5
 
         lateral_error_derivative_gain = 0.15
         heading_error_derivative_gain = 0.5
@@ -249,7 +249,7 @@ class TrajectoryTrackingController:
             lateral_error_derivative_gain = 0.015
             heading_error_derivative_gain = 0.05
 
-        if vehicle.speed>70/3.6:
+        if vehicle.speed > 70 / 3.6:
             lateral_gain = 1.51
             heading_error_derivative_gain = 0.1
 

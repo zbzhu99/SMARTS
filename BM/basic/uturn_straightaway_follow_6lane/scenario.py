@@ -21,7 +21,11 @@ except Exception as e:
     logger.error(f"Scenario {scenario_map_file} failed to copy")
     raise e
 
-ego_missions = [t.EndlessMission(begin=("-straightaway", 2, 200),)]
+ego_missions = [
+    t.EndlessMission(
+        begin=("-straightaway", 2, 200),
+    )
+]
 
 start_offset = 10
 start_offset_2 = 40
@@ -49,7 +53,8 @@ traffic = t.Traffic(
     + [
         t.Flow(
             route=t.Route(
-                begin=("straightaway", 2, start_offset), end=("straightaway", 2, "max"),
+                begin=("straightaway", 2, start_offset),
+                end=("straightaway", 2, "max"),
             ),
             rate=1,
             actors={
@@ -65,6 +70,9 @@ traffic = t.Traffic(
     ]
 )
 
-scenario = t.Scenario(traffic={"all": traffic}, ego_missions=ego_missions,)
+scenario = t.Scenario(
+    traffic={"all": traffic},
+    ego_missions=ego_missions,
+)
 
 gen_scenario(scenario, output_dir=s_dir)

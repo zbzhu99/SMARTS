@@ -24,7 +24,8 @@ except Exception as e:
 ego_missions = [
     t.Mission(
         route=t.Route(
-            begin=("2lane_stretch_1", 0, 1), end=("1lane_stretch_4", 0, "max"),
+            begin=("2lane_stretch_1", 0, 1),
+            end=("1lane_stretch_4", 0, "max"),
         ),
     )
 ]
@@ -33,7 +34,8 @@ traffic = t.Traffic(
     flows=[
         t.Flow(
             route=t.Route(
-                begin=("2lane_stretch_1", 1, 1), end=("1lane_stretch_4", 1, "max"),
+                begin=("2lane_stretch_1", 1, 1),
+                end=("1lane_stretch_4", 1, "max"),
             ),
             rate=1,
             actors={t.TrafficActor("car"): 1},
@@ -41,6 +43,9 @@ traffic = t.Traffic(
     ]
 )
 
-scenario = t.Scenario(traffic={"all": traffic}, ego_missions=ego_missions,)
+scenario = t.Scenario(
+    traffic={"all": traffic},
+    ego_missions=ego_missions,
+)
 
 gen_scenario(scenario, output_dir=s_dir)

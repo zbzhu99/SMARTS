@@ -64,7 +64,7 @@ def main(scenarios, sim_name, headless, num_episodes, seed, max_episode_steps=No
         episode.record_scenario(env.scenario_log)
         logger = logging.getLogger(
             # env.scenario_log["scenario_map"]
-            )
+        )
         ch: CheckerHost = CheckerHost(env._smarts, logger)
         ch.add_checkers(CheckerConfig(CutinChecker(bm_id=AGENT_ID)))
 

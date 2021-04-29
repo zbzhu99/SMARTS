@@ -34,16 +34,19 @@ from smarts.core.utils.id import SocialAgentId
 
 
 class _SUMO_PARAMS_MODE(IntEnum):
-    TITLE_CASE=0
-    KEEP_SNAKE_CASE=1
-    
+    TITLE_CASE = 0
+    KEEP_SNAKE_CASE = 1
+
+
 class _SumoParams(collections_abc.Mapping):
     """For some Sumo params (e.x. LaneChangingModel) the arguments are in title case
     with a given prefix. Subclassing this class allows for an automatic way to map
     between PEP8-compatible naming and Sumo's.
     """
 
-    def __init__(self, prefix, whitelist=[], mode=_SUMO_PARAMS_MODE.TITLE_CASE, **kwargs):
+    def __init__(
+        self, prefix, whitelist=[], mode=_SUMO_PARAMS_MODE.TITLE_CASE, **kwargs
+    ):
         def snake_to_title(word: str):
             return "".join(x.capitalize() or "_" for x in word.split("_"))
 
@@ -51,12 +54,12 @@ class _SumoParams(collections_abc.Mapping):
             w = word[0].upper() + word[1:]
             return "".join(x or "_" for x in w.split("_"))
 
-        func:function = snake_to_title
+        func: function = snake_to_title
         if mode == _SUMO_PARAMS_MODE.TITLE_CASE:
             pass
         elif mode == _SUMO_PARAMS_MODE.KEEP_SNAKE_CASE:
             func = keep_snake_case
-            
+
         # XXX: On rare occasions sumo doesn't respect their own conventions
         #      (e.x. junction model's impatience).
         self._params = {key: kwargs.pop(key) for key in whitelist if key in kwargs}

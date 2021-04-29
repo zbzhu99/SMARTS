@@ -40,13 +40,19 @@ ego_missions = [
 traffic = t.Traffic(
     flows=[
         t.Flow(
-            route=t.Route(begin=("east_ew", 1, 20), end=("south_ns", 1, "max"),),
+            route=t.Route(
+                begin=("east_ew", 1, 20),
+                end=("south_ns", 1, "max"),
+            ),
             rate=1,
             actors={t.TrafficActor("car", speed=t.Distribution(mean=0.9, sigma=0)): 1},
         )
     ]
 )
 
-scenario = t.Scenario(traffic={"all": traffic}, ego_missions=ego_missions,)
+scenario = t.Scenario(
+    traffic={"all": traffic},
+    ego_missions=ego_missions,
+)
 
 gen_scenario(scenario, output_dir=s_dir)

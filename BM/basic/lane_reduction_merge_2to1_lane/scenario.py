@@ -23,11 +23,16 @@ except Exception as e:
 
 ego_missions = [
     t.Mission(
-        route=t.Route(begin=("2lane_stretch_1", 0, 1), end=("2lane_stretch_2", 0, 50),),
+        route=t.Route(
+            begin=("2lane_stretch_1", 0, 1),
+            end=("2lane_stretch_2", 0, 50),
+        ),
     )
 ]
 
 
-scenario = t.Scenario(ego_missions=ego_missions,)
+scenario = t.Scenario(
+    ego_missions=ego_missions,
+)
 
 gen_scenario(scenario, output_dir=s_dir)

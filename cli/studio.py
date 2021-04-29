@@ -90,10 +90,11 @@ def _build_single_scenario(clean, scenario):
     scenario_py = scenario_root / "scenario.py"
     if scenario_py.exists():
         subprocess.check_call([sys.executable, scenario_py])
-    
+
     map_net = scenario_root / "map.net.xml"
     map_glb = scenario_root / "map.glb"
     generate_glb_from_sumo_network(str(map_net), str(map_glb))
+
 
 from pathlib import Path
 
@@ -116,12 +117,17 @@ def build_all_scenarios(clean, scenarios):
         scenarios = [str(Path("./scenarios").absolute())]
     builder_threads = {}
     import smarts.core.scenario as sscenario
+
     sscenario_dir_hash = hash(str(Path(sscenario.__file__).parent))
     for scenarios_path in scenarios:
         path = Path(scenarios_path)
         done = {sscenario_dir_hash}
-        for p in ( p.resolve() for p in path.rglob("**/*") if p.name in ["map.net.xml", "scenario.py"]):
-            parent=p.parent.relative_to(str(Path(scenarios_path).absolute()))
+        for p in (
+            p.resolve()
+            for p in path.rglob("**/*")
+            if p.name in ["map.net.xml", "scenario.py"]
+        ):
+            parent = p.parent.relative_to(str(Path(scenarios_path).absolute()))
             parent_hash = hash(parent)
             if parent_hash not in done:
                 done.add(parent_hash)

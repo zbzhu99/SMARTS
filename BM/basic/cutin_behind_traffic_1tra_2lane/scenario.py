@@ -23,7 +23,10 @@ except Exception as e:
 
 ego_missions = [
     t.Mission(
-        route=t.Route(begin=("straightaway", 1, 1), end=("straightaway", 0, "max"),),
+        route=t.Route(
+            begin=("straightaway", 1, 1),
+            end=("straightaway", 0, "max"),
+        ),
         via=[
             t.Via("straightaway", 1, 60, 20),
             t.Via("straightaway", 0, 80, 15),
@@ -36,14 +39,16 @@ traffic = t.Traffic(
     flows=[
         t.Flow(
             route=t.Route(
-                begin=("straightaway", 0, 0), end=("straightaway", 0, "max"),
+                begin=("straightaway", 0, 0),
+                end=("straightaway", 0, "max"),
             ),
             rate=1,
             actors={t.TrafficActor("car", speed=t.Distribution(mean=1, sigma=0)): 1},
         ),
         t.Flow(
             route=t.Route(
-                begin=("straightaway", 0, 40), end=("straightaway", 0, "max"),
+                begin=("straightaway", 0, 40),
+                end=("straightaway", 0, "max"),
             ),
             rate=1,
             actors={
@@ -59,6 +64,9 @@ traffic = t.Traffic(
     ]
 )
 
-scenario = t.Scenario(traffic={"all": traffic}, ego_missions=ego_missions,)
+scenario = t.Scenario(
+    traffic={"all": traffic},
+    ego_missions=ego_missions,
+)
 
 gen_scenario(scenario, output_dir=s_dir)

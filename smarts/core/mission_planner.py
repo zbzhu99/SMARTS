@@ -63,9 +63,9 @@ class MissionPlanner:
         self._prev_kyber_y_position = None
         self._first_uturn = True
         self._uturn_target_velocity_window = [0] * 10
-        self._cutin_count=0
-        self._cutin_initial_speed=None
-        self._cutin_initial_rel_position=None
+        self._cutin_count = 0
+        self._cutin_initial_speed = None
+        self._cutin_initial_rel_position = None
 
     def random_endless_mission(
         self, min_range_along_lane=0.3, max_range_along_lane=0.9
@@ -230,15 +230,14 @@ class MissionPlanner:
 
         if not neighborhood_vehicles or sim.elapsed_sim_time < 1:
             return []
-        
+
         if self._cutin_initial_speed is None:
-            self._cutin_initial_speed=neighborhood_vehicles[0].speed
+            self._cutin_initial_speed = neighborhood_vehicles[0].speed
 
         if self._cutin_initial_rel_position is None:
-            self._cutin_initial_rel_position = neighborhood_vehicles[0].pose.position[0]-vehicle.pose.position[0]
-
-
-        
+            self._cutin_initial_rel_position = (
+                neighborhood_vehicles[0].pose.position[0] - vehicle.pose.position[0]
+            )
 
         target_vehicle = neighborhood_vehicles[0]
         target_position = target_vehicle.pose.position[:2]
@@ -258,7 +257,7 @@ class MissionPlanner:
         target_velocity = np.dot(
             velocity_vector, radians_to_vec(target_vehicle.pose.heading)
         )
-        target_velocity=neighborhood_vehicles[0].speed
+        target_velocity = neighborhood_vehicles[0].speed
 
         self._prev_kyber_x_position = target_position[0]
         self._prev_kyber_y_position = target_position[1]
@@ -274,21 +273,15 @@ class MissionPlanner:
         # of the other vehicle.
         position_gain = 8
 
-        cut_in_offset = np.clip(30 - 1.5*aggressiveness, 15, 30)
-        if 45/3.6<self._cutin_initial_speed:
-            if self._cutin_initial_rel_position>=0:
-                position_gain=14
+        cut_in_offset = np.clip(30 - 1.5 * aggressiveness, 15, 30)
+        if 45 / 3.6 < self._cutin_initial_speed:
+            if self._cutin_initial_rel_position >= 0:
+                position_gain = 14
             else:
                 position_gain = 2
 
-
-            
-
-        
         # if aggressiveness > 8:
         #     position_gain = 4
-
-        
 
         if (
             (abs(offset - (cut_in_offset + target_offset)) > 0.2)
@@ -301,7 +294,11 @@ class MissionPlanner:
             speed_limit = np.clip(
                 np.clip(
                     (target_velocity * 1.1)
-                    - np.clip(position_gain * (offset - (cut_in_offset + target_offset)),-0.6*target_velocity,0.3*target_velocity),
+                    - np.clip(
+                        position_gain * (offset - (cut_in_offset + target_offset)),
+                        -0.6 * target_velocity,
+                        0.3 * target_velocity,
+                    ),
                     0.5 * target_velocity,
                     2 * target_velocity,
                 ),
@@ -324,30 +321,38 @@ class MissionPlanner:
         #         0.5,
         #         45)
         #     self._cutin_count+=1
-        
 
         else:
-            #print((offset-target_offset)/(vehicle.speed-target_velocity),"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<",(offset-target_offset))
+            # print((offset-target_offset)/(vehicle.speed-target_velocity),"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<",(offset-target_offset))
             self._task_is_triggered = True
             nei_wps = self._waypoints.waypoint_paths_on_lane_at(
                 position, target_lane.getID(), 60
             )
 
-            cut_in_speed = np.clip(target_velocity * 1.2,0.5 * target_lane.getSpeed(),26 * target_lane.getSpeed())
-            upper=0.0-0.0*aggressiveness/10
+            cut_in_speed = np.clip(
+                target_velocity * 1.2,
+                0.5 * target_lane.getSpeed(),
+                26 * target_lane.getSpeed(),
+            )
+            upper = 0.0 - 0.0 * aggressiveness / 10
             # upper=0.3 * target_lane.getSpeed()
-            lower=0.4-0.2*aggressiveness/10
+            lower = 0.4 - 0.2 * aggressiveness / 10
             # lower=1
             if lane.getID() != target_lane.getID():
                 cut_in_speed = np.clip(
-                np.clip(
-                    (target_velocity * 1.1)
-                    -np.clip(2*8 * (offset - (cut_in_offset + target_offset)),-lower*target_velocity,upper*target_velocity),
-                    0.5 * target_velocity,
-                    2 * target_velocity,
-                ),
-                0.5,
-                45)
+                    np.clip(
+                        (target_velocity * 1.1)
+                        - np.clip(
+                            2 * 8 * (offset - (cut_in_offset + target_offset)),
+                            -lower * target_velocity,
+                            upper * target_velocity,
+                        ),
+                        0.5 * target_velocity,
+                        2 * target_velocity,
+                    ),
+                    0.5,
+                    45,
+                )
             # upper=0.3
             # lower=0.3
             # ttc=2-1*aggressiveness/10
@@ -365,7 +370,6 @@ class MissionPlanner:
             #     45)
 
             speed_limit = cut_in_speed
-            
 
             # 1.5 m/s is the threshold for speed offset. If the vehicle speed
             # is less than target_velocity plus this offset then it will not
@@ -379,7 +383,7 @@ class MissionPlanner:
             #     self._task_is_triggered = False
             # else:
             #     self._task_is_triggered = True
-            
+
         # nei_wps = self._waypoints.waypoint_paths_on_lane_at(
         #         position, lane.getID(), 60
         #     )
@@ -387,7 +391,7 @@ class MissionPlanner:
         # print(abs(target_position[0]-position[0]),vehicle.speed,target_vehicle.speed,velocity_vector[0],sim.elapsed_sim_time)
 
         p0 = position
-        p_temp = nei_wps[0][int(len(nei_wps[0]) // (3+0*aggressiveness/10))].pos
+        p_temp = nei_wps[0][int(len(nei_wps[0]) // (3 + 0 * aggressiveness / 10))].pos
         p1 = p_temp
         p2 = nei_wps[0][2 * len(nei_wps[0]) // 3].pos
 

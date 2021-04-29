@@ -22,19 +22,30 @@ except Exception as e:
     raise e
 
 ego_missions = [
-    t.Mission(t.Route(begin=("curve_ahead", 0, 1), end=("curve_ahead", 1, "max"),),)
+    t.Mission(
+        t.Route(
+            begin=("curve_ahead", 0, 1),
+            end=("curve_ahead", 1, "max"),
+        ),
+    )
 ]
 
 traffic = t.Traffic(
     flows=[
         t.Flow(
-            route=t.Route(begin=("curve_ahead", 1, 30), end=("curve_ahead", 1, "max"),),
+            route=t.Route(
+                begin=("curve_ahead", 1, 30),
+                end=("curve_ahead", 1, "max"),
+            ),
             rate=1,
             actors={t.TrafficActor("car"): 1},
         )
     ]
 )
 
-scenario = t.Scenario(traffic={"all": traffic}, ego_missions=ego_missions,)
+scenario = t.Scenario(
+    traffic={"all": traffic},
+    ego_missions=ego_missions,
+)
 
 gen_scenario(scenario, output_dir=s_dir)
