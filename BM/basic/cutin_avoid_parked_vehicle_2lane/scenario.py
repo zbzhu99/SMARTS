@@ -23,7 +23,12 @@ except Exception as e:
 
 ego_missions = [
     t.Mission(
-        route=t.Route(begin=("straightaway", 1, 1), end=("straightaway", 0, "max"),),
+        route=t.Route(begin=("straightaway", 1, 1), end=("straightaway", 0, 300),),
+        via=[
+            t.Via("straightaway", 1, 60, 20),
+            t.Via("straightaway", 0, 80, 15),
+            t.Via("straightaway", 0, 120, 7.5),
+        ],
     )
 ]
 

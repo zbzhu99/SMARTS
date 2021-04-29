@@ -9,7 +9,7 @@ from sys import path
 path.append(str(Path(__file__).parent.parent))
 from copy_scenario import copy_to_dir
 
-scenario_map_file = "scenarios/merge_2to1_lane"
+scenario_map_file = "scenarios/merge_2to1_lane_3times"
 
 logger = logging.getLogger(str(Path(__file__)))
 

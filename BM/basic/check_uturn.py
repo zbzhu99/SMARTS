@@ -2,7 +2,11 @@ import math
 from typing import Dict
 
 from smarts.core.utils.math import vec_to_radians
-from checker_utils import get_lane_vector_at_offset, get_offset_into_lane, is_further_along_route
+from checker_utils import (
+    get_lane_vector_at_offset,
+    get_offset_into_lane,
+    is_further_along_route,
+)
 from smarts.core.smarts import SMARTS
 from smarts.core.sensors import EgoVehicleObservation, Observation, VehicleObservation
 from checker import Checker, CheckerFrameResult, Result
@@ -45,7 +49,9 @@ class UTurnChecker(Checker):
             eoff = get_offset_into_lane(rn, ego.lane_id, ego.position[:2])
 
             if not self._cut_in_front:
-                further = is_further_along_route(rn, ego.lane_id, ego.position, near.lane_id, near.position)
+                further = is_further_along_route(
+                    rn, ego.lane_id, ego.position, near.lane_id, near.position
+                )
                 if further:
                     self._cut_in_front = True
             else:

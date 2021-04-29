@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on Wed 28 Apr 2021 07:43:25 PM EDT by Eclipse SUMO netedit Version 1.9.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <sumo-net-file value="/home/dev/Desktop/BM_Scenarios/basic/scenarios/straightaway_3e_1w.net.xml"/>
+    </input>
+
+    <output>
+        <output-file value="/home/dev/Desktop/repos/NewSMARTS/SMARTS/BM/basic/scenarios/6lane_straightaway.net.xml"/>
+    </output>
+
+    <processing>
+        <geometry.min-radius.fix.railways value="false"/>
+        <geometry.max-grade.fix value="false"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="false"/>
+    </processing>
+
+    <junctions>
+        <no-internal-links value="true"/>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="5"/>
+        <junctions.limit-turn-speed value="5.5"/>
+        <rectangular-lane-cut value="false"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="false"/>
+    </pedestrian>
+
+    <report>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+-->
+
+<net version="1.9" junctionCornerDetail="5" limitTurnSpeed="5.50" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/net_file.xsd">
+
+    <location netOffset="0.00,0.00" convBoundary="-468.79,101.43,158.60,101.43" origBoundary="-10000000000.00,-10000000000.00,10000000000.00,10000000000.00" projParameter="!"/>
+
+    <edge id="-straightaway" from="east_end" to="west_end" priority="-1">
+        <lane id="-straightaway_0" index="0" speed="13.89" length="627.39" shape="158.60,109.43 -468.79,109.43"/>
+        <lane id="-straightaway_1" index="1" speed="13.89" length="627.39" shape="158.60,106.23 -468.79,106.23"/>
+        <lane id="-straightaway_2" index="2" speed="13.89" length="627.39" shape="158.60,103.03 -468.79,103.03"/>
+    </edge>
+    <edge id="straightaway" from="west_end" to="east_end" priority="-1">
+        <lane id="straightaway_0" index="0" speed="13.89" length="627.39" shape="-468.79,93.43 158.60,93.43"/>
+        <lane id="straightaway_1" index="1" speed="13.89" length="627.39" shape="-468.79,96.63 158.60,96.63"/>
+        <lane id="straightaway_2" index="2" speed="13.89" length="627.39" shape="-468.79,99.83 158.60,99.83"/>
+    </edge>
+
+    <junction id="east_end" type="dead_end" x="158.60" y="101.43" incLanes="straightaway_0 straightaway_1 straightaway_2" intLanes="" shape="158.60,101.43 158.60,91.83 158.60,101.43"/>
+    <junction id="west_end" type="dead_end" x="-468.79" y="101.43" incLanes="-straightaway_0 -straightaway_1 -straightaway_2" intLanes="" shape="-468.79,101.43 -468.79,111.03 -468.79,101.43"/>
+
+</net>

@@ -23,9 +23,7 @@ except Exception as e:
 
 ego_missions = [
     t.Mission(
-        route=t.Route(
-            begin=("2lane_stretch_1", 0, 1), end=("1lane_stretch_1", 0, "max"),
-        ),
+        route=t.Route(begin=("2lane_stretch_1", 0, 1), end=("2lane_stretch_2", 0, 50),),
     )
 ]
 

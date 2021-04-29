@@ -46,7 +46,9 @@ class CutinChecker(Checker):
         if near:
             rn = sim.road_network
 
-            further = is_further_along_route(rn, ego.lane_id, ego.position, near.lane_id, near.position)
+            further = is_further_along_route(
+                rn, ego.lane_id, ego.position, near.lane_id, near.position
+            )
             eoff = get_offset_into_lane(rn, ego.lane_id, ego.position[:2])
 
             ep_on_lane = get_position_from_lane_offset(rn, ego.lane_id, eoff)

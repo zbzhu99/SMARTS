@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on Thu 22 Apr 2021 03:22:17 PM EDT by Eclipse SUMO netedit Version 1.9.0
+<!-- generated on Wed 28 Apr 2021 09:41:56 PM EDT by Eclipse SUMO netedit Version 1.9.0
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
 
     <input>
-        <sumo-net-file value="/home/dev/Desktop/BM_Scenarios/basic/scenarios/merge_2to1_lane.net.xml"/>
+        <sumo-net-file value="/home/dev/Desktop/repos/NewSMARTS/SMARTS/BM/basic/scenarios/merge_2to1_lane.net.xml"/>
     </input>
 
     <output>
-        <output-file value="/home/dev/Desktop/BM_Scenarios/basic/scenarios/merge_2to1_lane.net.xml"/>
+        <output-file value="/home/dev/Desktop/repos/NewSMARTS/SMARTS/BM/basic/scenarios/merge_2to1_lane.net.xml"/>
     </output>
 
     <processing>
@@ -38,94 +38,48 @@
 
 <net version="1.9" junctionCornerDetail="5" limitTurnSpeed="5.50" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/net_file.xsd">
 
-    <location netOffset="0.00,0.00" convBoundary="-848.64,-620.67,31.17,-620.66" origBoundary="-10000000000.00,-10000000000.00,10000000000.00,10000000000.00" projParameter="!"/>
+    <location netOffset="0.00,0.00" convBoundary="-848.64,-620.66,-483.00,-620.66" origBoundary="-10000000000.00,-10000000000.00,10000000000.00,10000000000.00" projParameter="!"/>
 
     <edge id=":c_1_0" function="internal">
         <lane id=":c_1_0_0" index="0" speed="13.89" length="8.40" shape="-740.34,-625.46 -737.88,-624.96 -736.34,-623.86 -734.80,-622.76 -732.34,-622.26"/>
         <lane id=":c_1_0_1" index="1" speed="13.89" length="8.40" shape="-740.34,-622.26 -732.34,-622.26"/>
     </edge>
-    <edge id=":c_2_0" function="internal">
-        <lane id=":c_2_0_0" index="0" speed="13.89" length="8.40" shape="-487.00,-625.46 -484.54,-624.96 -483.00,-623.86 -481.46,-622.76 -479.00,-622.26"/>
-        <lane id=":c_2_0_1" index="1" speed="13.89" length="8.40" shape="-487.00,-622.26 -479.00,-622.26"/>
-    </edge>
-    <edge id=":c_3_0" function="internal">
-        <lane id=":c_3_0_0" index="0" speed="13.89" length="8.40" shape="-60.02,-625.46 -57.56,-624.96 -56.02,-623.86 -54.48,-622.76 -52.02,-622.26"/>
-        <lane id=":c_3_0_1" index="1" speed="13.89" length="8.40" shape="-60.02,-622.26 -52.02,-622.26"/>
-    </edge>
     <edge id=":e_1_0" function="internal">
         <lane id=":e_1_0_0" index="0" speed="13.89" length="8.40" shape="-676.38,-622.26 -673.92,-622.76 -672.38,-623.86 -670.84,-624.96 -668.38,-625.46"/>
         <lane id=":e_1_0_1" index="1" speed="13.89" length="8.40" shape="-676.38,-622.26 -668.38,-622.26"/>
     </edge>
-    <edge id=":e_2_0" function="internal">
-        <lane id=":e_2_0_0" index="0" speed="13.89" length="8.40" shape="-395.47,-622.26 -393.01,-622.76 -391.47,-623.86 -389.93,-624.96 -387.47,-625.46"/>
-        <lane id=":e_2_0_1" index="1" speed="13.89" length="8.40" shape="-395.47,-622.26 -387.47,-622.26"/>
-    </edge>
 
     <edge id="1lane_stretch_1" from="c_1" to="e_1" priority="-1">
         <lane id="1lane_stretch_1_0" index="0" speed="13.89" length="55.96" shape="-732.34,-622.26 -676.38,-622.26"/>
-    </edge>
-    <edge id="1lane_stretch_2" from="c_2" to="e_2" priority="-1">
-        <lane id="1lane_stretch_2_0" index="0" speed="13.89" length="83.53" shape="-479.00,-622.26 -395.47,-622.26"/>
-    </edge>
-    <edge id="1lane_stretch_4" from="c_3" to="east_end" priority="-1">
-        <lane id="1lane_stretch_4_0" index="0" speed="13.89" length="83.19" shape="-52.02,-622.26 31.17,-622.27"/>
     </edge>
     <edge id="2lane_stretch_1" from="west_end" to="c_1" priority="-1">
         <lane id="2lane_stretch_1_0" index="0" speed="13.89" length="108.30" shape="-848.64,-625.46 -740.34,-625.46"/>
         <lane id="2lane_stretch_1_1" index="1" speed="13.89" length="108.30" shape="-848.64,-622.26 -740.34,-622.26"/>
     </edge>
     <edge id="2lane_stretch_2" from="e_1" to="c_2" priority="-1">
-        <lane id="2lane_stretch_2_0" index="0" speed="13.89" length="181.38" shape="-668.38,-625.46 -487.00,-625.46"/>
-        <lane id="2lane_stretch_2_1" index="1" speed="13.89" length="181.38" shape="-668.38,-622.26 -487.00,-622.26"/>
-    </edge>
-    <edge id="2lane_stretch_3" from="e_2" to="c_3" priority="-1">
-        <lane id="2lane_stretch_3_0" index="0" speed="13.89" length="327.45" shape="-387.47,-625.46 -60.02,-625.46"/>
-        <lane id="2lane_stretch_3_1" index="1" speed="13.89" length="327.45" shape="-387.47,-622.26 -60.02,-622.26"/>
+        <lane id="2lane_stretch_2_0" index="0" speed="13.89" length="185.38" shape="-668.38,-625.46 -483.00,-625.46"/>
+        <lane id="2lane_stretch_2_1" index="1" speed="13.89" length="185.38" shape="-668.38,-622.26 -483.00,-622.26"/>
     </edge>
 
     <junction id="c_1" type="priority" x="-736.34" y="-620.66" incLanes="2lane_stretch_1_0 2lane_stretch_1_1" intLanes=":c_1_0_0 :c_1_0_1" shape="-732.34,-620.66 -732.34,-623.86 -735.37,-624.69 -737.31,-626.23 -738.55,-626.82 -740.34,-627.06 -740.34,-620.66" name="converge_1">
         <request index="0" response="10" foes="10" cont="0"/>
         <request index="1" response="00" foes="01" cont="0"/>
     </junction>
-    <junction id="c_2" type="priority" x="-483.00" y="-620.66" incLanes="2lane_stretch_2_0 2lane_stretch_2_1" intLanes=":c_2_0_0 :c_2_0_1" shape="-479.00,-620.66 -479.00,-623.86 -482.03,-624.69 -483.97,-626.23 -485.21,-626.82 -487.00,-627.06 -487.00,-620.66" name="converge_2">
-        <request index="0" response="10" foes="10" cont="0"/>
-        <request index="1" response="00" foes="01" cont="0"/>
-    </junction>
-    <junction id="c_3" type="priority" x="-56.02" y="-620.66" incLanes="2lane_stretch_3_0 2lane_stretch_3_1" intLanes=":c_3_0_0 :c_3_0_1" shape="-52.02,-620.66 -52.02,-623.86 -55.05,-624.69 -56.99,-626.23 -58.23,-626.82 -60.02,-627.06 -60.02,-620.66" name="converge_3">
-        <request index="0" response="10" foes="10" cont="0"/>
-        <request index="1" response="00" foes="01" cont="0"/>
-    </junction>
+    <junction id="c_2" type="dead_end" x="-483.00" y="-620.66" incLanes="2lane_stretch_2_0 2lane_stretch_2_1" intLanes="" shape="-483.00,-627.06 -483.00,-620.66" name="converge_2"/>
     <junction id="e_1" type="priority" x="-672.38" y="-620.66" incLanes="1lane_stretch_1_0" intLanes=":e_1_0_0 :e_1_0_1" shape="-668.38,-620.66 -668.38,-627.06 -671.41,-626.23 -673.35,-624.69 -674.59,-624.10 -676.38,-623.86 -676.38,-620.66" name="expand_1">
         <request index="0" response="00" foes="00" cont="0"/>
         <request index="1" response="00" foes="00" cont="0"/>
     </junction>
-    <junction id="e_2" type="right_before_left" x="-391.47" y="-620.66" incLanes="1lane_stretch_2_0" intLanes=":e_2_0_0 :e_2_0_1" shape="-387.47,-620.66 -387.47,-627.06 -390.50,-626.23 -392.44,-624.69 -393.68,-624.10 -395.47,-623.86 -395.47,-620.66" name="e_2">
-        <request index="0" response="00" foes="00" cont="0"/>
-        <request index="1" response="00" foes="00" cont="0"/>
-    </junction>
-    <junction id="east_end" type="dead_end" x="31.17" y="-620.67" incLanes="1lane_stretch_4_0" intLanes="" shape="31.17,-623.87 31.17,-620.67"/>
     <junction id="west_end" type="dead_end" x="-848.64" y="-620.66" incLanes="" intLanes="" shape="-848.64,-620.66 -848.64,-627.06"/>
 
     <connection from="1lane_stretch_1" to="2lane_stretch_2" fromLane="0" toLane="0" via=":e_1_0_0" dir="s" state="M"/>
     <connection from="1lane_stretch_1" to="2lane_stretch_2" fromLane="0" toLane="1" via=":e_1_0_1" dir="s" state="M"/>
-    <connection from="1lane_stretch_2" to="2lane_stretch_3" fromLane="0" toLane="0" via=":e_2_0_0" dir="s" state="="/>
-    <connection from="1lane_stretch_2" to="2lane_stretch_3" fromLane="0" toLane="1" via=":e_2_0_1" dir="s" state="="/>
     <connection from="2lane_stretch_1" to="1lane_stretch_1" fromLane="0" toLane="0" via=":c_1_0_0" dir="s" state="m"/>
     <connection from="2lane_stretch_1" to="1lane_stretch_1" fromLane="1" toLane="0" keepClear="0" via=":c_1_0_1" dir="s" state="M"/>
-    <connection from="2lane_stretch_2" to="1lane_stretch_2" fromLane="0" toLane="0" via=":c_2_0_0" dir="s" state="m"/>
-    <connection from="2lane_stretch_2" to="1lane_stretch_2" fromLane="1" toLane="0" keepClear="0" via=":c_2_0_1" dir="s" state="M"/>
-    <connection from="2lane_stretch_3" to="1lane_stretch_4" fromLane="0" toLane="0" via=":c_3_0_0" dir="s" state="m"/>
-    <connection from="2lane_stretch_3" to="1lane_stretch_4" fromLane="1" toLane="0" keepClear="0" via=":c_3_0_1" dir="s" state="M"/>
 
     <connection from=":c_1_0" to="1lane_stretch_1" fromLane="0" toLane="0" dir="s" state="M"/>
     <connection from=":c_1_0" to="1lane_stretch_1" fromLane="1" toLane="0" dir="s" state="M"/>
-    <connection from=":c_2_0" to="1lane_stretch_2" fromLane="0" toLane="0" dir="s" state="M"/>
-    <connection from=":c_2_0" to="1lane_stretch_2" fromLane="1" toLane="0" dir="s" state="M"/>
-    <connection from=":c_3_0" to="1lane_stretch_4" fromLane="0" toLane="0" dir="s" state="M"/>
-    <connection from=":c_3_0" to="1lane_stretch_4" fromLane="1" toLane="0" dir="s" state="M"/>
     <connection from=":e_1_0" to="2lane_stretch_2" fromLane="0" toLane="0" dir="s" state="M"/>
     <connection from=":e_1_0" to="2lane_stretch_2" fromLane="1" toLane="1" dir="s" state="M"/>
-    <connection from=":e_2_0" to="2lane_stretch_3" fromLane="0" toLane="0" dir="s" state="M"/>
-    <connection from=":e_2_0" to="2lane_stretch_3" fromLane="1" toLane="1" dir="s" state="M"/>
 
 </net>
