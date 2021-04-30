@@ -38,7 +38,7 @@ traffic = t.Traffic(
                 end=("1lane_stretch_4", 1, "max"),
             ),
             rate=1,
-            actors={t.TrafficActor("car"): 1},
+            actors={t.TrafficActor("target"): 1},
         )
     ]
 )

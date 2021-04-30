@@ -43,7 +43,7 @@ traffic = t.Traffic(
                 end=("straightaway", 0, "max"),
             ),
             rate=1,
-            actors={t.TrafficActor("car"): 1},
+            actors={t.TrafficActor("target"): 1},
         ),
         t.Flow(
             route=t.Route(
