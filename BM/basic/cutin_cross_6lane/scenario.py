@@ -22,8 +22,12 @@ except Exception as e:
 
 ego_missions = [
     t.Mission(
-        t.Route(begin=("east_ew", 1, 20), end=("west_ew", 2, "max")),
-        # via=(t.Via(t.JunctionEdgeIDResolver("east_ew", 1, "west_ew", 2), 2, 3, 30),)
+        t.Route(begin=("east_ew", 0, 20), end=("west_ew", 1, "max")),
+        via=[
+            t.Via("east_ew", 0, 50, 30),
+            t.Via(t.JunctionEdgeIDResolver("east_ew", 0, "west_ew", 1), 1, 5, 15),
+            t.Via("west_ew", 1, 20, 7.5),
+        ],
     )
 ]
 
@@ -31,11 +35,13 @@ traffic = t.Traffic(
     flows=[
         t.Flow(
             route=t.Route(
-                begin=("east_ew", 2, 30),
-                end=("west_ew", 2, "max"),
+                begin=("east_ew", 1, 20),
+                end=("west_ew", 1, "max"),
             ),
             rate=1,
-            actors={t.TrafficActor("target"): 1},
+            actors={
+                t.TrafficActor("target", speed=t.Distribution(mean=0.9, sigma=0)): 1
+            },
         )
     ]
 )

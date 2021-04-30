@@ -21,12 +21,17 @@ except Exception as e:
     logger.error(f"Scenario {scenario_map_file} failed to copy")
     raise e
 
+base_ego_position = 200
 ego_missions = [
     t.Mission(
         t.Route(
-            begin=("curve_ahead", 0, 1),
+            begin=("curve_ahead", 0, base_ego_position),
             end=("curve_ahead", 1, "max"),
         ),
+        via=[
+            t.Via("curve_ahead", 0, 425, 20),
+            t.Via("curve_ahead", 1, 440, 15),
+        ],
     )
 ]
 
@@ -34,11 +39,19 @@ traffic = t.Traffic(
     flows=[
         t.Flow(
             route=t.Route(
-                begin=("curve_ahead", 1, 30),
+                begin=("curve_ahead", 1, 240),
                 end=("curve_ahead", 1, "max"),
             ),
             rate=1,
-            actors={t.TrafficActor("target"): 1},
+            actors={
+                t.TrafficActor(
+                    "target",
+                    speed=t.Distribution(mean=1, sigma=0),
+                    lane_changing_model=t.LaneChangingModel(
+                        strategic=0, cooperative=0, keepRight=0
+                    ),
+                ): 1
+            },
         )
     ]
 )

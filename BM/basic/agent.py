@@ -48,8 +48,7 @@ def main(scenarios, sim_name, headless, num_episodes, seed, max_episode_steps=No
     # )
     agent_spec = AgentSpec(
         interface=AgentInterface.from_type(
-            AgentType.StandardWithAbsoluteSteering,
-            max_episode_steps=max_episode_steps
+            AgentType.StandardWithAbsoluteSteering, max_episode_steps=max_episode_steps
         ),
         agent_builder=UTurnAgent,
     )

@@ -1,3 +1,4 @@
+from examples.single_agent import UTurnAgent
 import logging
 from pathlib import Path
 
@@ -22,9 +23,10 @@ except Exception as e:
     raise e
 
 ego_missions = [
-    t.EndlessMission(
-        begin=("-straightaway", 2, 100),
-    )
+    t.Mission(
+        t.Route(begin=("-straightaway", 0, 30), end=("-straightaway", 0, "max")),
+        task=t.UTurn(initial_speed=20),
+    ),
 ]
 
 start_offset_target = 60
