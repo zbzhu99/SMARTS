@@ -74,7 +74,7 @@ def main(scenarios, sim_name, headless, num_episodes, seed, max_episode_steps=No
             # env.scenario_log["scenario_map"]
         )
         ch: CheckerHost = CheckerHost(env._smarts, logger)
-        ch.add_checkers(CheckerConfig(CutinChecker(bm_id=AGENT_ID)))
+        ch.add_checkers(CheckerConfig(CutinChecker(bm_id=AGENT_ID, target_id="target")))
 
         dones = {"__all__": False}
         while not dones["__all__"]: # and not ch.done:
