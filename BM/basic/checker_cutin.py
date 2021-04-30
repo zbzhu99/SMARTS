@@ -29,11 +29,10 @@ class CutinChecker(Checker):
                 if id in l[i].id:
                     break
             except IndexError:
-                return default 
+                return default
         return l[index]
-       
 
-    def __init__(self, bm_id, target_id = None) -> None:
+    def __init__(self, bm_id, target_id=None) -> None:
         super().__init__(bm_id)
 
         self._uturn_started = False
