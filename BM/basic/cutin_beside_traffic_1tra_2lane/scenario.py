@@ -27,6 +27,14 @@ ego_missions = [
             begin=("straightaway", 1, 1),
             end=("straightaway", 0, "max"),
         ),
+        via=[
+            t.Via("straightaway", 1, 70, 12.9),
+            t.Via("straightaway", 0, 80, 12.9),
+            t.Via("straightaway", 0, 160, 12.9),
+            t.Via("straightaway", 1, 220, 14),
+            t.Via("straightaway", 1, 460, 16),
+            t.Via("straightaway", 0, 500, 16),
+        ],
     )
 ]
 
@@ -49,7 +57,7 @@ traffic = t.Traffic(
             actors={
                 t.TrafficActor(
                     "left_lane_hog",
-                    speed=t.Distribution(mean=0.95, sigma=0),
+                    speed=t.Distribution(mean=0.75, sigma=0),
                     lane_changing_model=t.LaneChangingModel(
                         strategic=0, cooperative=0, keepRight=0
                     ),
