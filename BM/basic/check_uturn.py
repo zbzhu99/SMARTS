@@ -20,11 +20,24 @@ class UTurnChecker(Checker):
         except IndexError:
             return default
 
-    def __init__(self, bm_id) -> None:
+    @staticmethod
+    def _get_item(l: list, id, default=None):
+        index = 0
+        for i in range(len(l) + 1):
+            index = i
+            try:
+                if id in l[i].id:
+                    break
+            except IndexError:
+                return default
+        return l[index]
+
+    def __init__(self, bm_id, target_id=None) -> None:
         super().__init__(bm_id)
 
         self._uturn_started = False
         self._cut_in_front = False
+        self._target_id = target_id
 
     def evaluate(
         self, sim: SMARTS, observations: Dict[str, Observation], rewards, dones, infos
@@ -39,9 +52,14 @@ class UTurnChecker(Checker):
         if observation is None:
             return CheckerFrameResult(f"Vehicle `{self._bm_id}` not found", Result.TBD)
 
-        near: VehicleObservation = self._get_index(
-            observation.neighborhood_vehicle_states, 0
-        )
+        if self._target_id:
+            near: VehicleObservation = self._get_item(
+                observation.neighborhood_vehicle_states, self._target_id
+            )
+        else:
+            near: VehicleObservation = self._get_index(
+                observation.neighborhood_vehicle_states, 0
+            )
         ego: EgoVehicleObservation = observation.ego_vehicle_state
 
         if near:

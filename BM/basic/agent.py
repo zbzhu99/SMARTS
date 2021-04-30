@@ -37,22 +37,22 @@ class ChaseViaPointsAgent(Agent):
 
 
 def main(scenarios, sim_name, headless, num_episodes, seed, max_episode_steps=None):
-    agent_spec = AgentSpec(
-        interface=AgentInterface(
-            max_episode_steps=max_episode_steps,
-            waypoints=True,
-            action=ActionSpaceType.LaneWithContinuousSpeed,
-            neighborhood_vehicles=True,
-        ),
-        agent_builder=ChaseViaPointsAgent,
-    )
     # agent_spec = AgentSpec(
-    #     interface=AgentInterface.from_type(
-    #         AgentType.StandardWithAbsoluteSteering, 
-    #         max_episode_steps=max_episode_steps
+    #     interface=AgentInterface(
+    #         max_episode_steps=max_episode_steps,
+    #         waypoints=True,
+    #         action=ActionSpaceType.LaneWithContinuousSpeed,
+    #         neighborhood_vehicles=True,
     #     ),
-    #     agent_builder=UTurnAgent,
+    #     agent_builder=ChaseViaPointsAgent,
     # )
+    agent_spec = AgentSpec(
+        interface=AgentInterface.from_type(
+            AgentType.StandardWithAbsoluteSteering,
+            max_episode_steps=max_episode_steps
+        ),
+        agent_builder=UTurnAgent,
+    )
     env = gym.make(
         "smarts.env:hiway-v0",
         scenarios=scenarios,
@@ -65,7 +65,7 @@ def main(scenarios, sim_name, headless, num_episodes, seed, max_episode_steps=No
         sumo_auto_start=False,
         seed=seed,
     )
-
+    UTurnAgent.sim = env._smarts
     for episode in episodes(n=num_episodes):
         agent = agent_spec.build_agent()
         observations = env.reset()
@@ -74,10 +74,12 @@ def main(scenarios, sim_name, headless, num_episodes, seed, max_episode_steps=No
             # env.scenario_log["scenario_map"]
         )
         ch: CheckerHost = CheckerHost(env._smarts, logger)
-        ch.add_checkers(CheckerConfig(CutinChecker(bm_id=AGENT_ID, target_id="target")))
+        checker = UTurnChecker(bm_id=AGENT_ID, target_id="target")
+        # checker = CutinChecker(bm_id=AGENT_ID, target_id="target")
+        ch.add_checkers(CheckerConfig(checker))
 
         dones = {"__all__": False}
-        while not dones["__all__"]: # and not ch.done:
+        while not dones["__all__"]:  # and not ch.done:
             agent_obs = observations[AGENT_ID]
             agent_action = agent.act(agent_obs)
             observations, rewards, dones, infos = env.step({AGENT_ID: agent_action})
