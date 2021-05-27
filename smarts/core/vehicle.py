@@ -30,7 +30,7 @@ from smarts.sstudio.types import UTurn
 
 from . import models
 from .chassis import AckermannChassis, BoxChassis, Chassis
-from .colors import SceneColors
+from .colors import Colors, SceneColors
 from .coordinates import BoundingBox, Heading, Pose
 from .renderer import Renderer, RendererException
 from .sensors import (
@@ -321,9 +321,15 @@ class Vehicle:
             length=chassis_dims.length,
         )
 
-        vehicle_color = (
-            SceneColors.Agent.value if trainable else SceneColors.SocialAgent.value
-        )
+        if trainable:
+            if agent_interface.vehicle_color == "red":
+                vehicle_color = Colors.Red.value
+            elif agent_interface.vehicle_color == "blue":
+                vehicle_color = Colors.Blue.value
+            else:
+                raise Exception(f"Expected vehicle color to be red or blue, but received {agent_interface.vehicle_color}.")
+        else:
+            vehicle_color = SceneColors.SocialAgent.value
 
         if agent_interface.vehicle_type == "sedan":
             urdf_name = "vehicle"

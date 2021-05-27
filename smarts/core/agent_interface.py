@@ -255,6 +255,11 @@ class AgentInterface:
     The choice of vehicle type.
     """
 
+    vehicle_color: str = "red"
+    """
+    The choice of vehicle color.
+    """
+
     accelerometer: Union[Accelerometer, bool] = True
     """
     Enable acceleration and jerk observations.
