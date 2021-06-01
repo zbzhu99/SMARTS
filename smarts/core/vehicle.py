@@ -327,7 +327,9 @@ class Vehicle:
             elif agent_interface.vehicle_color == "blue":
                 vehicle_color = Colors.Blue.value
             else:
-                raise Exception(f"Expected agent vehicle color to be red or blue, but got {agent_interface.vehicle_color}.")
+                raise Exception(
+                    f"Expected agent vehicle color to be red or blue, but got {agent_interface.vehicle_color}."
+                )
         else:
             vehicle_color = SceneColors.SocialAgent.value
 

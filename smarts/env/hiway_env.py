@@ -89,7 +89,7 @@ class HiWayEnv(gym.Env):
         self._log = logging.getLogger(self.__class__.__name__)
         smarts.core.seed(seed)
 
-        self._agent_specs = agent_specs
+        self.agent_specs = agent_specs
         self._dones_registered = 0
 
         self._scenarios_iterator = Scenario.scenario_variations(
@@ -157,7 +157,7 @@ class HiWayEnv(gym.Env):
 
     def step(self, agent_actions):
         agent_actions = {
-            agent_id: self._agent_specs[agent_id].action_adapter(action)
+            agent_id: self.agent_specs[agent_id].action_adapter(action)
             for agent_id, action in agent_actions.items()
         }
         observations, rewards, agent_dones, extras = self._smarts.step(agent_actions)
@@ -168,7 +168,7 @@ class HiWayEnv(gym.Env):
         }
 
         for agent_id in observations:
-            agent_spec = self._agent_specs[agent_id]
+            agent_spec = self.agent_specs[agent_id]
             observation = observations[agent_id]
             reward = rewards[agent_id]
             info = infos[agent_id]
@@ -180,7 +180,7 @@ class HiWayEnv(gym.Env):
         for done in agent_dones.values():
             self._dones_registered += 1 if done else 0
 
-        agent_dones["__all__"] = self._dones_registered == len(self._agent_specs)
+        agent_dones["__all__"] = self._dones_registered == len(self.agent_specs)
 
         return observations, rewards, agent_dones, infos
 
@@ -191,7 +191,7 @@ class HiWayEnv(gym.Env):
         env_observations = self._smarts.reset(scenario)
 
         observations = {
-            agent_id: self._agent_specs[agent_id].observation_adapter(obs)
+            agent_id: self.agent_specs[agent_id].observation_adapter(obs)
             for agent_id, obs in env_observations.items()
         }
 
