@@ -57,7 +57,7 @@ class FrameStack(gym.Wrapper):
         Dict[str, Deque[sensors.Observation]],
         Dict[str, float],
         Dict[str, bool],
-        Dict[str, Union[float, sensors.Observation]],
+        Dict[str, Dict[str, Union[float, sensors.Observation]]],
     ]:
 
         env_observations, rewards, dones, infos = super(FrameStack, self).step(
