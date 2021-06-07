@@ -117,14 +117,15 @@ class HiWayEnv(gym.Env):
 
         self._smarts = SMARTS(
             agent_interfaces=agent_interfaces,
-            traffic_sim=SumoTrafficSimulation(
-                headless=sumo_headless,
-                time_resolution=timestep_sec,
-                num_external_sumo_clients=num_external_sumo_clients,
-                sumo_port=sumo_port,
-                auto_start=sumo_auto_start,
-                endless_traffic=endless_traffic,
-            ),
+            traffic_sim=None,
+            # SumoTrafficSimulation(
+            #     headless=sumo_headless,
+            #     time_resolution=timestep_sec,
+            #     num_external_sumo_clients=num_external_sumo_clients,
+            #     sumo_port=sumo_port,
+            #     auto_start=sumo_auto_start,
+            #     endless_traffic=endless_traffic,
+            # ),
             envision=envision_client,
             visdom=visdom_client,
             timestep_sec=timestep_sec,
