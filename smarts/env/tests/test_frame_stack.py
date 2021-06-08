@@ -68,7 +68,7 @@ def test_frame_stack(env, agent_specs, num_stack):
     # Test invalid num_stack inputs
     if num_stack <= 1:
         with pytest.raises(Exception):
-            env = FrameStack(env, num_stack)    
+            env = FrameStack(env, num_stack)
         return
 
     # Wrap env with FrameStack to stack multiple observations
