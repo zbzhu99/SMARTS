@@ -31,6 +31,7 @@ class FrameStack(gym.Wrapper):
     """ By default, this wrapper will stack 3 consecutive frames as an agent observation"""
 
     def __init__(self, env: gym.Env, num_stack: int = 3):
+        assert num_stack > 1, f"Expected num_stack > 1, but got {num_stack}."
         super(FrameStack, self).__init__(env)
         self.num_stack = num_stack
         self.frames = {
