@@ -331,10 +331,10 @@ class Vehicle:
         )
 
         if trainable:
-            if agent_interface.vehicle_color == "red":
-                vehicle_color = Colors.Red.value
-            elif agent_interface.vehicle_color == "blue":
+            if agent_interface.vehicle_color == "blue":
                 vehicle_color = Colors.Blue.value
+            elif agent_interface.vehicle_color == "white":
+                vehicle_color = Colors.White.value
             else:
                 raise Exception(
                     f"Expected agent vehicle color to be red or blue, but got {agent_interface.vehicle_color}."
