@@ -30,39 +30,24 @@ from tensorflow.compat.v1 import global_variables_initializer
 from tensorflow.compat.v1.train import AdamOptimizer, Saver
 from tensorflow.compat.v1.summary import scalar as summary_scalar
 from tensorflow.compat.v1.train import linear_cosine_decay, piecewise_constant
-from smarts.core import agent as smarts_agent
 from examples.gameOfTag import model as got_model
 
-class TagAgent(smarts_agent.Agent):
+class TagAgent():
     """Build Tag PPO CNN network."""
 
     def __init__(self, config):
-        if 'filter_arches' in config['model_para']:
-            self.filter_arches = config['model_para']['filter_arches']
-        else:
-            raise Exception(f"Expected CNN layer specification 'filter_arches' entry in 'model_para'.")
+        self.config = config
 
-        # Verify action type used
-        if config['env_para']['action_type'] == "Categorical" and config['env_para']['controller'] == "Continuous":
-            if config['model_para']['action_dim'] != 5:
-                raise Exception(f"Expected action_dim=5.")
-        if config['env_para']['action_type'] == "Categorical" and config['env_para']['controller'] == "LaneWithContinuousSpeed":
-            if config['model_para']['action_dim'] != 12:
-                raise Exception(f"Expected action_dim=12.")
-        elif config['env_para']['action_type'] == "DiagGaussian":
-            if config['model_para']['action_dim'] != 3:
-                raise Exception(f"Expected action_dim=3.")
-        else:
-            raise Exception(f"Unsupported action_type.")
+    def create_model(self, env):
+        # Environment constants
+        input_shape = env.observation_space.shape
+        num_actions = env.action_space.shape[0]
+        action_min = env.action_space.low
+        action_max = env.action_space.high
 
-        self._model = get_cnn_backbone(
-                state_dim=self.state_dim,
-                act_dim=self.action_dim,
-                hidden_sizes=self.hidden_sizes,
-                activation=self.activation,
-                filter_arches=self.filter_arches,
-                summary=self.verbose,
-                action_type=config['model_para']['action_type'])
+        ppo_epsilon = self.config['model_para']["ppo_epsilon"]
+        value_scale = self.config['model_para']["value_scale"]
+        entropy_scale = self.config['model_para']["entropy_scale"]
 
         self.model_predator = got_model.PPO(input_shape, 
             num_actions, action_min, action_max,
@@ -77,13 +62,19 @@ class TagAgent(smarts_agent.Agent):
             entropy_scale=entropy_scale,
             model_name='prey')
 
-    @property
-    def model(self):
-        return self._model
 
     def act(self, obs):
+        if 
+        actions_t_predator, values_t_predator = self.model_predator.predict(obs)
+        actions_t_prey, values_t_prey = self.model_prey.predict(obs)
 
         return None
+
+
+    def save(self):
+        self.model_predator.save()
+        self.model_prey.save()   
+
 
 def get_cnn_backbone(state_dim, act_dim, hidden_sizes, activation, filter_arches, summary, action_type):
     """Get CNN backbone."""

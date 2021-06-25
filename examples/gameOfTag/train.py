@@ -4,18 +4,16 @@ import signal
 import yaml
 from examples.gameOfTag import env as got_env
 from examples.gameOfTag import model as got_model
+from examples.gameOfTag import agent as got_agent
 from pathlib import Path
 from utils import compute_gae
 
 
-def train(config, model_name, save_interval=1000, eval_interval=200):
+def train(config, save_interval=1000, eval_interval=200):
 
     # Traning parameters
     discount_factor = config['model_para']["discount_factor"]
     gae_lambda = config['model_para']["gae_lambda"]
-    ppo_epsilon = config['model_para']["ppo_epsilon"]
-    value_scale = config['model_para']["value_scale"]
-    entropy_scale = config['model_para']["entropy_scale"]
     horizon = config['model_para']["horizon"]
     num_epochs = config['model_para']["num_epochs"]
     batch_size = config['model_para']["batch_size"]
@@ -26,27 +24,13 @@ def train(config, model_name, save_interval=1000, eval_interval=200):
     # Environment constants
     input_shape = env.observation_space.shape
     num_actions = env.action_space.shape[0]
-    action_min = env.action_space.low
-    action_max = env.action_space.high
 
     # Create model
     print("[INFO] Creating model")
-    model_predator = got_model.PPO(input_shape, 
-        num_actions, action_min, action_max,
-        epsilon=ppo_epsilon,
-        value_scale=value_scale, 
-        entropy_scale=entropy_scale,
-        model_name='predator')
-    model_prey = got_model.PPO(input_shape, 
-        num_actions, action_min, action_max,
-        epsilon=ppo_epsilon,
-        value_scale=value_scale, 
-        entropy_scale=entropy_scale,
-        model_name='prey')
+    tag_agent = got_agent.TagAgent()
 
     def interrupt(*args):
-        model_predator.save()
-        model_prey.save()
+        tag_agent.save()
         print("Interrupt key detected.") 
 
     # Catch keyboard interrupt and terminate signal
@@ -62,6 +46,7 @@ def train(config, model_name, save_interval=1000, eval_interval=200):
         for _ in range(horizon):
             # Predict and value action given state
             # π(a_t | s_t; θ_old)
+            obs = env.step()
             actions_t_predator, values_t_predator = model_predator.predict(obs)
             actions_t_prey, values_t_prey = model_prey.predict(obs)
 
