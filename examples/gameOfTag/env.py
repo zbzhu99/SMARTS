@@ -79,7 +79,7 @@ class TagEnv(gym.Env):
             agent_id: 
                 smarts_agent.AgentSpec(
                     interface=predator_interface,
-                    agent_builder=got_agent.AgentTag,
+                    agent_builder=got_agent.TagAgent,
                     observation_adapter=observation_adapter,
                     reward_adapter=predator_reward_adapter,
                     action_adapter=action_adapter(config["env_para"]["action_type"], config["env_para"]["controller"]),
@@ -89,7 +89,7 @@ class TagEnv(gym.Env):
             else 
                 smarts_agent.AgentSpec(
                     interface=prey_interface,
-                    agent_builder=got_agent.AgentTag,
+                    agent_builder=got_agent.TagAgent,
                     observation_adapter=observation_adapter,
                     reward_adapter=prey_reward_adapter,
                     action_adapter=action_adapter(config["env_para"]["action_type"], config["env_para"]["controller"]),
