@@ -105,9 +105,18 @@ class TagEnv(gym.Env):
             seed=random.randint(0, 4294967295) # [0, 2^32 -1)
         )
         # Wrap env with FrameStack to stack multiple observations
-        env = smarts_frame_stack.FrameStack(env=env, num_stack=9, num_skip=4)
+        self.env = smarts_frame_stack.FrameStack(env=env, num_stack=9, num_skip=4)
 
-        return env
+        # Set action space and observation space
+        self.action_space = gym.spaces.Box(
+            np.array([0, 0, -1]), 
+            np.array([+1, +1, +1]), 
+            dtype=np.float32)  # throttle, break, steering
+        self.observation_space = gym.spaces.Box(
+            low=0, high=1, 
+            shape=(256, 256, 3), 
+            dtype=np.float32)
+
 
     def reset(self)->Dict[str, np.ndarray]:
         """
@@ -163,7 +172,9 @@ class TagEnv(gym.Env):
 
     def close(self):
         if self.env is not None:
-            self.env.destroy()
+            return self.env.close()
+        return None
+
 
 def stack_matrix(states: List[np.ndarray])->np.ndarray:
     # Stack 2D images along the depth dimension
@@ -188,9 +199,9 @@ def action_adapter(action_type, controller):
         def action_adapter_diaggaussian(model_action):
             throttle, brake, steering = model_action
             # Modify action space limits
-            throttle = (throttle + 1)/2
-            brake = (brake + 1)/2
-            steering = steering
+            # throttle = (throttle + 1)/2
+            # brake = (brake + 1)/2
+            # steering = steering
             return np.array([throttle, brake, steering], dtype=np.float32)         
         return action_adapter_diaggaussian
 
@@ -276,7 +287,7 @@ def action_adapter(action_type, controller):
         return action_adapter_lane 
 
     else:
-        raise Exception(f"Unknown action type: {action_type}.")
+        raise Exception(f"Unknown action type.")
 
 
 def observation_adapter(obs)->np.ndarray:
@@ -295,12 +306,6 @@ def observation_adapter(obs)->np.ndarray:
     # Center frames
     frame = grayscale*2 - 1 
     frame = frame.astype(np.float32)
-
-    if np.isnan(frame).any():
-        raise Exception("NAN in frame")
-
-    if np.isinf(frame).any():
-        raise Exception("INF in frame")
 
     # Plot graph
     # fig, axes = plt.subplots(1, 4, figsize=(10, 10))
@@ -357,7 +362,7 @@ def predator_reward_adapter(obs, env_reward):
     # Penalty for driving off road
     if obs.events.off_road:
         reward -= 50
-        return reward
+        return np.float32(reward)
 
     # Distance based reward
     targets = get_targets(obs.neighborhood_vehicle_states, "prey")
@@ -389,7 +394,7 @@ def predator_reward_adapter(obs, env_reward):
     #     not obs.events.not_moving:
     #     reward -= 5
  
-    return reward
+    return np.float32(reward)
 
 
 def prey_reward_adapter(obs, env_reward):
@@ -399,7 +404,7 @@ def prey_reward_adapter(obs, env_reward):
     # Penalty for driving off road
     if obs.events.off_road:
         reward -= 50
-        return reward
+        return np.float32(reward)
 
     # Distance based reward
     targets = get_targets(obs.neighborhood_vehicle_states, "predator")
@@ -430,4 +435,4 @@ def prey_reward_adapter(obs, env_reward):
     if obs.events.not_moving:
         reward -= 20
 
-    return reward
+    return np.float32(reward)

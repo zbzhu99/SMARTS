@@ -2,23 +2,17 @@ import os
 import argparse
 import gym
 import yaml
-from examples import gameOfTag as got 
+from examples.gameOfTag import env as got_env
 
 import cv2
 import numpy as np
 from utils import FrameStack, compute_gae, compute_returns
 
 from ppo import PPO
-from vec_env.subproc_vec_env import SubprocVecEnv
 
-
-def make_env():
-    return gym.make(env_name)
 
 def train(config, model_name, save_interval=1000, eval_interval=200):
     try:
-        test_env = gym.make(env_name)
-
         # Traning parameters
         initial_lr = config['model_para']['model_config']["initial_lr"]
         discount_factor = config['model_para']['model_config']["discount_factor"]
@@ -34,13 +28,19 @@ def train(config, model_name, save_interval=1000, eval_interval=200):
         def lr_scheduler(step_idx): return initial_lr * \
             0.85 ** (step_idx // 10000)
 
-        # Environment constants
-        frame_stack_size = 4
-        input_shape = (84, 84, frame_stack_size)
-        num_actions = test_env.action_space.shape[0]
-        action_min = test_env.action_space.low
-        action_max = test_env.action_space.high
 
+        print("[INFO] Creating environments")
+        env = got_env.TagEnv(config)
+
+        # Environment constants
+        input_shape = env.observation_space.shape
+        num_actions = env.action_space.shape[0]
+        action_min = env.action_space.low
+        action_max = env.action_space.high
+
+        print(action_max, action_min, num_actions, input_shape)
+        print("-------------------------------")
+        
         # Create model
         print("[INFO] Creating model")
         model = PPO(input_shape, num_actions, action_min, action_max,
@@ -48,8 +48,6 @@ def train(config, model_name, save_interval=1000, eval_interval=200):
                     value_scale=value_scale, entropy_scale=entropy_scale,
                     model_name=model_name)
 
-        print("[INFO] Creating environments")
-        envs = SubprocVecEnv([make_env for _ in range(num_envs)])
 
         initial_frames = envs.reset()
         envs.get_images()
