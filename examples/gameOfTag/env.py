@@ -1,0 +1,433 @@
+import gym
+import matplotlib.pyplot as plt
+import numpy as np
+import random
+import time
+
+from examples.gameOfTag import agent as got_agent
+from skimage.color import rgb2gray
+from smarts.core import agent as smarts_agent
+from smarts.core import agent_interface as smarts_agent_interface
+from smarts.core import controllers as smarts_controllers
+from smarts.env import hiway_env as smarts_hiway_env
+from smarts.env.wrappers import frame_stack as smarts_frame_stack
+from typing import Dict, List
+
+
+class TagEnv(gym.Env):
+    def __init__(self, config):
+         # Update the agents number and env api type.
+        self.config = config
+        self.action_type = config["env_para"]["action_type"]
+        self.controller = config["env_para"]["controller"] # Smarts controller
+        self.neighborhood_radius = config["env_para"]["neighborhood_radius"]
+        self.rgb_wh = config["env_para"]["rgb_wh"]
+        self.predators = []
+        self.preys = []
+        for agent_id in config["env_para"]["agent_ids"]:
+            if 'predator' in agent_id:
+                self.predators.append(agent_id)
+            elif 'prey' in agent_id:
+               self.preys.append(agent_id)
+            else:
+                raise ValueError(f"Expected agent_id to have prefix of 'predator' or 'prey', but got {agent_id}.") 
+
+        predator_interface = smarts_agent_interface.AgentInterface(
+            max_episode_steps=config["env_para"]["max_episode_steps"],
+            neighborhood_vehicles = smarts_agent_interface.NeighborhoodVehicles(radius=self.neighborhood_radius),
+            rgb = smarts_agent_interface.RGB(width=256,height=256,resolution=self.rgb_wh/256),
+            vehicle_color = 'blue',
+            action=getattr(smarts_controllers.ActionSpaceType, self.controller),
+            done_criteria = smarts_agent_interface.DoneCriteria(
+                collision=False,
+                off_road=False,
+                off_route=False,
+                on_shoulder=False,
+                wrong_way=False,
+                not_moving=False,
+                agents_alive=smarts_agent_interface.AgentsAliveDoneCriteria(
+                    agent_lists_alive=[
+                        smarts_agent_interface.AgentsListAlive(agents_list=self.preys, minimum_agents_alive_in_list=1),
+                    ]
+                ),
+            )
+        )
+
+        prey_interface = smarts_agent_interface.AgentInterface(
+            max_episode_steps=config["env_para"]["max_episode_steps"],
+            neighborhood_vehicles = smarts_agent_interface.NeighborhoodVehicles(radius=self.neighborhood_radius),
+            rgb = smarts_agent_interface.RGB(width=256,height=256,resolution=self.rgb_wh/256),            
+            vehicle_color = 'white',
+            action=getattr(smarts_controllers.ActionSpaceType, self.controller),
+            done_criteria = smarts_agent_interface.DoneCriteria(
+                collision=True,
+                off_road=False,
+                off_route=False,
+                on_shoulder=False,
+                wrong_way=False,
+                not_moving=False,
+                agents_alive=smarts_agent_interface.AgentsAliveDoneCriteria(
+                    agent_lists_alive=[
+                        smarts_agent_interface.AgentsListAlive(agents_list=self.predators, minimum_agents_alive_in_list=1),
+                    ]
+                ),
+            )
+        )
+
+        # Create agent spec
+        agent_specs = {
+            agent_id: 
+                smarts_agent.AgentSpec(
+                    interface=predator_interface,
+                    agent_builder=got_agent.AgentTag,
+                    observation_adapter=observation_adapter,
+                    reward_adapter=predator_reward_adapter,
+                    action_adapter=action_adapter(config["env_para"]["action_type"], config["env_para"]["controller"]),
+                    info_adapter=info_adapter,
+                )
+            if 'predator' in agent_id
+            else 
+                smarts_agent.AgentSpec(
+                    interface=prey_interface,
+                    agent_builder=got_agent.AgentTag,
+                    observation_adapter=observation_adapter,
+                    reward_adapter=prey_reward_adapter,
+                    action_adapter=action_adapter(config["env_para"]["action_type"], config["env_para"]["controller"]),
+                    info_adapter=info_adapter,
+                )
+            for agent_id in config["env_para"]["agent_ids"]
+        }
+ 
+        env = smarts_hiway_env.HiWayEnv(
+            scenarios=config["env_para"]["scenarios"],
+            agent_specs=agent_specs,
+            headless=config["env_para"]["headless"],
+            seed=random.randint(0, 4294967295) # [0, 2^32 -1)
+        )
+        # Wrap env with FrameStack to stack multiple observations
+        env = smarts_frame_stack.FrameStack(env=env, num_stack=9, num_skip=4)
+
+        return env
+
+    def reset(self)->Dict[str, np.ndarray]:
+        """
+        Reset the environment, if done is true, must clear obs array.
+
+        :return: the observation of gym environment
+        """
+
+        raw_states = self.env.reset()
+
+        #Stack observation into 3D numpy matrix
+        states = {
+            agent_id: stack_matrix(raw_state) 
+            for agent_id, raw_state in raw_states.items()
+        }  
+
+        self.init_state = states
+        return states
+
+
+    def step(self, action):
+        """
+        Run one timestep of the environment's dynamics.
+
+        Accepts an action and returns a tuple (state, reward, done, info).
+
+        :param action: action
+        :param agent_index: the index of agent
+        :return: state, reward, done, info
+        """
+
+        raw_states, rewards, dones, infos = self.env.step(action)
+
+        #Stack observation into 3D numpy matrix
+        states = {
+            agent_id: stack_matrix(raw_state) 
+            for agent_id, raw_state in raw_states.items()
+        }  
+
+        # Plot for debugging purposes
+        # import matplotlib.pyplot as plt
+        # fig=plt.figure(figsize=(10,10))
+        # columns = 3
+        # rows = len(states.keys())
+        # for row, (agent_id, state) in enumerate(states.items()):
+        #     for col in range(0, columns):
+        #         img = state[:,:,col*3:(col+1)*3]
+        #         fig.add_subplot(rows, columns, row*columns + col + 1)
+        #         plt.imshow(img)
+        # plt.show()
+
+        return states, rewards, dones, infos
+
+    def close(self):
+        if self.env is not None:
+            self.env.destroy()
+
+def stack_matrix(states: List[np.ndarray])->np.ndarray:
+    # Stack 2D images along the depth dimension
+    if states[0].ndim == 2 or states[0].ndim == 3:
+        return np.dstack(states) 
+    else:
+        raise Exception(f"Expected input numpy array with 2 or 3 dimensions, but received input with {states[0].ndim} dimensions.")
+
+
+def info_adapter(obs, reward, info):
+    return reward
+
+
+def action_adapter(action_type, controller):
+    # Action space
+    # throttle: [0, 1]
+    # brake: [0, 1]
+    # steering: [-1, 1]
+
+    if action_type == "DiagGaussian" and controller == "Continuous":
+        # For DiagGaussian action space
+        def action_adapter_diaggaussian(model_action):
+            throttle, brake, steering = model_action
+            # Modify action space limits
+            throttle = (throttle + 1)/2
+            brake = (brake + 1)/2
+            steering = steering
+            return np.array([throttle, brake, steering], dtype=np.float32)         
+        return action_adapter_diaggaussian
+
+    elif action_type == "Categorical" and controller == "Continuous":
+        # For Categorical action space
+        def action_adapter_continuous(model_action):
+            # Modify action space limits 
+            if model_action == 0 or model_action == 5:
+                # Do nothing
+                throttle = 0.3
+                brake = 0
+                steering = 0
+            elif model_action == 1:
+                # Accelerate
+                throttle = 0.8
+                brake = 0
+                steering = 0
+            elif model_action == 2:
+                # Turn left
+                throttle = 0.3
+                brake = 0
+                steering = -1
+            elif model_action == 3:
+                # Turn right
+                throttle = 0.3
+                brake = 0
+                steering = 1
+            elif model_action == 4:
+                # Brake
+                throttle = 0
+                brake = 0.7
+                steering = 0
+            else:
+                raise Exception("Unknown model action category.")
+            return np.array([throttle, brake, steering], dtype=np.float32)
+        return action_adapter_continuous   
+
+    elif action_type == "Categorical" and controller == "LaneWithContinuousSpeed":
+        # For Categorical action space
+        def action_adapter_lane(model_action):
+            # Modify action space limits 
+            # speed = [0, 3, 6, 9]
+            # lane_change = [-1, 0, 1]
+            if model_action == 0 or model_action == 12:
+                speed=0
+                lane_change=-1 
+            elif model_action == 1:
+                speed=0
+                lane_change=0 
+            elif model_action == 2:
+                speed=0
+                lane_change=1 
+            elif model_action == 3:
+                speed=3
+                lane_change=-1 
+            elif model_action == 4:
+                speed=3
+                lane_change=0 
+            elif model_action == 5:
+                speed=3
+                lane_change=1 
+            elif model_action == 6:
+                speed=6
+                lane_change=-1 
+            elif model_action == 7:
+                speed=6
+                lane_change=0 
+            elif model_action == 8:
+                speed=6
+                lane_change=1
+            elif model_action == 9:
+                speed=9
+                lane_change=-1 
+            elif model_action == 10:
+                speed=9
+                lane_change=0 
+            elif model_action == 11:
+                speed=9
+                lane_change=1 
+            else:
+                raise Exception("Unknown model action category.")
+            return [speed, lane_change]
+        return action_adapter_lane 
+
+    else:
+        raise Exception(f"Unknown action type: {action_type}.")
+
+
+def observation_adapter(obs)->np.ndarray:
+    # RGB grid map
+    rgb = obs.top_down_rgb.data
+
+    # Replace self color to yellow
+    coloured_self = rgb.copy()
+    coloured_self[123:132,126:130,0]=255
+    coloured_self[123:132,126:130,1]=190
+    coloured_self[123:132,126:130,2]=40
+
+    # Convert rgb to grayscale image
+    grayscale = rgb2gray(coloured_self)
+
+    # Center frames
+    frame = grayscale*2 - 1 
+    frame = frame.astype(np.float32)
+
+    if np.isnan(frame).any():
+        raise Exception("NAN in frame")
+
+    if np.isinf(frame).any():
+        raise Exception("INF in frame")
+
+    # Plot graph
+    # fig, axes = plt.subplots(1, 4, figsize=(10, 10))
+    # ax = axes.ravel()
+    # ax[0].imshow(rgb)
+    # ax[0].set_title("RGB")
+    # ax[1].imshow(coloured_self)
+    # ax[1].set_title("Coloured self - yellow")
+    # ax[2].imshow(grayscale, cmap=plt.cm.gray)
+    # ax[2].set_title("Grayscale")
+    # ax[3].imshow(frame)
+    # ax[3].set_title("Centered")
+    # fig.tight_layout()
+    # plt.show()
+    # sys.exit(2)
+
+    return frame
+
+
+def get_targets(vehicles, target:str):
+    target_vehicles = [
+        vehicle
+        for vehicle in vehicles
+        if target in vehicle.id
+    ]
+    return target_vehicles
+
+
+def distance_to_targets(ego, targets):
+    distances = [np.linalg.norm(ego.position - target.position) for target in targets],
+    return distances
+
+
+def linear(x: float)->float:
+    return x
+
+
+def inverse(x: float)->float:
+    return -x+80
+
+
+def exponential_negative(x: float)->float:
+    return 90*np.exp(-0.028*x)
+
+
+def exponential_positive(x: float)->float:
+    return np.exp(0.056*x)
+
+
+def predator_reward_adapter(obs, env_reward):
+    reward = 0
+    ego = obs.ego_vehicle_state
+
+    # Penalty for driving off road
+    if obs.events.off_road:
+        reward -= 50
+        return reward
+
+    # Distance based reward
+    targets = get_targets(obs.neighborhood_vehicle_states, "prey")
+    if targets:
+        distances = distance_to_targets(ego, targets)
+        min_distance = np.amin(distances)
+        # dist_reward = exponential_negative(min_distance)    
+        dist_reward = inverse(min_distance)
+        reward += np.clip(dist_reward, 0, 80)
+    # else: # No neighborhood preys
+    #     reward -= 10
+
+    # Reward for colliding
+    for c in obs.events.collisions:
+        if 'prey' in c.collidee_id:
+            reward += 100
+        else:
+            reward -= 40 
+        print(
+            f"Predator {ego.id} collided with vehicle {c.collidee_id}."
+        )
+
+    # Penalty for not moving
+    if obs.events.not_moving:
+        reward -= 20
+
+    # Penalty for each step spent without catching prey
+    # if not obs.events.collisions and \
+    #     not obs.events.not_moving:
+    #     reward -= 5
+ 
+    return reward
+
+
+def prey_reward_adapter(obs, env_reward):
+    reward = 0
+    ego = obs.ego_vehicle_state
+
+    # Penalty for driving off road
+    if obs.events.off_road:
+        reward -= 50
+        return reward
+
+    # Distance based reward
+    targets = get_targets(obs.neighborhood_vehicle_states, "predator")
+    if targets:
+        distances = distance_to_targets(ego, targets)
+        ave_distance = np.average(distances)
+        # dist_reward = exponential_positive(ave_distance)   
+        dist_reward = linear(ave_distance)
+        reward += np.clip(dist_reward, 0, 80)
+    # else: # No neighborhood predators
+    #     reward += 80
+
+    # Penalty for colliding
+    for c in obs.events.collisions:
+        if 'predator' in c.collidee_id:
+            reward -= 100
+        else:
+            reward -= 40   
+        print(
+            f"Prey {ego.id} collided with vehicle {c.collidee_id}."
+        )
+
+    # # Reward for each step spent without being caught by predator
+    # if not obs.events.collisions:
+    #     reward += 20
+
+    # Penalty for not moving
+    if obs.events.not_moving:
+        reward -= 20
+
+    return reward
