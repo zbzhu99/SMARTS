@@ -18,94 +18,106 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tensorflow.compat.v1.keras import backend as K
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.layers import Conv2D, Dense, Flatten, Input, Lambda
-from tensorflow.keras.layers import concatenate, Activation, Concatenate
-from tensorflow.keras.layers import GRU, Reshape, Embedding
-from tensorflow.keras.models import Model, Sequential
-from tensorflow.python.keras.callbacks import History
-from tensorflow.python.keras.losses import MSE
-from tensorflow.compat.v1 import global_variables_initializer
-from tensorflow.compat.v1.train import AdamOptimizer, Saver
-from tensorflow.compat.v1.summary import scalar as summary_scalar
-from tensorflow.compat.v1.train import linear_cosine_decay, piecewise_constant
+import numpy as np
+import utils
 from examples.gameOfTag import model as got_model
+from typing import Sequence, Union
+
 
 class TagAgent():
-    """Build Tag PPO CNN network."""
-
-    def __init__(self, config):
+    def __init__(self, name, config):
+        # Verify name
+        if name == "predator" or name == "prey":
+            self.name = name
+        else:
+            raise Exception(f"Expected predator or prey, but got {name}.")    
         self.config = config
+        self.states = []
+        self.actions = []
+        self.values = []
+        self.rewards = []
+        self.dones = []
+        self.advantages = None
+        self.returns = None
+        self.last_value = None
 
-    def create_model(self, env):
-        # Environment constants
+    def reset(self):
+        self.states = []
+        self.actions = []
+        self.values = []
+        self.rewards = []
+        self.dones = []
+        self.advantages = None
+        self.returns = None
+        self.last_value = None
+
+    def add_trajectory(self, state, action, value, reward, done):
+        self.states.append(state)
+        self.actions.append(action)
+        self.values.append(value)
+        self.rewards.append(reward)
+        self.dones.append(done)
+
+    def store_last_value(self, last_value):
+        self.last_value = last_value
+
+    def compute_gae(self):
+        advantages = utils.compute_gae(
+            rewards=self.rewards,
+            values=self.values,
+            last_values=self.last_value,
+            dones=self.dones,
+            discount_factor=self.config['model_para']['discount_factor'], 
+            gae_lambda=self.config['model_para']['gae_lambda'],
+            )
+        self.advantages = (advantages - advantages.mean())/(advantages.std() + 1e-8)
+        self.returns = advantages + self.values  
+
+
+class TagModel():
+    def __init__(self, name, env, config):
+        self.name = name
+        self.config = config
+        self.model = None
+        self._create_model(env)
+
+    def _create_model(self, env):
+        # Environment
         input_shape = env.observation_space.shape
         num_actions = env.action_space.shape[0]
         action_min = env.action_space.low
         action_max = env.action_space.high
 
-        ppo_epsilon = self.config['model_para']["ppo_epsilon"]
-        value_scale = self.config['model_para']["value_scale"]
-        entropy_scale = self.config['model_para']["entropy_scale"]
+        ppo_epsilon = self.config['model_para']['ppo_epsilon']
+        value_scale = self.config['model_para']['value_scale']
+        entropy_scale = self.config['model_para']['entropy_scale']
 
-        self.model_predator = got_model.PPO(input_shape, 
+        self.model = got_model.PPO(input_shape, 
             num_actions, action_min, action_max,
             epsilon=ppo_epsilon,
             value_scale=value_scale, 
             entropy_scale=entropy_scale,
-            model_name='predator')
-        self.model_prey = got_model.PPO(input_shape, 
-            num_actions, action_min, action_max,
-            epsilon=ppo_epsilon,
-            value_scale=value_scale, 
-            entropy_scale=entropy_scale,
-            model_name='prey')
-
+            model_name=self.name)
 
     def act(self, obs):
-        if 
-        actions_t_predator, values_t_predator = self.model_predator.predict(obs)
-        actions_t_prey, values_t_prey = self.model_prey.predict(obs)
-
-        return None
-
+        actions = {}
+        values = {}
+        for vehicle, state in obs.items():
+            if self.name in vehicle:
+                actions_t, values_t = self.model.predict(state)
+                actions[vehicle]=actions_t
+                values[vehicle]=values_t
+        return actions, values
 
     def save(self):
-        self.model_predator.save()
-        self.model_prey.save()   
+        return self.model.save()
 
 
-def get_cnn_backbone(state_dim, act_dim, hidden_sizes, activation, filter_arches, summary, action_type):
-    """Get CNN backbone."""
-    state_input = Input(shape=state_dim, name='obs')
-    conv_layer = build_conv_layers(state_input, filter_arches, activation, 'shared')
-    flatten_layer = Flatten()(conv_layer)
-    dense_layer = bulid_mlp_layers(flatten_layer, hidden_sizes, activation, 'shared')
-    if action_type == "Categorical":
-        pi_latent = Dense(act_dim, activation=None, name='pi_latent')(dense_layer)
-    elif action_type == "DiagGaussian":
-        pi_latent = Dense(act_dim, activation='tanh', name='pi_latent')(dense_layer)
+def stack_vars(state: Union[np.ndarray, Sequence[np.ndarray]])->np.ndarray:
+    if not isinstance(state, (list, tuple)):
+        state = state.reshape((1,) + state.shape)
     else:
-        raise Exception(f"Error: Unsupported action_type {action_type}.")    
-    out_value = Dense(1, activation=None, name='output_value')(dense_layer)
-    model = Model(inputs=[state_input], outputs=[pi_latent, out_value])
-    if summary:
-        model.summary()
+        state = list(map(lambda x: x.reshape((1,) + x.shape), state))
+        state = np.vstack(state)
 
-    return model
-
-def bulid_mlp_layers(input_layer, hidden_sizes, activation, prefix=''):
-    output_layer = input_layer
-    for i, hidden_size in enumerate(hidden_sizes):
-        output_layer = \
-            Dense(hidden_size, activation=activation, name='{}_hidden_mlp_{}'.format(prefix, i))(output_layer)
-    return output_layer
-
-def build_conv_layers(input_layer, filter_arches, activation, prefix=''):
-    conv_layer = input_layer
-    for i, filter_arch in enumerate(filter_arches):
-        filters, kernel_size, strides = filter_arch
-        conv_layer = Conv2D(filters, kernel_size, strides, activation=activation, padding='valid',
-                            name="{}_conv_layer_{}".format(prefix, i))(conv_layer)
-    return conv_layer
+    return state

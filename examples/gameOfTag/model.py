@@ -233,7 +233,6 @@ class PPO():
 
         self.model_dir = "./models/{}".format(self.model_name)
         self.log_dir = "./logs/{}".format(self.model_name)
-        self.video_dir = "./videos/{}".format(self.model_name)
         if model_checkpoint is None and os.path.isdir(self.model_dir):
             answer = input(
                 "{} exists. Do you wish to continue (C) or restart training (R)?".format(self.model_dir))
@@ -251,7 +250,7 @@ class PPO():
                 model_checkpoint))
         else:
             self.step_idx = 0
-            for d in [self.model_dir, self.log_dir, self.video_dir]:
+            for d in [self.model_dir, self.log_dir]:
                 if os.path.isdir(d):
                     shutil.rmtree(d)
                 os.makedirs(d)

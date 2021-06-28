@@ -1,125 +1,144 @@
 import numpy as np
 import os
+import random
 import signal
+import sys
 import yaml
 from examples.gameOfTag import env as got_env
-from examples.gameOfTag import model as got_model
+from examples.gameOfTag import evaluate
 from examples.gameOfTag import agent as got_agent
 from pathlib import Path
-from utils import compute_gae
 
 
-def train(config, save_interval=1000, eval_interval=200):
+def train(config, save_interval=50, eval_interval=50):
 
     # Traning parameters
     discount_factor = config['model_para']["discount_factor"]
-    gae_lambda = config['model_para']["gae_lambda"]
-    horizon = config['model_para']["horizon"]
     num_epochs = config['model_para']["num_epochs"]
     batch_size = config['model_para']["batch_size"]
+    num_episodes = config['model_para']['num_episodes']
 
+    # Create env
     print("[INFO] Creating environments")
-    env = got_env.TagEnv(config)
-
-    # Environment constants
+    seed = random.randint(0, 4294967295) # [0, 2^32 -1)
+    env = got_env.TagEnv(config, seed)
     input_shape = env.observation_space.shape
     num_actions = env.action_space.shape[0]
 
+    # Create agent
+    print("[INFO] Creating agents")
+    all_agents = {name:got_agent.TagAgent(name, config) for name in config["env_para"]["agent_ids"]}
+    all_predators_id = env.predators
+    all_preys_id = env.preys
+
     # Create model
     print("[INFO] Creating model")
-    tag_agent = got_agent.TagAgent()
+    model_predator = got_agent.TagModel(config, "predator")
+    model_prey = got_agent.TagModel(config, "prey")
 
     def interrupt(*args):
-        tag_agent.save()
+        model_predator.save()
+        model_prey.save()
         print("Interrupt key detected.") 
+        sys.exit(0)
 
     # Catch keyboard interrupt and terminate signal
     signal.signal(signal.SIGINT, interrupt)
 
     print("[INFO] Training loop")
-    obs = env.reset()
-    while True:
+    for episode in num_episodes:
         # While there are running environments
-        states, taken_actions, values, rewards, dones = [], [], [], [], []
+        
+        obs = env.reset()
+        [agent.reset() for _, agent in all_agents.items()]
+        active_agents = set([agent_id for agent_id, _ in all_agents.items()])
 
-        # Simulate game for some number of steps
-        for _ in range(horizon):
+        # Simulate for one episode
+        while True:
             # Predict and value action given state
             # π(a_t | s_t; θ_old)
+            actions_t={}
+            values_t={}
             obs = env.step()
-            actions_t_predator, values_t_predator = model_predator.predict(obs)
-            actions_t_prey, values_t_prey = model_prey.predict(obs)
+            actions_t_predator, values_t_predator = model_predator.act(obs)
+            actions_t_prey, values_t_prey = model_prey.act(obs)
+            actions_t.update(actions_t_predator)
+            actions_t.update(actions_t_prey)
+            values_t.update(values_t_predator)
+            values_t.update(values_t_prey)
 
             # Sample action from a Gaussian distribution
-            envs.step_async(actions_t)
-            frames, rewards_t, dones_t, _ = envs.step_wait()
-            envs.get_images()  # render
+            states_t, rewards_t, dones_t, _ = env.step(actions_t)
 
             # Store state, action and reward
-            # [T, N, 84, 84, 4]
-            states.append(states_t)
-            taken_actions.append(actions_t)              # [T, N, 3]
-            values.append(np.squeeze(values_t, axis=-1))  # [T, N]
-            rewards.append(rewards_t)                    # [T, N]
-            dones.append(dones_t)                        # [T, N]
+            for agent in active_agents:
+                agent.add_trajectory(
+                    state=states_t[agent.name],
+                    action=actions_t[agent.name],
+                    value=np.squeeze(values_t[agent.name], axis=-1),
+                    reward=rewards_t[agent.name],
+                    done=dones_t[agent.name],
+                )
 
-            # Get new state
-            for i in range(num_envs):
-                # Reset environment's frame stack if done
-                if dones_t[i]:
-                    for _ in range(frame_stack_size):
-                        frame_stacks[i].add_frame(frames[i])
-                else:
-                    frame_stacks[i].add_frame(frames[i])
+            for agent_id, done in dones_t:
+                if done:
+                    # Remove done agents
+                    active_agents.remove(agent_id)
+                    # Calculate last values (bootstrap values)
+                    if 'predator' in agent_id:
+                        _, values_t = model_predator.act(states_t)
+                    elif 'prey' in agent_id:
+                        _, values_t = model_prey.act(states_t)
+                    else:
+                        raise Exception(f"Unknown {agent_id}.")
+                    # Store last values    
+                    all_agents[agent_id].store_last_values(np.squeeze(values_t, axis=-1))
 
-        # Calculate last values (bootstrap values)
-        states_last = [frame_stacks[i].get_state()
-                        for i in range(num_envs)]
-        last_values = np.squeeze(model.predict(
-            states_last)[1], axis=-1)  # [N]
+            # Break when episode completes
+            if dones_t['__all__']:
+                break
 
-        advantages = compute_gae(
-            rewards, values, last_values, dones, discount_factor, gae_lambda)
-        advantages = (advantages - advantages.mean()) / \
-            (advantages.std() + 1e-8)  # Move down one line?
-        returns = advantages + values
-        # Flatten arrays
-        states = np.array(states).reshape(
-            (-1, *input_shape))       # [T x N, 84, 84, 4]
-        taken_actions = np.array(taken_actions).reshape(
-            (-1, num_actions))  # [T x N, 3]
-        # [T x N]
-        returns = returns.flatten()
-        # [T X N]
-        advantages = advantages.flatten()
+        # Compute generalised advantage
+        [agent.compute_gae() for _, agent in all_agents.items()]
 
-        T = len(rewards)
-        N = num_envs
-        assert states.shape == (
-            T * N, input_shape[0], input_shape[1], frame_stack_size)
-        assert taken_actions.shape == (T * N, num_actions)
-        assert returns.shape == (T * N,)
-        assert advantages.shape == (T * N,)
+        states_predator = [np.array(all_agents[agent_id].states) for agent_id in all_predators_id]
+        states_predator = got_agent.stack_vars(states_predator)
+        states_prey = [np.array(all_agents[agent_id].states) for agent_id in all_preys_id]
+        states_prey = got_agent.stack_vars(states_prey)
+
+        actions_predator = [np.array(all_agents[agent_id].actions) for agent_id in all_predators_id]
+        actions_predator = got_agent.stack_vars(actions_predator)
+        actions_prey = [np.array(all_agents[agent_id].actions) for agent_id in all_preys_id]
+        actions_prey = got_agent.stack_vars(actions_prey)
+
+        returns_predator = [all_agents[agent_id].returns for agent_id in all_predators_id]
+        returns_predator = got_agent.stack_vars(returns_predator)
+        returns_prey = [all_agents[agent_id].returns for agent_id in all_preys_id]
+        returns_prey = got_agent.stack_vars(returns_prey)
+
+        advantages_predator = [all_agents[agent_id].advantages for agent_id in all_predators_id]
+        advantages_predator = got_agent.stack_vars(advantages_predator)
+        advantages_prey = [all_agents[agent_id].advantages for agent_id in all_preys_id]
+        advantages_prey = got_agent.stack_vars(advantages_prey)
+
+
+        T = len(returns_prey)
+        N = 1
+        assert states_prey.shape == (T * N, *input_shape)
+        assert actions_prey.shape == (T * N, num_actions)
+        assert returns_prey.shape == (T * N,)
+        assert advantages_prey.shape == (T * N,)
 
         # Train for some number of epochs
-        model.update_old_policy()  # θ_old <- θ
+        model_predator.update_old_policy()  # θ_old <- θ
+        model_prey.update_old_policy()  # θ_old <- θ
+
+        # Train predator
         for _ in range(num_epochs):
-            num_samples = len(states)
+            num_samples = len(states_predator)
             indices = np.arange(num_samples)
             np.random.shuffle(indices)
             for i in range(int(np.ceil(num_samples / batch_size))):
-                # Evaluate model
-                if model.step_idx % eval_interval == 0:
-                    print("[INFO] Running evaluation...")
-                    avg_reward, value_error = evaluate(
-                        model, test_env, discount_factor, frame_stack_size, make_video=True)
-                    model.write_to_summary("eval_avg_reward", avg_reward)
-                    model.write_to_summary("eval_value_error", value_error)
-
-                # Save model
-                if model.step_idx % save_interval == 0:
-                    model.save()
-
                 # Sample mini-batch randomly
                 begin = i * batch_size
                 end = begin + batch_size
@@ -128,8 +147,42 @@ def train(config, save_interval=1000, eval_interval=200):
                 mb_idx = indices[begin:end]
 
                 # Optimize network
-                model.train(states[mb_idx], taken_actions[mb_idx],
-                            returns[mb_idx], advantages[mb_idx])
+                model_predator.train(states_predator[mb_idx], actions_predator[mb_idx],
+                            returns_predator[mb_idx], advantages_predator[mb_idx], 
+                            learning_rate=config['model_para']['initial_lr_predator'])
+
+        # Train prey
+        for _ in range(num_epochs):
+            num_samples = len(states_prey)
+            indices = np.arange(num_samples)
+            np.random.shuffle(indices)
+            for i in range(int(np.ceil(num_samples / batch_size))):
+                # Sample mini-batch randomly
+                begin = i * batch_size
+                end = begin + batch_size
+                if end > num_samples:
+                    end = None
+                mb_idx = indices[begin:end]
+
+                # Optimize network
+                model_prey.train(states_prey[mb_idx], actions_prey[mb_idx],
+                            returns_prey[mb_idx], advantages_prey[mb_idx], 
+                            learning_rate=config['model_para']['initial_lr_prey'])
+
+        # Evaluate model
+        if episode % eval_interval == 0:
+            print("[INFO] Running evaluation...")
+            avg_reward_predator, avg_reward_prey, value_error_predator, value_error_prey = evaluate.evaluate(
+                model_predator, model_prey, config, discount_factor)
+            model_predator.write_to_summary("eval_avg_reward", avg_reward_predator)
+            model_predator.write_to_summary("eval_value_error", value_error_predator)
+            model_prey.write_to_summary("eval_avg_reward", avg_reward_prey)
+            model_prey.write_to_summary("eval_value_error", value_error_prey)
+
+        # Save model
+        if episode % save_interval == 0:
+            model_predator.save()
+            model_prey.save()
 
 
 if __name__ == "__main__":
@@ -142,7 +195,6 @@ if __name__ == "__main__":
 
     train(
         config=config, 
-        model_name=config['env_para']['env_name'], 
         save_interval=config['model_para']['save_interval'],
         eval_interval=config['model_para']['eval_interval'],
     )

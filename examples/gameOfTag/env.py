@@ -1,7 +1,6 @@
 import gym
 import matplotlib.pyplot as plt
 import numpy as np
-import random
 import time
 
 from examples.gameOfTag import agent as got_agent
@@ -15,10 +14,9 @@ from typing import Dict, List
 
 
 class TagEnv(gym.Env):
-    def __init__(self, config):
+    def __init__(self, config, seed=42):
          # Update the agents number and env api type.
         self.config = config
-        self.action_type = config["env_para"]["action_type"]
         self.controller = config["env_para"]["controller"] # Smarts controller
         self.neighborhood_radius = config["env_para"]["neighborhood_radius"]
         self.rgb_wh = config["env_para"]["rgb_wh"]
@@ -82,7 +80,7 @@ class TagEnv(gym.Env):
                     agent_builder=got_agent.TagAgent,
                     observation_adapter=observation_adapter,
                     reward_adapter=predator_reward_adapter,
-                    action_adapter=action_adapter(config["env_para"]["action_type"], config["env_para"]["controller"]),
+                    action_adapter=action_adapter(config["env_para"]["controller"]),
                     info_adapter=info_adapter,
                 )
             if 'predator' in agent_id
@@ -92,7 +90,7 @@ class TagEnv(gym.Env):
                     agent_builder=got_agent.TagAgent,
                     observation_adapter=observation_adapter,
                     reward_adapter=prey_reward_adapter,
-                    action_adapter=action_adapter(config["env_para"]["action_type"], config["env_para"]["controller"]),
+                    action_adapter=action_adapter(config["env_para"]["controller"]),
                     info_adapter=info_adapter,
                 )
             for agent_id in config["env_para"]["agent_ids"]
@@ -102,7 +100,7 @@ class TagEnv(gym.Env):
             scenarios=config["env_para"]["scenarios"],
             agent_specs=agent_specs,
             headless=config["env_para"]["headless"],
-            seed=random.randint(0, 4294967295) # [0, 2^32 -1)
+            seed=seed
         )
         # Wrap env with FrameStack to stack multiple observations
         self.env = smarts_frame_stack.FrameStack(env=env, num_stack=9, num_skip=4)
@@ -113,7 +111,7 @@ class TagEnv(gym.Env):
             np.array([+1, +1, +1]), 
             dtype=np.float32)  # throttle, break, steering
         self.observation_space = gym.spaces.Box(
-            low=0, high=1, 
+            low=-1, high=1, 
             shape=(256, 256, 3), 
             dtype=np.float32)
 
@@ -188,13 +186,13 @@ def info_adapter(obs, reward, info):
     return reward
 
 
-def action_adapter(action_type, controller):
+def action_adapter(controller):
     # Action space
     # throttle: [0, 1]
     # brake: [0, 1]
     # steering: [-1, 1]
 
-    if action_type == "DiagGaussian" and controller == "Continuous":
+    if controller == "Continuous":
         # For DiagGaussian action space
         def action_adapter_diaggaussian(model_action):
             throttle, brake, steering = model_action
@@ -204,90 +202,8 @@ def action_adapter(action_type, controller):
             # steering = steering
             return np.array([throttle, brake, steering], dtype=np.float32)         
         return action_adapter_diaggaussian
-
-    elif action_type == "Categorical" and controller == "Continuous":
-        # For Categorical action space
-        def action_adapter_continuous(model_action):
-            # Modify action space limits 
-            if model_action == 0 or model_action == 5:
-                # Do nothing
-                throttle = 0.3
-                brake = 0
-                steering = 0
-            elif model_action == 1:
-                # Accelerate
-                throttle = 0.8
-                brake = 0
-                steering = 0
-            elif model_action == 2:
-                # Turn left
-                throttle = 0.3
-                brake = 0
-                steering = -1
-            elif model_action == 3:
-                # Turn right
-                throttle = 0.3
-                brake = 0
-                steering = 1
-            elif model_action == 4:
-                # Brake
-                throttle = 0
-                brake = 0.7
-                steering = 0
-            else:
-                raise Exception("Unknown model action category.")
-            return np.array([throttle, brake, steering], dtype=np.float32)
-        return action_adapter_continuous   
-
-    elif action_type == "Categorical" and controller == "LaneWithContinuousSpeed":
-        # For Categorical action space
-        def action_adapter_lane(model_action):
-            # Modify action space limits 
-            # speed = [0, 3, 6, 9]
-            # lane_change = [-1, 0, 1]
-            if model_action == 0 or model_action == 12:
-                speed=0
-                lane_change=-1 
-            elif model_action == 1:
-                speed=0
-                lane_change=0 
-            elif model_action == 2:
-                speed=0
-                lane_change=1 
-            elif model_action == 3:
-                speed=3
-                lane_change=-1 
-            elif model_action == 4:
-                speed=3
-                lane_change=0 
-            elif model_action == 5:
-                speed=3
-                lane_change=1 
-            elif model_action == 6:
-                speed=6
-                lane_change=-1 
-            elif model_action == 7:
-                speed=6
-                lane_change=0 
-            elif model_action == 8:
-                speed=6
-                lane_change=1
-            elif model_action == 9:
-                speed=9
-                lane_change=-1 
-            elif model_action == 10:
-                speed=9
-                lane_change=0 
-            elif model_action == 11:
-                speed=9
-                lane_change=1 
-            else:
-                raise Exception("Unknown model action category.")
-            return [speed, lane_change]
-        return action_adapter_lane 
-
     else:
-        raise Exception(f"Unknown action type.")
+        raise Exception(f"Unknown controller type.")
 
 
 def observation_adapter(obs)->np.ndarray:

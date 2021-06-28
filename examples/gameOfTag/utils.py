@@ -2,19 +2,6 @@ import numpy as np
 import scipy.signal
 
 
-def discount(x, gamma):
-    return scipy.signal.lfilter([1], [1, -gamma], x[::-1], axis=0)[::-1]
-
-
-def compute_v_and_adv(rewards, values, bootstrapped_value, gamma, lam=1.0):
-    rewards = np.array(rewards)
-    values = np.array(list(values) + [bootstrapped_value])
-    v = discount(np.array(list(rewards) + [bootstrapped_value]), gamma)[:-1]
-    delta = rewards + gamma * values[1:] - values[:-1]
-    adv = discount(delta, gamma * lam)
-    return v, adv
-
-
 def compute_returns(rewards, bootstrap_value, terminals, gamma):
     returns = []
     R = bootstrap_value
@@ -35,6 +22,10 @@ def compute_gae(rewards, values, bootstrap_values, terminals, gamma, lam):
         delta = V - values[i]
         deltas.append(delta)
     deltas = np.array(list(reversed(deltas)))
+
+    print("-----------------deltas---------------------")
+    print(deltas.shape)
+    print(deltas.dtype)
 
     # Compute gae
     A = deltas[-1, :]

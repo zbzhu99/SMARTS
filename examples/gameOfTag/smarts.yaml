@@ -1,11 +1,3 @@
-alg_para:
-  alg_name: Tag
-  save_model: True
-  save_interval: 50 # Save model every #number of episodes elapsed in one environment
-  multi_model: # One algorithm with multiple different models. Group together agents which use the same model.
-    - [predator1, predator2, predator3]
-    - [prey1, prey2]
-
 env_para:
   env_name: SMARTS
   headless: True
@@ -19,23 +11,15 @@ env_para:
     - predator3
     - prey1
     - prey2
-  action_type: Categorical
   controller: Continuous
-  # controller: LaneWithContinuousSpeed
   scenarios: 
     - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
     # - /home/kyber/workspaces/SMARTS/scenarios/figure_eight
     # - /scenarios/SMARTS-xtsmarts/scenarios/cloverleaf
     # - /scenarios/SMARTS-xtsmarts/scenarios/figure_eight
 
-agent_para:
-  agent_name: Tag
-  agent_num : 5
-  complete_step: 100000000 # Maximum steps by agent for completion of simulation
-  # sync_model_interval: 1 # Episode interval to update model
 
 model_para:
-  model_name: TagPpoCnn
   state_dim: [256, 256, 3]
   action_dim: 5 # action_dim=3 for action_type=DiagGaussian; action_dim=5 for action_type=Categorical; action_dim=12 for controller=LaneWithContinuousSpeed
   # BATCH_SIZE: 256 # 256: Discrete action space; 8192: Continuous action space
@@ -46,20 +30,20 @@ model_para:
   # MAX_GRAD_NORM: 5.0
   # NUM_SGD_ITER: 4
   # SUMMARY: False
-  initial_lr: 3e-4
+  num_episodes: 10000000 # Maximum number of episodes over which to train
+  initial_lr_predator: 3e-4
+  initial_lr_prey: 9e-5
   discount_factor: 0.99
   gae_lambda: 0.95
   ppo_epsilon: 0.2
   value_scale: 0.5
   entropy_scale: 0.01
-  horizon: 128
+  # horizon: 128
   num_epochs: 10
   batch_size: 128
-  num_envs: 16
-  save_interval: 1000
-  eval_interval: 200
-  record_episodes: True
-  restart: True
+  # num_envs: 16
+  save_interval: 50
+  eval_interval: 50
   activation: leaky_relu
   # filter_arches: # A=421,108 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
   #   - [16, [32, 32], [4, 4]]
@@ -80,15 +64,3 @@ model_para:
   # init_weights: # Path to saved models
   #   - /home/kyber/workspaces/testing/evaluate/actor_predator_0000000.npz
   #   - /home/kyber/workspaces/testing/evaluate/actor_prey_0000000.npz
-
-env_num: 3
-speedup: False # Set each explorer in a fixed cpu core. DO NOT use when running multiple xingtian in same server.
-
-benchmark:
-  log_interval_to_train: 50 # Print training output after #num of episodes
-  eval:
-    # model_path: /home/kyber/workspaces/testing/evaluate/
-    model_path: /root/xt_archive/evaluate/ # Path in docker container
-    model_order: [predator, prey] # Order of models in algorithm.get_weights() and algorithm.set_weights() functions
-    gap: 1 # index gap of eval model
-    evaluator_num: 1  # the number of evaluator instance
