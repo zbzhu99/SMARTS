@@ -13,10 +13,10 @@ env_para:
     - prey2
   controller: Continuous
   scenarios: 
-    - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
+    # - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
     # - /home/kyber/workspaces/SMARTS/scenarios/figure_eight
-    # - /scenarios/SMARTS-xtsmarts/scenarios/cloverleaf
-    # - /scenarios/SMARTS-xtsmarts/scenarios/figure_eight
+    - /src/scenarios/cloverleaf
+    - /src/scenarios/figure_eight
 
 
 model_para:

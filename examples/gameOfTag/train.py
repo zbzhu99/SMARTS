@@ -97,7 +97,7 @@ def train(config, save_interval=50, eval_interval=50):
                     # Remove done agents
                     del next_states_t[agent_id]
                     # Print done agents
-                    print(f"Done: {agent_id}.")
+                    print(f"Done: {agent_id}. Step: {steps}.")
 
             # Break when episode completes
             if dones_t["__all__"]:

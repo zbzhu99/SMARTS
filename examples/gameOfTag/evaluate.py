@@ -47,6 +47,11 @@ def evaluate(model_predator, model_prey, config):
                 reward=rewards_t[agent_id],
                 done=int(dones_t[agent_id]),
             )
+            if dones_t[agent_id] == 1:
+                # Remove done agents
+                del next_states_t[agent_id]
+                # Print done agents
+                print(f"Done: {agent_id}. Step: {steps}.")
 
         # Break when episode completes
         if dones_t["__all__"]:
