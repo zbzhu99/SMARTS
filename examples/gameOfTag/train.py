@@ -47,13 +47,18 @@ def train(config, save_interval=50, eval_interval=50):
 
     print("[INFO] Training loop")
     for episode in range(num_episodes):
-        # While there are running environments
-        
+        if episode%100 == 0:
+            print(f"Episode: {episode}")
+
         states_t = env.reset()
         [agent.reset() for _, agent in all_agents.items()]
+        steps=0
 
         # Simulate for one episode
         while True:
+            if steps%100 == 0:
+                print(f"Episode: {episode}, Steps: {steps}")
+
             # Predict and value action given state
             # π(a_t | s_t; θ_old)
             actions_t={}
@@ -80,13 +85,13 @@ def train(config, save_interval=50, eval_interval=50):
                 if dones_t[agent_id] == 1:
                     # Calculate last values (bootstrap values)
                     if 'predator' in agent_id:
-                        _, values_t = model_predator.act(next_states_t[agent_id])
+                        _, next_values_t = model_predator.act({agent_id:next_states_t[agent_id]})
                     elif 'prey' in agent_id:
-                        _, values_t = model_prey.act(next_states_t[agent_id])
+                        _, next_values_t = model_prey.act({agent_id:next_states_t[agent_id]})
                     else:
                         raise Exception(f"Unknown {agent_id}.")
                     # Store last values    
-                    all_agents[agent_id].store_last_values(values_t)
+                    all_agents[agent_id].store_last_value(next_values_t)
 
             # Break when episode completes
             if dones_t['__all__']:
@@ -94,6 +99,7 @@ def train(config, save_interval=50, eval_interval=50):
 
             # Assign next_states to states
             states_t = next_states_t
+            steps += 1
 
 
         # Compute generalised advantage
