@@ -35,7 +35,7 @@ def evaluate(model_predator, model_prey, config):
                 action=actions_t[agent_id],
                 value=values_t[agent_id],
                 reward=rewards_t[agent_id],
-                done=dones_t[agent_id],
+                done=int(dones_t[agent_id]),
             )
 
         # Break when episode completes

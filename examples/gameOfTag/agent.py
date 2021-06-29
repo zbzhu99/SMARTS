@@ -65,10 +65,10 @@ class TagAgent():
         advantages = utils.compute_gae(
             rewards=self.rewards,
             values=self.values,
-            last_values=self.last_value,
-            dones=self.dones,
-            discount_factor=self.config['model_para']['discount_factor'], 
-            gae_lambda=self.config['model_para']['gae_lambda'],
+            bootstrap_values=self.last_value,
+            terminals=self.dones,
+            gamma=self.config['model_para']['discount_factor'], 
+            lam=self.config['model_para']['gae_lambda'],
             )
         self.advantages = (advantages - advantages.mean())/(advantages.std() + 1e-8)
         self.returns = advantages + self.values  
@@ -124,12 +124,16 @@ class TagModel():
     def save(self):
         return self.model.save()
 
+    def train(self, input_states, taken_actions, returns, advantage, learning_rate):
+        return self.model.train(input_states, taken_actions, returns, advantage, learning_rate)
 
-def stack_vars(state: Union[np.ndarray, Sequence[np.ndarray]])->np.ndarray:
-    if not isinstance(state, (list, tuple)):
-        state = state.reshape((1,) + state.shape)
-    else:
-        state = list(map(lambda x: x.reshape((1,) + x.shape), state))
-        state = np.vstack(state)
+    def write_to_summary(self, name, value):
+        return self.model.write_to_summary(name, value)
 
-    return state
+    def update_old_policy(self):
+        return self.model.update_old_policy()
+
+
+def stack_vars(var: Union[np.ndarray, Sequence[np.ndarray]])->np.ndarray:
+    var_stacked = np.vstack(var)
+    return var_stacked

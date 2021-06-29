@@ -19,7 +19,7 @@ def compute_returns(rewards, bootstrap_value, terminals, gamma):
 
 
 def compute_gae(rewards, values, bootstrap_values, terminals, gamma, lam):
-    values = np.vstack((values, [bootstrap_values]))
+    values = np.vstack((values, bootstrap_values))
 
     # Compute delta
     deltas = []
@@ -28,10 +28,6 @@ def compute_gae(rewards, values, bootstrap_values, terminals, gamma, lam):
         delta = V - values[i]
         deltas.append(delta)
     deltas = np.array(list(reversed(deltas)))
-
-    print("-----------------deltas---------------------")
-    print(deltas.shape)
-    print(deltas.dtype)
 
     # Compute gae
     A = deltas[-1, :]
