@@ -33,7 +33,7 @@ def evaluate(model_predator, model_prey, config):
             all_agents[agent_id].add_trajectory(
                 state=states_t[agent_id],
                 action=actions_t[agent_id],
-                value=np.squeeze(values_t[agent_id], axis=-1),
+                value=values_t[agent_id],
                 reward=rewards_t[agent_id],
                 done=dones_t[agent_id],
             )

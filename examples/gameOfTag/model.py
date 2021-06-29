@@ -136,10 +136,10 @@ class PPO():
             self.taken_actions, "Invalid value for self.taken_actions")
         self.policy = PolicyGraph(
             self.input_states, self.taken_actions, num_actions, action_min,
-            action_max, "policy")
+            action_max, "policy", clip_action_space=True)
         self.policy_old = PolicyGraph(
             self.input_states, self.taken_actions, num_actions, action_min,
-            action_max, "policy_old")
+            action_max, "policy_old", clip_action_space=True)
 
         # Create policy gradient train function
         self.returns = tf.placeholder(

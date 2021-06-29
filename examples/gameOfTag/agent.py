@@ -117,8 +117,8 @@ class TagModel():
         for vehicle, state in obs.items():
             if self.name in vehicle:
                 actions_t, values_t = self.model.predict(np.expand_dims(state, axis=0))
-                actions[vehicle]=actions_t
-                values[vehicle]=values_t
+                actions[vehicle]=np.squeeze(actions_t, axis=0)
+                values[vehicle]=np.squeeze(values_t, axis=-1)
         return actions, values
 
     def save(self):

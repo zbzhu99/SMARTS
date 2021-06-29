@@ -33,8 +33,8 @@ def train(config, save_interval=50, eval_interval=50):
 
     # Create model
     print("[INFO] Creating model")
-    model_predator = got_agent.TagModel(config, "predator")
-    model_prey = got_agent.TagModel(config, "prey")
+    model_predator = got_agent.TagModel("predator", env, config, model_checkpoint=None)
+    model_prey = got_agent.TagModel("prey", env, config, model_checkpoint=None)
 
     def interrupt(*args):
         model_predator.save()
@@ -46,7 +46,7 @@ def train(config, save_interval=50, eval_interval=50):
     signal.signal(signal.SIGINT, interrupt)
 
     print("[INFO] Training loop")
-    for episode in num_episodes:
+    for episode in range(num_episodes):
         # While there are running environments
         
         states_t = env.reset()
@@ -73,7 +73,7 @@ def train(config, save_interval=50, eval_interval=50):
                 all_agents[agent_id].add_trajectory(
                     state=states_t[agent_id],
                     action=actions_t[agent_id],
-                    value=np.squeeze(values_t[agent_id], axis=-1),
+                    value=values_t[agent_id],
                     reward=rewards_t[agent_id],
                     done=dones_t[agent_id],
                 )
@@ -86,7 +86,7 @@ def train(config, save_interval=50, eval_interval=50):
                     else:
                         raise Exception(f"Unknown {agent_id}.")
                     # Store last values    
-                    all_agents[agent_id].store_last_values(np.squeeze(values_t, axis=-1))
+                    all_agents[agent_id].store_last_values(values_t)
 
             # Break when episode completes
             if dones_t['__all__']:
@@ -194,6 +194,9 @@ def train(config, save_interval=50, eval_interval=50):
             print("[INFO] Saving model...")
             model_predator.save()
             model_prey.save()
+
+    # Close env
+    env.close()
 
 
 if __name__ == "__main__":
