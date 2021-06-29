@@ -107,6 +107,8 @@ if __name__ == "__main__":
 
     # Silence the logs of TF
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+    tf.random.set_seed(42)
+    np.random.seed(42)
 
     # Create env
     env = got_env.TagEnv(config, 42)

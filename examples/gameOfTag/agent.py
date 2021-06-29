@@ -100,6 +100,7 @@ class TagModel:
         ppo_epsilon = self.config["model_para"]["ppo_epsilon"]
         value_scale = self.config["model_para"]["value_scale"]
         entropy_scale = self.config["model_para"]["entropy_scale"]
+        base_path = self.config["benchmark"]["base_path"]
 
         self.model = got_model.PPO(
             input_shape,
@@ -111,6 +112,7 @@ class TagModel:
             entropy_scale=entropy_scale,
             model_name=self.name,
             model_checkpoint=model_checkpoint,
+            base_path=base_path,
         )
 
     def act(self, obs):

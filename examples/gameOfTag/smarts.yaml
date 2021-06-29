@@ -55,5 +55,7 @@ model_para:
   hidden_sizes: [256] # MLP layers 
 
 benchmark:
+  # base_path: "/home/kyber/workspaces/" # For use in local computer
+  base_path: "/" # For use in server
   # checkpoint_predator: /got/models/predator/
   # checkpoint_prey: /got/models/prey/

@@ -161,6 +161,7 @@ class PPO:
         entropy_scale=0.01,
         model_checkpoint=None,
         model_name="ppo",
+        base_path="./",
     ):
         """
         input_shape [3]:
@@ -326,8 +327,8 @@ class PPO:
         self.saver = tf.train.Saver()
 
         date = datetime.now().strftime("%Y_%m_%d_%I_%M_%S")
-        self.model_dir = f"/got/models_{date}/{self.model_name}"
-        self.log_dir = f"/got/logs_{date}/{self.model_name}"
+        self.model_dir = f"{base_path}got/models_{date}/{self.model_name}"
+        self.log_dir = f"{base_path}got/logs_{date}/{self.model_name}"
         # if model_checkpoint is None and os.path.isdir(self.model_dir):
         #     answer = input(
         #         "{} exists. Do you wish to continue (C) or restart training (R)?".format(self.model_dir))
