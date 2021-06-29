@@ -64,16 +64,7 @@ class PolicyGraph:
                 padding="valid",
                 name="conv2",
             )
-            self.conv3 = tf.layers.conv2d(
-                self.conv2,
-                filters=32,
-                kernel_size=3,
-                strides=2,
-                activation=tf.nn.leaky_relu,
-                padding="valid",
-                name="conv3",
-            )
-            self.flatten = tf.layers.flatten(self.conv3, name="flatten")
+            self.flatten = tf.layers.flatten(self.conv2, name="flatten")
             self.shared_features = tf.layers.dense(
                 self.flatten,
                 256,
@@ -330,9 +321,9 @@ class PPO:
         self.model_name = model_name
         self.saver = tf.train.Saver()
 
-        date = datetime.now().strftime("%Y_%m_%d_%I_%M_%S")
-        self.model_dir = f"{base_path}got/models_{date}/{self.model_name}"
-        self.log_dir = f"{base_path}got/logs_{date}/{self.model_name}"
+        dateNow = datetime.now().strftime("%Y_%m_%d_%I_%M_%S")
+        self.model_dir = f"{base_path}got/models_{dateNow}/{self.model_name}"
+        self.log_dir = f"{base_path}got/logs_{dateNow}/{self.model_name}"
         # if model_checkpoint is None and os.path.isdir(self.model_dir):
         #     answer = input(
         #         "{} exists. Do you wish to continue (C) or restart training (R)?".format(self.model_dir))
