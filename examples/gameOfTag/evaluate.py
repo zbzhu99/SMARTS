@@ -45,6 +45,8 @@ def evaluate(model_predator, model_prey, config):
         # Assign next_states to states
         states_t = next_states_t
 
+    env.close()
+
     total_reward = [np.sum(all_agents[agent_id].rewards) for agent_id in all_predators_id]
     total_reward_predator = np.sum(total_reward)
     total_reward = [np.sum(all_agents[agent_id].rewards) for agent_id in all_preys_id]
@@ -63,12 +65,27 @@ def value_error(values, returns):
 
 
 
-# if __name__ == "__main__":
-#     config_yaml=(Path(__file__).absolute().parent).joinpath("smarts.yaml")
-#     with open(config_yaml, "r") as file:
-#         config = yaml.load(file, Loader=yaml.FullLoader)
+if __name__ == "__main__":
+    config_yaml=(Path(__file__).absolute().parent).joinpath("smarts.yaml")
+    with open(config_yaml, "r") as file:
+        config = yaml.load(file, Loader=yaml.FullLoader)
 
-#     # Silence the logs of TF
-#     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+    # Silence the logs of TF
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-#     evaluate()
+    env = got_env.TagEnv(config, 42)
+    model_checkpoint_predator = config['benchmark'].get('checkpoint_predator', default = None)
+    model_checkpoint_prey = config['benchmark'].get('checkpoint_prey', default = None)
+    model_predator = got_agent.TagModel("predator", env, config, model_checkpoint=model_checkpoint_predator)
+    model_prey = got_agent.TagModel("prey", env, config, model_checkpoint=model_checkpoint_prey)
+    env.close()
+    discount_factor = config['model_para']["discount_factor"]
+
+    avg_reward_predator, avg_reward_prey, value_error_predator, value_error_prey = evaluate(
+        model_predator, model_prey, config, discount_factor)
+
+    print("Finished evaluation------------------------")    
+    print(f"avg_reward_predator: {avg_reward_predator}")
+    print(f"avg_reward_prey: {avg_reward_prey}")
+    print(f"value_error_predator: {value_error_predator}")
+    print(f"value_error_prey: {value_error_prey}")

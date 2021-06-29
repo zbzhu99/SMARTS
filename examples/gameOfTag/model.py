@@ -3,7 +3,8 @@ import re
 import shutil
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior() 
 
 
 class PolicyGraph():
@@ -233,14 +234,14 @@ class PPO():
 
         self.model_dir = "./models/{}".format(self.model_name)
         self.log_dir = "./logs/{}".format(self.model_name)
-        if model_checkpoint is None and os.path.isdir(self.model_dir):
-            answer = input(
-                "{} exists. Do you wish to continue (C) or restart training (R)?".format(self.model_dir))
-            if answer.upper() == "C":
-                model_checkpoint = tf.train.latest_checkpoint(self.model_dir)
-            elif answer.upper() != "R":
-                raise Exception(
-                    "There is already a model directory {}. Please delete it or change model_name and try again".format(self.model_dir))
+        # if model_checkpoint is None and os.path.isdir(self.model_dir):
+        #     answer = input(
+        #         "{} exists. Do you wish to continue (C) or restart training (R)?".format(self.model_dir))
+        #     if answer.upper() == "C":
+        #         model_checkpoint = tf.train.latest_checkpoint(self.model_dir)
+        #     elif answer.upper() != "R":
+        #         raise Exception(
+        #             "There is already a model directory {}. Please delete it or change model_name and try again".format(self.model_dir))
 
         if model_checkpoint:
             self.step_idx = int(re.findall(

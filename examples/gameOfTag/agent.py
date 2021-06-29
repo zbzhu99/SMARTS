@@ -27,7 +27,7 @@ from typing import Sequence, Union
 class TagAgent():
     def __init__(self, name, config):
         # Verify name
-        if name == "predator" or name == "prey":
+        if "predator" in name or "prey" in name:
             self.name = name
         else:
             raise Exception(f"Expected predator or prey, but got {name}.")    
@@ -86,13 +86,13 @@ class TagAgent():
 
 
 class TagModel():
-    def __init__(self, name, env, config):
+    def __init__(self, name, env, config, model_checkpoint):
         self.name = name
         self.config = config
         self.model = None
-        self._create_model(env)
+        self._create_model(env, model_checkpoint)
 
-    def _create_model(self, env):
+    def _create_model(self, env, model_checkpoint):
         # Environment
         input_shape = env.observation_space.shape
         num_actions = env.action_space.shape[0]
@@ -108,7 +108,8 @@ class TagModel():
             epsilon=ppo_epsilon,
             value_scale=value_scale, 
             entropy_scale=entropy_scale,
-            model_name=self.name)
+            model_name=self.name,
+            model_checkpoint=model_checkpoint)
 
     def act(self, obs):
         actions = {}
