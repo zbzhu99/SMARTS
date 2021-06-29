@@ -45,12 +45,13 @@ def train(config, save_interval=50, eval_interval=50):
     # Catch keyboard interrupt and terminate signal
     signal.signal(signal.SIGINT, interrupt)
 
-    print("[INFO] Training loop")
+    print("[INFO] Loop ...")
     for episode in range(num_episodes):
         states_t = env.reset()
         [agent.reset() for _, agent in all_agents.items()]
         steps = 0
 
+        print("[INFO] Data collection ...")
         # Simulate for one episode
         while True:
             if steps % 100 == 0:
@@ -95,6 +96,8 @@ def train(config, save_interval=50, eval_interval=50):
                     all_agents[agent_id].store_last_value(next_values_t[agent_id])
                     # Remove done agents
                     del next_states_t[agent_id]
+                    # Print done agents
+                    print(f"Done: {agent_id}.")
 
             # Break when episode completes
             if dones_t["__all__"]:
@@ -108,37 +111,33 @@ def train(config, save_interval=50, eval_interval=50):
         [agent.compute_gae() for _, agent in all_agents.items()]
 
         # Flatten arrays
-        states_predator = [
-            np.array(all_agents[agent_id].states) for agent_id in all_predators_id
-        ]
-        states_predator = got_agent.stack_vars(states_predator)
-        states_prey = [
-            np.array(all_agents[agent_id].states) for agent_id in all_preys_id
-        ]
-        states_prey = got_agent.stack_vars(states_prey)
+        states_predator = []
+        actions_predator = []
+        returns_predator = []
+        advantages_predator = []
+        for agent_id in all_predators_id:
+            states_predator.extend(all_agents[agent_id].states) 
+            actions_predator.extend(all_agents[agent_id].actions) 
+            returns_predator.extend(all_agents[agent_id].returns) 
+            advantages_predator.extend(all_agents[agent_id].advantages) 
+        states_predator = np.array(states_predator)
+        actions_predator = np.array(actions_predator)
+        returns_predator = np.array(returns_predator).flatten()
+        advantages_predator = np.array(advantages_predator).flatten()
 
-        actions_predator = [
-            np.array(all_agents[agent_id].actions) for agent_id in all_predators_id
-        ]
-        actions_predator = got_agent.stack_vars(actions_predator)
-        actions_prey = [
-            np.array(all_agents[agent_id].actions) for agent_id in all_preys_id
-        ]
-        actions_prey = got_agent.stack_vars(actions_prey)
-
-        returns_predator = [
-            all_agents[agent_id].returns for agent_id in all_predators_id
-        ]
-        returns_predator = got_agent.stack_vars(returns_predator).flatten()
-        returns_prey = [all_agents[agent_id].returns for agent_id in all_preys_id]
-        returns_prey = got_agent.stack_vars(returns_prey).flatten()
-
-        advantages_predator = [
-            all_agents[agent_id].advantages for agent_id in all_predators_id
-        ]
-        advantages_predator = got_agent.stack_vars(advantages_predator).flatten()
-        advantages_prey = [all_agents[agent_id].advantages for agent_id in all_preys_id]
-        advantages_prey = got_agent.stack_vars(advantages_prey).flatten()
+        states_prey = []
+        actions_prey = []
+        returns_prey = []
+        advantages_prey = []
+        for agent_id in all_preys_id:
+            states_prey.extend(all_agents[agent_id].states) 
+            actions_prey.extend(all_agents[agent_id].actions) 
+            returns_prey.extend(all_agents[agent_id].returns) 
+            advantages_prey.extend(all_agents[agent_id].advantages) 
+        states_prey = np.array(states_prey)
+        actions_prey = np.array(actions_prey)
+        returns_prey = np.array(returns_prey).flatten()
+        advantages_prey = np.array(advantages_prey).flatten()
 
         # print("----------shapes--------------------")
         # print("states_predator.shape: ",states_predator.shape)
@@ -164,6 +163,7 @@ def train(config, save_interval=50, eval_interval=50):
         model_predator.update_old_policy()  # θ_old <- θ
         model_prey.update_old_policy()  # θ_old <- θ
 
+        print("[INFO] Training ...")
         # Train predator
         for _ in range(num_epochs):
             num_samples = len(states_predator)

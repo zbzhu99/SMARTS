@@ -138,6 +138,5 @@ class TagModel:
         return self.model.update_old_policy()
 
 
-def stack_vars(var: Union[np.ndarray, Sequence[np.ndarray]]) -> np.ndarray:
-    var_stacked = np.vstack(var)
-    return var_stacked
+# def stack_vars(var: Union[np.ndarray, Sequence[np.ndarray]]) -> np.ndarray:
+#     return np.vstack(var)
