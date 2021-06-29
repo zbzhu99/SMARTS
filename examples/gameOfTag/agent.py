@@ -73,6 +73,17 @@ class TagAgent():
         self.advantages = (advantages - advantages.mean())/(advantages.std() + 1e-8)
         self.returns = advantages + self.values  
 
+    def compute_returns(self):
+        returns = utils.compute_returns(
+            rewards=np.transpose([self.rewards], [1, 0]), 
+            bootstrap_value=[0], 
+            terminals=np.transpose([self.dones], [1, 0]), 
+            gamma=self.config['model_para']['discount_factor']
+        )
+        return returns
+
+
+
 
 class TagModel():
     def __init__(self, name, env, config):
@@ -104,7 +115,7 @@ class TagModel():
         values = {}
         for vehicle, state in obs.items():
             if self.name in vehicle:
-                actions_t, values_t = self.model.predict(state)
+                actions_t, values_t = self.model.predict(np.expand_dims(state, axis=0))
                 actions[vehicle]=actions_t
                 values[vehicle]=values_t
         return actions, values

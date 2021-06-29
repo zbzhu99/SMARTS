@@ -49,9 +49,8 @@ def train(config, save_interval=50, eval_interval=50):
     for episode in num_episodes:
         # While there are running environments
         
-        obs = env.reset()
+        states_t = env.reset()
         [agent.reset() for _, agent in all_agents.items()]
-        active_agents = set([agent_id for agent_id, _ in all_agents.items()])
 
         # Simulate for one episode
         while True:
@@ -59,36 +58,31 @@ def train(config, save_interval=50, eval_interval=50):
             # π(a_t | s_t; θ_old)
             actions_t={}
             values_t={}
-            obs = env.step()
-            actions_t_predator, values_t_predator = model_predator.act(obs)
-            actions_t_prey, values_t_prey = model_prey.act(obs)
+            actions_t_predator, values_t_predator = model_predator.act(states_t)
+            actions_t_prey, values_t_prey = model_prey.act(states_t)
             actions_t.update(actions_t_predator)
             actions_t.update(actions_t_prey)
             values_t.update(values_t_predator)
             values_t.update(values_t_prey)
 
             # Sample action from a Gaussian distribution
-            states_t, rewards_t, dones_t, _ = env.step(actions_t)
+            next_states_t, rewards_t, dones_t, _ = env.step(actions_t)
 
             # Store state, action and reward
-            for agent in active_agents:
-                agent.add_trajectory(
-                    state=states_t[agent.name],
-                    action=actions_t[agent.name],
-                    value=np.squeeze(values_t[agent.name], axis=-1),
-                    reward=rewards_t[agent.name],
-                    done=dones_t[agent.name],
+            for agent_id, _ in rewards_t.items():
+                all_agents[agent_id].add_trajectory(
+                    state=states_t[agent_id],
+                    action=actions_t[agent_id],
+                    value=np.squeeze(values_t[agent_id], axis=-1),
+                    reward=rewards_t[agent_id],
+                    done=dones_t[agent_id],
                 )
-
-            for agent_id, done in dones_t:
-                if done:
-                    # Remove done agents
-                    active_agents.remove(agent_id)
+                if dones_t[agent_id] == 1:
                     # Calculate last values (bootstrap values)
                     if 'predator' in agent_id:
-                        _, values_t = model_predator.act(states_t)
+                        _, values_t = model_predator.act(next_states_t[agent_id])
                     elif 'prey' in agent_id:
-                        _, values_t = model_prey.act(states_t)
+                        _, values_t = model_prey.act(next_states_t[agent_id])
                     else:
                         raise Exception(f"Unknown {agent_id}.")
                     # Store last values    
@@ -98,9 +92,14 @@ def train(config, save_interval=50, eval_interval=50):
             if dones_t['__all__']:
                 break
 
+            # Assign next_states to states
+            states_t = next_states_t
+
+
         # Compute generalised advantage
         [agent.compute_gae() for _, agent in all_agents.items()]
 
+        # Flatten arrays
         states_predator = [np.array(all_agents[agent_id].states) for agent_id in all_predators_id]
         states_predator = got_agent.stack_vars(states_predator)
         states_prey = [np.array(all_agents[agent_id].states) for agent_id in all_preys_id]
@@ -121,8 +120,19 @@ def train(config, save_interval=50, eval_interval=50):
         advantages_prey = [all_agents[agent_id].advantages for agent_id in all_preys_id]
         advantages_prey = got_agent.stack_vars(advantages_prey)
 
+        print("----------shapes--------------------")
+        print("states_predator.shape: ",states_predator.shape)
+        print("states_prey.shape: ",states_prey.shape)
+        print("actions_predator.shape: ",actions_predator.shape)
+        print("actions_prey.shape: ",actions_prey.shape)
+        print("returns_predator.shape: ",returns_predator.shape)
+        print("returns_prey.shape: ",returns_prey.shape)
+        print("advantages_predator.shape: ",advantages_predator.shape)
+        print("advantages_prey.shape: ",advantages_prey.shape)
 
-        T = len(returns_prey)
+        # Verify shapes
+        actions_prey_check = [np.array(all_agents[agent_id].actions) for agent_id in all_preys_id]
+        T = actions_prey_check[0].shape[0] + actions_prey_check[1].shape[0]
         N = 1
         assert states_prey.shape == (T * N, *input_shape)
         assert actions_prey.shape == (T * N, num_actions)
@@ -181,6 +191,7 @@ def train(config, save_interval=50, eval_interval=50):
 
         # Save model
         if episode % save_interval == 0:
+            print("[INFO] Saving model...")
             model_predator.save()
             model_prey.save()
 
