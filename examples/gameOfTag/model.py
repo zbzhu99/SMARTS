@@ -329,11 +329,11 @@ class PPO:
         self.model_name = model_name
         self.saver = tf.train.Saver()
 
-        self.model_dir = (Path(__file__).absolute().parent).joinpath(
-            "./models/{}".format(self.model_name)
+        self.model_dir = (Path(__file__).absolute().parent.parent.parent.parent).joinpath(
+            "got/models/{}".format(self.model_name)
         )
-        self.log_dir = (Path(__file__).absolute().parent).joinpath(
-            "./logs/{}".format(self.model_name)
+        self.log_dir = (Path(__file__).absolute().parent.parent.parent.parent).joinpath(
+            "got/logs/{}".format(self.model_name)
         )
         # if model_checkpoint is None and os.path.isdir(self.model_dir):
         #     answer = input(
