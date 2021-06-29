@@ -21,7 +21,7 @@ def evaluate(model_predator, model_prey, config):
     all_preys_id = env.preys
 
     states_t = env.reset()
-    steps=0
+    steps = 0
     while True:
         if steps % 100 == 0:
             print(f"Evaluation. Seed: {seed}, Steps: {steps}")
@@ -118,13 +118,15 @@ if __name__ == "__main__":
         raise Exception("Missing prey model checkpoint")
 
     model_checkpoint_predator_dir = config["benchmark"]["checkpoint_predator"]
-    model_checkpoint_predator = tf.train.latest_checkpoint(model_checkpoint_predator_dir)  
+    model_checkpoint_predator = tf.train.latest_checkpoint(
+        model_checkpoint_predator_dir
+    )
     model_predator = got_agent.TagModel(
         "predator", env, config, model_checkpoint=model_checkpoint_predator
     )
 
     model_checkpoint_prey_dir = config["benchmark"]["checkpoint_prey"]
-    model_checkpoint_prey = tf.train.latest_checkpoint(model_checkpoint_prey_dir)      
+    model_checkpoint_prey = tf.train.latest_checkpoint(model_checkpoint_prey_dir)
     model_prey = got_agent.TagModel(
         "prey", env, config, model_checkpoint=model_checkpoint_prey
     )

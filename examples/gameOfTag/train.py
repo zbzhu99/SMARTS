@@ -116,10 +116,10 @@ def train(config, save_interval=50, eval_interval=50):
         returns_predator = []
         advantages_predator = []
         for agent_id in all_predators_id:
-            states_predator.extend(all_agents[agent_id].states) 
-            actions_predator.extend(all_agents[agent_id].actions) 
-            returns_predator.extend(all_agents[agent_id].returns) 
-            advantages_predator.extend(all_agents[agent_id].advantages) 
+            states_predator.extend(all_agents[agent_id].states)
+            actions_predator.extend(all_agents[agent_id].actions)
+            returns_predator.extend(all_agents[agent_id].returns)
+            advantages_predator.extend(all_agents[agent_id].advantages)
         states_predator = np.array(states_predator)
         actions_predator = np.array(actions_predator)
         returns_predator = np.array(returns_predator).flatten()
@@ -130,10 +130,10 @@ def train(config, save_interval=50, eval_interval=50):
         returns_prey = []
         advantages_prey = []
         for agent_id in all_preys_id:
-            states_prey.extend(all_agents[agent_id].states) 
-            actions_prey.extend(all_agents[agent_id].actions) 
-            returns_prey.extend(all_agents[agent_id].returns) 
-            advantages_prey.extend(all_agents[agent_id].advantages) 
+            states_prey.extend(all_agents[agent_id].states)
+            actions_prey.extend(all_agents[agent_id].actions)
+            returns_prey.extend(all_agents[agent_id].returns)
+            advantages_prey.extend(all_agents[agent_id].advantages)
         states_prey = np.array(states_prey)
         actions_prey = np.array(actions_prey)
         returns_prey = np.array(returns_prey).flatten()

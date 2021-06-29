@@ -47,54 +47,49 @@ class PolicyGraph:
 
         with tf.variable_scope(scope_name):
             # Construct model
-            self.conv1 = tf.layers.conv2d(
-                input_states,
+            self.conv1 = tf.keras.layers.Conv2D(
                 filters=8,
                 kernel_size=12,
                 strides=4,
                 activation=tf.nn.leaky_relu,
                 padding="valid",
                 name="conv1",
-            )
-            self.conv2 = tf.layers.conv2d(
-                self.conv1,
+            )(input_states)
+            self.conv2 = tf.keras.layers.Conv2D(
                 filters=16,
                 kernel_size=6,
                 strides=4,
                 activation=tf.nn.leaky_relu,
                 padding="valid",
                 name="conv2",
-            )
-            self.conv3 = tf.layers.conv2d(
-                self.conv2,
+            )(self.conv1)
+            self.conv3 = tf.keras.layers.Conv2D(
                 filters=32,
                 kernel_size=3,
                 strides=2,
                 activation=tf.nn.leaky_relu,
                 padding="valid",
                 name="conv3",
-            )
-            self.flatten = tf.layers.flatten(self.conv3, name="flatten")
-            self.shared_features = tf.layers.dense(
-                self.flatten,
+            )(self.conv2)
+            self.flatten = tf.keras.layers.Flatten(name="flatten")(self.conv3)
+            self.shared_features = tf.keras.layers.Dense(
                 256,
                 activation=tf.nn.leaky_relu,
                 kernel_initializer=tf.initializers.variance_scaling(
                     scale=initial_mean_factor
                 ),
                 name="fc1",
-            )
+            )(self.flatten)
 
             # Policy branch π(a_t | s_t; θ)
-            self.action_mean = tf.layers.dense(
-                self.shared_features,
+            self.action_mean = tf.keras.layers.Dense(
                 num_actions,
                 activation=tf.nn.tanh,
                 kernel_initializer=tf.initializers.variance_scaling(
                     scale=initial_mean_factor
                 ),
                 name="action_mean",
-            )
+            )(self.shared_features)
             self.action_mean = action_min + ((self.action_mean + 1) / 2) * (
                 action_max - action_min
             )
@@ -104,8 +99,8 @@ class PolicyGraph:
             )
 
             # Value branch V(s_t; θ)
-            self.value = tf.layers.dense(
-                self.shared_features, 1, activation=None, name="value"
+            self.value = tf.keras.layers.Dense(1, activation=None, name="value")(
+                self.shared_features
             )
 
             # Create graph for sampling actions
