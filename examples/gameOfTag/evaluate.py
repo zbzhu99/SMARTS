@@ -1,6 +1,6 @@
 import numpy as np
 import os
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 import yaml
 from examples.gameOfTag import agent as got_agent
 from examples.gameOfTag import env as got_env

@@ -57,12 +57,12 @@ RUN pip install --upgrade pip
 
 # Install requirements.txt
 COPY ./requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt
 
 # Copy source files and install SMARTS
 COPY . /src
 WORKDIR /src
-RUN pip install --no-cache-dir -e .[train,test,dev]
+RUN pip install -e .[train,test,dev]
 # RUN scl scenario build-all ./scenarios
 
 # For Envision
