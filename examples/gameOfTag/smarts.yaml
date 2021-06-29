@@ -34,8 +34,8 @@ model_para:
   num_epochs: 10
   batch_size: 128
   # num_envs: 16
-  save_interval: 10
-  eval_interval: 10
+  save_interval: 50
+  eval_interval: 50
   activation: leaky_relu
   # filter_arches: # A=421,108 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
   #   - [16, [32, 32], [4, 4]]
@@ -52,7 +52,7 @@ model_para:
     - [5, [12, 12], [4, 4]]
     - [16, [6, 6], [4, 4]]
     - [32, [3, 3], [2, 2]] 
-  hidden_sizes: [256] # MLP layers 
+  hidden_sizes: [128] # MLP layers 
 
 benchmark:
   # base_path: "/home/kyber/workspaces/" # For use in local computer
