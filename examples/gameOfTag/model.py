@@ -4,6 +4,7 @@ import re
 import shutil
 import tensorflow.compat.v1 as tf
 
+from datetime import datetime
 from pathlib import Path
 
 tf.disable_v2_behavior()
@@ -329,12 +330,9 @@ class PPO:
         self.model_name = model_name
         self.saver = tf.train.Saver()
 
-        self.model_dir = (Path(__file__).absolute().parent.parent.parent.parent).joinpath(
-            "got/models/{}".format(self.model_name)
-        )
-        self.log_dir = (Path(__file__).absolute().parent.parent.parent.parent).joinpath(
-            "got/logs/{}".format(self.model_name)
-        )
+        date = datetime.now().strftime("%Y_%m_%d_%I_%M_%S")
+        self.model_dir = f"/got/models_{date}/{self.model_name}"
+        self.log_dir = f"/got/logs_{date}/{self.model_name}"
         # if model_checkpoint is None and os.path.isdir(self.model_dir):
         #     answer = input(
         #         "{} exists. Do you wish to continue (C) or restart training (R)?".format(self.model_dir))
