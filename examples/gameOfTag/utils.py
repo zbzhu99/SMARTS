@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.signal
 
 
 def compute_returns(rewards, bootstrap_value, terminals, gamma):

@@ -47,9 +47,6 @@ def train(config, save_interval=50, eval_interval=50):
 
     print("[INFO] Training loop")
     for episode in range(num_episodes):
-        if episode%100 == 0:
-            print(f"Episode: {episode}")
-
         states_t = env.reset()
         [agent.reset() for _, agent in all_agents.items()]
         steps=0
@@ -57,7 +54,7 @@ def train(config, save_interval=50, eval_interval=50):
         # Simulate for one episode
         while True:
             if steps%100 == 0:
-                print(f"Episode: {episode}, Steps: {steps}")
+                print(f"Seed: {seed}, Episode: {episode}, Steps: {steps}")
 
             # Predict and value action given state
             # π(a_t | s_t; θ_old)
@@ -80,7 +77,7 @@ def train(config, save_interval=50, eval_interval=50):
                     action=actions_t[agent_id],
                     value=values_t[agent_id],
                     reward=rewards_t[agent_id],
-                    done=dones_t[agent_id],
+                    done=int(dones_t[agent_id]),
                 )
                 if dones_t[agent_id] == 1:
                     # Calculate last values (bootstrap values)
@@ -91,7 +88,9 @@ def train(config, save_interval=50, eval_interval=50):
                     else:
                         raise Exception(f"Unknown {agent_id}.")
                     # Store last values    
-                    all_agents[agent_id].store_last_value(next_values_t)
+                    all_agents[agent_id].store_last_value(next_values_t[agent_id])
+                    # Remove done agents
+                    del next_states_t[agent_id]
 
             # Break when episode completes
             if dones_t['__all__']:
@@ -117,33 +116,34 @@ def train(config, save_interval=50, eval_interval=50):
         actions_prey = got_agent.stack_vars(actions_prey)
 
         returns_predator = [all_agents[agent_id].returns for agent_id in all_predators_id]
-        returns_predator = got_agent.stack_vars(returns_predator)
+        returns_predator = got_agent.stack_vars(returns_predator).flatten()
         returns_prey = [all_agents[agent_id].returns for agent_id in all_preys_id]
-        returns_prey = got_agent.stack_vars(returns_prey)
+        returns_prey = got_agent.stack_vars(returns_prey).flatten()
 
         advantages_predator = [all_agents[agent_id].advantages for agent_id in all_predators_id]
-        advantages_predator = got_agent.stack_vars(advantages_predator)
+        advantages_predator = got_agent.stack_vars(advantages_predator).flatten()
         advantages_prey = [all_agents[agent_id].advantages for agent_id in all_preys_id]
-        advantages_prey = got_agent.stack_vars(advantages_prey)
+        advantages_prey = got_agent.stack_vars(advantages_prey).flatten()
 
-        print("----------shapes--------------------")
-        print("states_predator.shape: ",states_predator.shape)
-        print("states_prey.shape: ",states_prey.shape)
-        print("actions_predator.shape: ",actions_predator.shape)
-        print("actions_prey.shape: ",actions_prey.shape)
-        print("returns_predator.shape: ",returns_predator.shape)
-        print("returns_prey.shape: ",returns_prey.shape)
-        print("advantages_predator.shape: ",advantages_predator.shape)
-        print("advantages_prey.shape: ",advantages_prey.shape)
+        # print("----------shapes--------------------")
+        # print("states_predator.shape: ",states_predator.shape)
+        # print("states_prey.shape: ",states_prey.shape)
+        # print("actions_predator.shape: ",actions_predator.shape)
+        # print("actions_prey.shape: ",actions_prey.shape)
+        # print("returns_predator.shape: ",returns_predator.shape)
+        # print("returns_prey.shape: ",returns_prey.shape)
+        # print("advantages_predator.shape: ",advantages_predator.shape)
+        # print("advantages_prey.shape: ",advantages_prey.shape)
 
         # Verify shapes
-        actions_prey_check = [np.array(all_agents[agent_id].actions) for agent_id in all_preys_id]
-        T = actions_prey_check[0].shape[0] + actions_prey_check[1].shape[0]
-        N = 1
-        assert states_prey.shape == (T * N, *input_shape)
-        assert actions_prey.shape == (T * N, num_actions)
-        assert returns_prey.shape == (T * N,)
-        assert advantages_prey.shape == (T * N,)
+        # actions_prey_check = [np.array(all_agents[agent_id].actions) for agent_id in all_preys_id]
+        # T = actions_prey_check[0].shape[0] + actions_prey_check[1].shape[0]
+        # N = 1
+        # print(f"T: {T}")
+        # assert states_prey.shape == (T * N, *input_shape)
+        # assert actions_prey.shape == (T * N, num_actions)
+        # assert returns_prey.shape == (T * N,)
+        # assert advantages_prey.shape == (T * N,)
 
         # Train for some number of epochs
         model_predator.update_old_policy()  # θ_old <- θ
@@ -189,7 +189,7 @@ def train(config, save_interval=50, eval_interval=50):
         if episode % eval_interval == 0:
             print("[INFO] Running evaluation...")
             avg_reward_predator, avg_reward_prey, value_error_predator, value_error_prey = evaluate.evaluate(
-                model_predator, model_prey, config, discount_factor)
+                model_predator, model_prey, config)
             model_predator.write_to_summary("eval_avg_reward", avg_reward_predator)
             model_predator.write_to_summary("eval_value_error", value_error_predator)
             model_prey.write_to_summary("eval_avg_reward", avg_reward_prey)

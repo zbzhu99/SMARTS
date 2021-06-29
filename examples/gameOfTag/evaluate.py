@@ -79,10 +79,9 @@ if __name__ == "__main__":
     model_predator = got_agent.TagModel("predator", env, config, model_checkpoint=model_checkpoint_predator)
     model_prey = got_agent.TagModel("prey", env, config, model_checkpoint=model_checkpoint_prey)
     env.close()
-    discount_factor = config['model_para']["discount_factor"]
 
     avg_reward_predator, avg_reward_prey, value_error_predator, value_error_prey = evaluate(
-        model_predator, model_prey, config, discount_factor)
+        model_predator, model_prey, config)
 
     print("Finished evaluation------------------------")    
     print(f"avg_reward_predator: {avg_reward_predator}")
