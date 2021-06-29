@@ -13,7 +13,6 @@ from pathlib import Path
 def train(config, save_interval=50, eval_interval=50):
 
     # Traning parameters
-    discount_factor = config["model_para"]["discount_factor"]
     num_epochs = config["model_para"]["num_epochs"]
     batch_size = config["model_para"]["batch_size"]
     num_episodes = config["model_para"]["num_episodes"]
@@ -22,8 +21,6 @@ def train(config, save_interval=50, eval_interval=50):
     print("[INFO] Creating environments")
     seed = random.randint(0, 4294967295)  # [0, 2^32 -1)
     env = got_env.TagEnv(config, seed)
-    input_shape = env.observation_space.shape
-    num_actions = env.action_space.shape[0]
 
     # Create agent
     print("[INFO] Creating agents")

@@ -304,9 +304,9 @@ def predator_reward_adapter(obs, env_reward):
     for c in obs.events.collisions:
         if "prey" in c.collidee_id:
             reward += 100
+            print(f"Predator {ego.id} collided with vehicle {c.collidee_id}.")
         else:
             reward -= 40
-        print(f"Predator {ego.id} collided with vehicle {c.collidee_id}.")
 
     # Penalty for not moving
     if obs.events.not_moving:

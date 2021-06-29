@@ -22,14 +22,6 @@ env_para:
 model_para:
   state_dim: [256, 256, 3]
   action_dim: 5 # action_dim=3 for action_type=DiagGaussian; action_dim=5 for action_type=Categorical; action_dim=12 for controller=LaneWithContinuousSpeed
-  # BATCH_SIZE: 256 # 256: Discrete action space; 8192: Continuous action space
-  # CRITIC_LOSS_COEF: 1.0
-  # ENTROPY_LOSS: 0.003
-  # LOSS_CLIPPING: 0.1
-  # LR: 0.0003
-  # MAX_GRAD_NORM: 5.0
-  # NUM_SGD_ITER: 4
-  # SUMMARY: False
   num_episodes: 10000000 # Maximum number of episodes over which to train
   initial_lr_predator: 3e-4
   initial_lr_prey: 9e-5
@@ -60,7 +52,9 @@ model_para:
     - [5, [12, 12], [4, 4]]
     - [16, [6, 6], [4, 4]]
     - [32, [3, 3], [2, 2]] 
-  hidden_sizes: [128] # MLP layers 
-  # init_weights: # Path to saved models
-  #   - /home/kyber/workspaces/testing/evaluate/actor_predator_0000000.npz
-  #   - /home/kyber/workspaces/testing/evaluate/actor_prey_0000000.npz
+  hidden_sizes: [256] # MLP layers 
+
+benchmark:
+  # checkpoint_predator: /home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator/
+  # checkpoint_prey: /home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey/
+    
