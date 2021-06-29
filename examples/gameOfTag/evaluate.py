@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import tensorflow.compat.v1 as tf
 import yaml
 from examples.gameOfTag import agent as got_agent
 from examples.gameOfTag import env as got_env
@@ -9,7 +10,9 @@ from pathlib import Path
 def evaluate(model_predator, model_prey, config):
     total_reward = 0
 
-    env = got_env.TagEnv(config, 42)
+    # Create env
+    seed = 42
+    env = got_env.TagEnv(config, seed)
     all_agents = {
         name: got_agent.TagAgent(name, config)
         for name in config["env_para"]["agent_ids"]
@@ -18,7 +21,11 @@ def evaluate(model_predator, model_prey, config):
     all_preys_id = env.preys
 
     states_t = env.reset()
+    steps=0
     while True:
+        if steps % 100 == 0:
+            print(f"Evaluation. Seed: {seed}, Steps: {steps}")
+
         # Predict action given state: π(a_t | s_t; θ)
         actions_t = {}
         values_t = {}
@@ -47,7 +54,9 @@ def evaluate(model_predator, model_prey, config):
 
         # Assign next_states to states
         states_t = next_states_t
+        steps += 1
 
+    # Close env
     env.close()
 
     total_reward = [
@@ -94,19 +103,31 @@ if __name__ == "__main__":
     # Silence the logs of TF
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
+    # Create env
     env = got_env.TagEnv(config, 42)
-    model_checkpoint_predator = config["benchmark"].get(
-        "checkpoint_predator", default=None
-    )
-    model_checkpoint_prey = config["benchmark"].get("checkpoint_prey", default=None)
+
+    # Load saved models
+    if "checkpoint_predator" not in config["benchmark"]:
+        raise Exception("Missing predator model checkpoint")
+    if "checkpoint_prey" not in config["benchmark"]:
+        raise Exception("Missing prey model checkpoint")
+
+    model_checkpoint_predator_dir = config["benchmark"]["checkpoint_predator"]
+    model_checkpoint_predator = tf.train.latest_checkpoint(model_checkpoint_predator_dir)  
     model_predator = got_agent.TagModel(
         "predator", env, config, model_checkpoint=model_checkpoint_predator
     )
+
+    model_checkpoint_prey_dir = config["benchmark"]["checkpoint_prey"]
+    model_checkpoint_prey = tf.train.latest_checkpoint(model_checkpoint_prey_dir)      
     model_prey = got_agent.TagModel(
         "prey", env, config, model_checkpoint=model_checkpoint_prey
     )
+
+    # Close env
     env.close()
 
+    # Evaluate
     (
         avg_reward_predator,
         avg_reward_prey,

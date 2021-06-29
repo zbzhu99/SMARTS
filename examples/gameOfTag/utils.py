@@ -2,12 +2,6 @@ import numpy as np
 
 
 def compute_returns(rewards, bootstrap_value, terminals, gamma):
-    print("-----------returns------------------")
-    print("rewards: ", rewards.shape)
-    print("bootstrap_value: ", bootstrap_value)
-    print("terminals: ", terminals.shape)
-    print("gamme: ", gamma)
-
     returns = []
     R = bootstrap_value
     for i in reversed(range(len(rewards))):

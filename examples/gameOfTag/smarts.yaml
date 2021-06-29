@@ -55,6 +55,6 @@ model_para:
   hidden_sizes: [256] # MLP layers 
 
 benchmark:
-  # checkpoint_predator: /home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator/
-  # checkpoint_prey: /home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey/
+  checkpoint_predator: /home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator/
+  checkpoint_prey: /home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey/
     
