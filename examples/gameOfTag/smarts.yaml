@@ -13,10 +13,10 @@ env_para:
     - prey2
   controller: Continuous
   scenarios: 
-    # - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
+    - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
     # - /home/kyber/workspaces/SMARTS/scenarios/figure_eight
-    - /src/scenarios/cloverleaf
-    - /src/scenarios/figure_eight
+    # - /src/scenarios/cloverleaf
+    # - /src/scenarios/figure_eight
 
 
 model_para:
@@ -52,10 +52,10 @@ model_para:
     - [5, [12, 12], [4, 4]]
     - [16, [6, 6], [4, 4]]
     - [32, [3, 3], [2, 2]] 
-  hidden_sizes: [128] # MLP layers 
+  hidden_sizes: [256] # MLP layers 
 
 benchmark:
-  # base_path: "/home/kyber/workspaces/" # For use in local computer
-  base_path: "/" # For use in server
+  base_path: "/home/kyber/workspaces/" # For use in local computer
+  # base_path: "/" # For use in server
   # checkpoint_predator: /got/models/predator/
   # checkpoint_prey: /got/models/prey/
