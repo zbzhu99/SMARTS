@@ -10,10 +10,13 @@ from examples.gameOfTag import agent as got_agent
 from pathlib import Path
 
 
-def train(config, save_interval=50, eval_interval=50):
+def main(config):
+    # Save and eval interval
+    save_interval=config["model_para"].get("save_interval", 50)
+    eval_interval=config["model_para"].get("eval_interval", 50)
 
     # Traning parameters
-    num_epochs = config["model_para"]["num_epochs"]
+    num_train_epochs = config["model_para"]["num_train_epochs"]
     batch_size = config["model_para"]["batch_size"]
     num_episodes = config["model_para"]["num_episodes"]
 
@@ -233,15 +236,91 @@ def train(config, save_interval=50, eval_interval=50):
 
 
 if __name__ == "__main__":
-    config_yaml = (Path(__file__).absolute().parent).joinpath("smarts.yaml")
+    config_yaml = (Path(__file__).absolute().parent).joinpath("got.yaml")
     with open(config_yaml, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
     # Silence the logs of TF
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-    train(
-        config=config,
-        save_interval=config["model_para"]["save_interval"],
-        eval_interval=config["model_para"]["eval_interval"],
-    )
+    main(config=config)
+
+
+
+ent_discount_val = ENTROPY_LOSS_WEIGHT
+
+
+
+model = Model(num_actions)
+optimizer = keras.optimizers.Adam(learning_rate=LR)
+
+train_writer = tf.summary.create_file_writer(STORE_PATH + f"/PPO-CartPole_{dt.datetime.now().strftime('%d%m%Y%H%M')}")
+
+num_steps = 10000000
+episode_reward_sum = 0
+state = env.reset()
+episode = 1
+total_loss = None
+for step in range(num_steps):
+    rewards = []
+    actions = []
+    values = []
+    states = []
+    dones = []
+    probs = []
+    for _ in range(BATCH_SIZE):
+        _, policy_logits = model(state.reshape(1, -1))
+
+        action, value = model.action_value(state.reshape(1, -1))
+        new_state, reward, done, _ = env.step(action.numpy()[0])
+
+        actions.append(action)
+        values.append(value[0])
+        states.append(state)
+        dones.append(done)
+        probs.append(policy_logits)
+        episode_reward_sum += reward
+
+        state = new_state
+
+        if done:
+            rewards.append(0.0)
+            state = env.reset()
+            if total_loss is not None:
+                print(f"Episode: {episode}, latest episode reward: {episode_reward_sum}, "
+                      f"total loss: {np.mean(total_loss)}, critic loss: {np.mean(c_loss)}, "
+                      f"actor loss: {np.mean(act_loss)}, entropy loss {np.mean(ent_loss)}")
+            with train_writer.as_default():
+                tf.summary.scalar('rewards', episode_reward_sum, episode)
+            episode_reward_sum = 0
+
+            episode += 1
+        else:
+            rewards.append(reward)
+
+    _, next_value = model.action_value(state.reshape(1, -1))
+    discounted_rewards, advantages = get_advantages(rewards, dones, values, next_value[0])
+
+    actions = tf.squeeze(tf.stack(actions))
+    probs = tf.nn.softmax(tf.squeeze(tf.stack(probs)))
+    action_inds = tf.stack([tf.range(0, actions.shape[0]), tf.cast(actions, tf.int32)], axis=1)
+
+    total_loss = np.zeros((NUM_TRAIN_EPOCHS))
+    act_loss = np.zeros((NUM_TRAIN_EPOCHS))
+    c_loss = np.zeros(((NUM_TRAIN_EPOCHS)))
+    ent_loss = np.zeros((NUM_TRAIN_EPOCHS))
+    for epoch in range(NUM_TRAIN_EPOCHS):
+        loss_tuple = train_model(action_inds, tf.gather_nd(probs, action_inds),
+                                 states, advantages, discounted_rewards, optimizer,
+                                 ent_discount_val)
+        total_loss[epoch] = loss_tuple[0]
+        c_loss[epoch] = loss_tuple[1]
+        act_loss[epoch] = loss_tuple[2]
+        ent_loss[epoch] = loss_tuple[3]
+    ent_discount_val *= ENT_DISCOUNT_RATE
+
+    with train_writer.as_default():
+        tf.summary.scalar('tot_loss', np.mean(total_loss), step)
+        tf.summary.scalar('critic_loss', np.mean(c_loss), step)
+        tf.summary.scalar('actor_loss', np.mean(act_loss), step)
+        tf.summary.scalar('entropy_loss', np.mean(ent_loss), step)

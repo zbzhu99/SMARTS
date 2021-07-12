@@ -44,7 +44,7 @@ class TagEnv(gym.Env):
             action=getattr(smarts_controllers.ActionSpaceType, self.controller),
             done_criteria=smarts_agent_interface.DoneCriteria(
                 collision=False,
-                off_road=False,
+                off_road=True,
                 off_route=False,
                 on_shoulder=False,
                 wrong_way=False,
@@ -71,7 +71,7 @@ class TagEnv(gym.Env):
             action=getattr(smarts_controllers.ActionSpaceType, self.controller),
             done_criteria=smarts_agent_interface.DoneCriteria(
                 collision=True,
-                off_road=False,
+                off_road=True,
                 off_route=False,
                 on_shoulder=False,
                 wrong_way=False,
@@ -204,15 +204,15 @@ def action_adapter(controller):
 
     if controller == "Continuous":
         # For DiagGaussian action space
-        def action_adapter_diaggaussian(model_action):
+        def action_adapter_continuous(model_action):
             throttle, brake, steering = model_action
             # Modify action space limits
-            # throttle = (throttle + 1)/2
-            # brake = (brake + 1)/2
+            throttle = (throttle + 1)/2
+            brake = (brake + 1)/2
             # steering = steering
             return np.array([throttle, brake, steering], dtype=np.float32)
 
-        return action_adapter_diaggaussian
+        return action_adapter_continuous
     else:
         raise Exception(f"Unknown controller type.")
 
@@ -306,11 +306,11 @@ def predator_reward_adapter(obs, env_reward):
             reward += 100
             print(f"Predator {ego.id} collided with vehicle {c.collidee_id}.")
         else:
-            reward -= 40
+            reward -= 30
 
     # Penalty for not moving
-    if obs.events.not_moving:
-        reward -= 20
+    # if obs.events.not_moving:
+        # reward -= 10
 
     # Penalty for each step spent without catching prey
     # if not obs.events.collisions and \
@@ -345,15 +345,15 @@ def prey_reward_adapter(obs, env_reward):
         if "predator" in c.collidee_id:
             reward -= 100
         else:
-            reward -= 40
+            reward -= 30
         print(f"Prey {ego.id} collided with vehicle {c.collidee_id}.")
 
-    # # Reward for each step spent without being caught by predator
+    # Penalty for not moving
+    # if obs.events.not_moving:
+    #     reward -= 20
+
+    # Reward for each step spent without being caught by predator
     # if not obs.events.collisions:
     #     reward += 20
-
-    # Penalty for not moving
-    if obs.events.not_moving:
-        reward -= 20
 
     return np.float32(reward)

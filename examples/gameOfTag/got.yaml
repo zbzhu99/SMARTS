@@ -21,22 +21,24 @@ env_para:
 
 model_para:
   state_dim: [256, 256, 3]
-  action_dim: 5 # action_dim=3 for action_type=DiagGaussian; action_dim=5 for action_type=Categorical; action_dim=12 for controller=LaneWithContinuousSpeed
+  action_dim: 3 
   num_episodes: 10000000 # Maximum number of episodes over which to train
-  initial_lr_predator: 3e-4
-  initial_lr_prey: 9e-5
-  discount_factor: 0.99
-  gae_lambda: 0.95
-  ppo_epsilon: 0.2
-  value_scale: 0.5
-  entropy_scale: 0.01
-  # horizon: 128
-  num_epochs: 10
-  batch_size: 128
-  # num_envs: 16
+  
+  initial_lr_predator: 0.001
+  initial_lr_prey: 0.0005
+
+  critic_loss_weight: 0.5
+  entropy_loss_weight: 0.01
+  ent_discount_rate: 0.995
+  gamma: 0.99
+  clip_value: 0.2
+
+  batch_size: 64
+  num_train_epochs: 10
+
   save_interval: 50
   eval_interval: 50
-  activation: leaky_relu
+  
   # filter_arches: # A=421,108 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
   #   - [16, [32, 32], [4, 4]]
   #   - [32, [17, 17], [4, 4]]
@@ -48,11 +50,11 @@ model_para:
   #   - [64, [7, 7], [2, 2]] 
   #   - [128, [4,4], [2, 2]]
   # hidden_sizes: [64] # MLP layers 
-  filter_arches: # C=211,049 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
-    - [5, [12, 12], [4, 4]]
-    - [16, [6, 6], [4, 4]]
-    - [32, [3, 3], [2, 2]] 
-  hidden_sizes: [256] # MLP layers 
+  # filter_arches: # C=211,049 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
+  #   - [5, [12, 12], [4, 4]]
+  #   - [16, [6, 6], [4, 4]]
+  #   - [32, [3, 3], [2, 2]] 
+  # hidden_sizes: [256] # MLP layers 
 
 benchmark:
   base_path: "/home/kyber/workspaces/" # For use in local computer
