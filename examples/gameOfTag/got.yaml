@@ -11,7 +11,7 @@ env_para:
     - predator3
     - prey1
     - prey2
-  controller: Continuous
+  controller: Categorical
   scenarios: 
     - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
     # - /home/kyber/workspaces/SMARTS/scenarios/figure_eight

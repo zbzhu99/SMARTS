@@ -211,8 +211,42 @@ def action_adapter(controller):
             brake = (brake + 1)/2
             # steering = steering
             return np.array([throttle, brake, steering], dtype=np.float32)
-
         return action_adapter_continuous
+    
+    elif controller == "Categorical":
+        # For Categorical action space
+        def action_adapter_categorical(model_action):
+            # Modify action space limits 
+            if model_action == 0:
+                # Drive slowly
+                throttle = 0.3
+                brake = 0
+                steering = 0
+            elif model_action == 1:
+                # Accelerate
+                throttle = 0.8
+                brake = 0
+                steering = 0
+            elif model_action == 2:
+                # Turn left
+                throttle = 0.3
+                brake = 0
+                steering = -0.8
+            elif model_action == 3:
+                # Turn right
+                throttle = 0.3
+                brake = 0
+                steering = 0.8
+            elif model_action == 4:
+                # Brake
+                throttle = 0
+                brake = 0.8
+                steering = 0
+            else:
+                raise Exception("Unknown model action category.")
+            return np.array([throttle, brake, steering], dtype=np.float32)
+        return action_adapter_categorical
+
     else:
         raise Exception(f"Unknown controller type.")
 
