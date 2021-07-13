@@ -8,10 +8,8 @@ from datetime import datetime
 
 import tensorflow_probability as tfp
 
-tf.disable_v2_behavior()
 
-
-class Model(tf.keras.Model):
+class NeuralNetwork(tf.keras.Model):
     def __init__(self, num_actions):
         """
         Args:
@@ -48,17 +46,51 @@ class Model(tf.keras.Model):
         value = self.value(dense_value_out)
         return policy, value
 
-    def action_value(self, state):
-        action, value = self.predict(x=state, batch_size=32)
-        action_normal = tfp.distributions.Normal(loc=action, scale=0.3)
-        action_sample = tf.squeeze(action_normal.sample(1), axis=0)
-        return action_sample, value
+
+class PPO(object):
+    def __init__(self, name, config):
+        self.name = name
+        self.config = config
+        self.model = NeuralNetwork(config['model_para']['action_dim'])
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=config['model_para']['initial_lr_'+name])
+
+    def act(self, obs):
+        actions = {}
+        action_samples = {}
+        values = {}
+        for vehicle, state in obs.items():
+            if self.name in vehicle:
+                actions_t, values_t = self.model(np.expand_dims(state, axis=0))
+                actions_normal_t = tfp.distributions.Normal(loc=actions_t, scale=0.3)
+
+                actions[vehicle] = tf.squeeze(actions_t, axis=0)
+                action_samples[vehicle] = tf.squeeze(actions_normal_t.sample(1), axis=0)
+                values[vehicle] = tf.squeeze(values_t, axis=-1)
+        return actions, action_samples, values
 
         # # Get the log probability of taken actions
         # # log π(a_t | s_t; θ)
         # self.action_log_prob = tf.reduce_sum(
         #     self.action_normal.log_prob(taken_actions), axis=-1, keepdims=True
         # )
+
+    def save(self):
+        return self.model.save()
+
+    def restore(self):
+        return 
+
+def train_model(model, optimizer, action_inds, old_probs, states, advantages, discounted_rewards, ent_discount_val):
+    with tf.GradientTape() as tape:
+        values, policy_logits = model(tf.stack(states))
+        act_loss = actor_loss(advantages, old_probs, action_inds, policy_logits)
+        ent_loss = entropy_loss(policy_logits, ent_discount_val)
+        c_loss = critic_loss(discounted_rewards, values)
+        tot_loss = act_loss + ent_loss + c_loss
+    grads = tape.gradient(tot_loss, model.trainable_variables)
+    optimizer.apply_gradients(zip(grads, model.trainable_variables))
+    return tot_loss, c_loss, act_loss, ent_loss
+
 
 def critic_loss(discounted_rewards, value_est, critic_loss_weight):
     return tf.cast(tf.reduce_mean(tf.keras.losses.mean_squared_error(discounted_rewards, value_est)) * critic_loss_weight,

@@ -1,23 +1,3 @@
-# Copyright (C) 2020. Huawei Technologies Co., Ltd. All rights reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-
 import numpy as np
 import utils
 from examples.gameOfTag import model as got_model
@@ -31,35 +11,48 @@ class TagAgent:
             self.name = name
         else:
             raise Exception(f"Expected predator or prey, but got {name}.")
-        self.config = config
-        self.states = []
-        self.actions = []
-        self.values = []
-        self.rewards = []
-        self.dones = []
-        self.advantages = None
-        self.returns = None
-        self.last_value = None
+        self._config = config
+        self._states = []
+        self._actions = []
+        self._values = []
+        self._rewards = []
+        self._dones = []
+        self._probs = []
+        self._advantages = None
+        self._returns = None
+        self._last_value = None
+        self._gamma = config['model_para']['gamma']
 
     def reset(self):
-        self.states = []
-        self.actions = []
-        self.values = []
-        self.rewards = []
-        self.dones = []
-        self.advantages = None
-        self.returns = None
-        self.last_value = None
+        self._states = []
+        self._actions = []
+        self._values = []
+        self._rewards = []
+        self._dones = []
+        self._probs = []
+        self._advantages = None
+        self._returns = None
+        self._last_value = None
 
-    def add_trajectory(self, state, action, value, reward, done):
-        self.states.append(state)
-        self.actions.append(action)
-        self.values.append(value)
-        self.rewards.append(reward)
-        self.dones.append(done)
+    @property
+    def actions(self):
+        return self._actions
 
-    def store_last_value(self, last_value):
-        self.last_value = last_value
+    @property
+    def probs(self):
+        return self._probs
+
+    def add_trajectory(self, action, value, state, done, prob, reward):
+        self._states.append(state)
+        self._actions.append(action)
+        self._values.append(value)
+        self._probs.append(prob)
+        self._dones.append(done)
+        self._rewards.append(reward)
+
+    def add_last_transition(self, value):
+        self._last_value = value
+
 
     def compute_gae(self):
         advantages = utils.compute_gae(
@@ -81,3 +74,21 @@ class TagAgent:
             gamma=self.config["model_para"]["discount_factor"],
         )
         return returns
+
+    def compute_advantages(self):
+        discounted_rewards = np.array(self._rewards + [self._last_value])
+
+        for t in reversed(range(len(self._rewards))):
+            discounted_rewards[t] = self._rewards[t] + self._gamma * discounted_rewards[t+1] * (1-self._dones[t])
+
+        discounted_rewards = discounted_rewards[:-1]
+        # advantages are bootstrapped discounted rewards - values, using Bellman's equation
+        advantages = discounted_rewards - np.stack(self._values)[:, 0]
+        # standardise advantages
+        advantages -= np.mean(advantages)
+        advantages /= (np.std(advantages) + 1e-10)
+        # standardise rewards too
+        discounted_rewards -= np.mean(discounted_rewards)
+        discounted_rewards /= (np.std(discounted_rewards) + 1e-8)
+
+        return discounted_rewards, advantages

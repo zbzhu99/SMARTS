@@ -22,7 +22,6 @@ env_para:
 model_para:
   state_dim: [256, 256, 3]
   action_dim: 3 
-  num_episodes: 10000000 # Maximum number of episodes over which to train
   
   initial_lr_predator: 0.001
   initial_lr_prey: 0.0005
@@ -34,6 +33,7 @@ model_para:
   clip_value: 0.2
 
   batch_size: 64
+  max_batch: 100000000
   num_train_epochs: 10
 
   save_interval: 50

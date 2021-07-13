@@ -7,8 +7,10 @@ import yaml
 from examples.gameOfTag import env as got_env
 from examples.gameOfTag import evaluate
 from examples.gameOfTag import agent as got_agent
+from examples.gameOfTag import ppo as got_ppo
 from pathlib import Path
 
+import tensorflow as tf
 
 def main(config):
     # Save and eval interval
@@ -18,7 +20,7 @@ def main(config):
     # Traning parameters
     num_train_epochs = config["model_para"]["num_train_epochs"]
     batch_size = config["model_para"]["batch_size"]
-    num_episodes = config["model_para"]["num_episodes"]
+    max_batch = config["model_para"]["max_batch"]
 
     # Create env
     print("[INFO] Creating environments")
@@ -36,12 +38,12 @@ def main(config):
 
     # Create model
     print("[INFO] Creating model")
-    model_predator = got_agent.TagModel("predator", env, config, model_checkpoint=None)
-    model_prey = got_agent.TagModel("prey", env, config, model_checkpoint=None)
+    ppo_predator = got_ppo("predator", env, config, model_checkpoint=None)
+    ppo_prey = got_ppo("prey", env, config, model_checkpoint=None)
 
     def interrupt(*args):
-        model_predator.save()
-        model_prey.save()
+        ppo_predator.save()
+        ppo_prey.save()
         print("Interrupt key detected.")
         sys.exit(0)
 
@@ -49,69 +51,145 @@ def main(config):
     signal.signal(signal.SIGINT, interrupt)
 
     print("[INFO] Loop ...")
-    for episode in range(num_episodes):
-        states_t = env.reset()
+    states_t = env.reset()
+    episode = 0
+    steps_t = 0
+    for batch_num in range(max_batch):
         [agent.reset() for _, agent in all_agents.items()]
-        steps = 0
 
         print("[INFO] Data collection ...")
-        # Simulate for one episode
-        while True:
-            if steps % 100 == 0:
-                print(f"Seed: {seed}, Episode: {episode}, Steps: {steps}")
+        for _ in range(batch_size):
 
             # Predict and value action given state
             # π(a_t | s_t; θ_old)
             actions_t = {}
             values_t = {}
-            actions_t_predator, values_t_predator = model_predator.act(states_t)
-            actions_t_prey, values_t_prey = model_prey.act(states_t)
+            action_samples_t = {}
+            actions_t_predator, action_samples_t_predator, values_t_predator = ppo_predator.act(states_t)
+            actions_t_prey, action_samples_t_prey, values_t_prey = ppo_prey.act(states_t)
             actions_t.update(actions_t_predator)
             actions_t.update(actions_t_prey)
+            action_samples_t.update(action_samples_t_predator)
+            action_samples_t.update(action_samples_t_prey)
             values_t.update(values_t_predator)
             values_t.update(values_t_prey)
 
             # Sample action from a Gaussian distribution
-            next_states_t, rewards_t, dones_t, _ = env.step(actions_t)
+            action_numpy_t = {vehicle: action_sample_t.numpy() for vehicle, action_sample_t in action_samples_t.items()}
+            next_states_t, rewards_t, dones_t, _ = env.step(action_numpy_t)
+            steps_t += 1
 
             # Store state, action and reward
             for agent_id, _ in rewards_t.items():
                 all_agents[agent_id].add_trajectory(
-                    state=states_t[agent_id],
-                    action=actions_t[agent_id],
+                    action=action_samples_t[agent_id],
                     value=values_t[agent_id],
-                    reward=rewards_t[agent_id],
+                    state=states_t[agent_id],
                     done=int(dones_t[agent_id]),
+                    probs=actions_t[agent_id],
+                    reward=rewards[agent_id],
                 )
                 if dones_t[agent_id] == 1:
-                    # Calculate last values (bootstrap values)
-                    if "predator" in agent_id:
-                        _, next_values_t = model_predator.act(
-                            {agent_id: next_states_t[agent_id]}
-                        )
-                    elif "prey" in agent_id:
-                        _, next_values_t = model_prey.act(
-                            {agent_id: next_states_t[agent_id]}
-                        )
-                    else:
-                        raise Exception(f"Unknown {agent_id}.")
-                    # Store last values
-                    all_agents[agent_id].store_last_value(next_values_t[agent_id])
                     # Remove done agents
                     del next_states_t[agent_id]
                     # Print done agents
-                    print(f"Done: {agent_id}. Step: {steps}.")
+                    print(f"Done: {agent_id}. Step: {steps_t}.")
 
             # Break when episode completes
             if dones_t["__all__"]:
-                break
+                # Next episode    
+                next_states_t = env.reset()
+                episode += 1
+
+                episode_reward_predator = np.sum([np.sum(all_agents[agent_id].rewards) for agent_id in all_predators_id])
+                episode_reward_prey = np.sum([np.sum(all_agents[agent_id].rewards) for agent_id in all_preys_id])
+                
+                # Log
+                # if total_loss is not None:
+                    print(f"Episode: {episode}," 
+                        f"episode reward predator: {episode_reward_predator}, "
+                        f"episode reward prey: {episode_reward_prey}, "
+                #         f"total loss: {np.mean(total_loss)}," 
+                #         f"critic loss: {np.mean(c_loss)}, "
+                #         f"actor loss: {np.mean(act_loss)}, "
+                #         f"entropy loss {np.mean(ent_loss)}")
+                    )
+                with train_writer.as_default():
+                    tf.summary.scalar('episode_reward_predator', episode_reward_predator, episode)
+                    tf.summary.scalar('episode_reward_prey', episode_reward_prey, episode)
+
+                # Reset counters
+                steps_t = 0
 
             # Assign next_states to states
             states_t = next_states_t
-            steps += 1
 
-        # Compute generalised advantage
-        [agent.compute_gae() for _, agent in all_agents.items()]
+
+        # Store state, action and reward
+        for agent_id, done in dones_t.items():
+            if agent_id != "__all__" and done == 0:
+                # Calculate last values (bootstrap values)
+                if "predator" in agent_id:
+                    _, _, next_values_t = ppo_predator.act(
+                        {agent_id: next_states_t[agent_id]}
+                    )
+                elif "prey" in agent_id:
+                    _, _, next_values_t = ppo_prey.act(
+                        {agent_id: next_states_t[agent_id]}
+                    )
+                else:
+                    raise Exception(f"Unknown {agent_id}.")
+                # Store last values
+                all_agents[agent_id].add_last_transition(value=next_values_t[agent_id])
+
+        # Compute generalised advantages
+        for _, agent in all_agents.items():
+            agent.compute_advantages()
+            actions = tf.squeeze(tf.stack(agent.actions))
+            probs = tf.nn.softmax(tf.squeeze(tf.stack(agent.probs)))
+            action_inds = tf.stack([tf.range(0, actions.shape[0]), tf.cast(actions, tf.int32)], axis=1)
+
+
+        actions = tf.squeeze(tf.stack(actions))
+        probs = tf.nn.softmax(tf.squeeze(tf.stack(probs)))
+        action_inds = tf.stack([tf.range(0, actions.shape[0]), tf.cast(actions, tf.int32)], axis=1)
+
+        total_loss = np.zeros((num_train_epochs))
+        act_loss = np.zeros((num_train_epochs))
+        c_loss = np.zeros(((num_train_epochs)))
+        ent_loss = np.zeros((num_train_epochs))
+        for epoch in range(num_train_epochs):
+            loss_tuple = train_model(ppo_predator.model, ppo_predator.optimizer, action_inds, tf.gather_nd(probs, action_inds),
+                                    states, advantages, discounted_rewards, optimizer,
+                                    ent_discount_val)
+            total_loss[epoch] = loss_tuple[0]
+            c_loss[epoch] = loss_tuple[1]
+            act_loss[epoch] = loss_tuple[2]
+            ent_loss[epoch] = loss_tuple[3]
+        ent_discount_val *= ENT_DISCOUNT_RATE
+
+        total_loss = np.zeros((num_train_epochs))
+        act_loss = np.zeros((num_train_epochs))
+        c_loss = np.zeros(((num_train_epochs)))
+        ent_loss = np.zeros((num_train_epochs))
+        for epoch in range(num_train_epochs):
+            loss_tuple = train_model(ppo_prey.model, ppo_prey.optimizer, action_inds, tf.gather_nd(probs, action_inds),
+                                    states, advantages, discounted_rewards, optimizer,
+                                    ent_discount_val)
+            total_loss[epoch] = loss_tuple[0]
+            c_loss[epoch] = loss_tuple[1]
+            act_loss[epoch] = loss_tuple[2]
+            ent_loss[epoch] = loss_tuple[3]
+        ent_discount_val *= ENT_DISCOUNT_RATE
+
+
+
+        with train_writer.as_default():
+            tf.summary.scalar('tot_loss', np.mean(total_loss), step)
+            tf.summary.scalar('critic_loss', np.mean(c_loss), step)
+            tf.summary.scalar('actor_loss', np.mean(act_loss), step)
+            tf.summary.scalar('entropy_loss', np.mean(ent_loss), step)
+
 
         # Flatten arrays
         states_predator = []
@@ -244,83 +322,3 @@ if __name__ == "__main__":
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
     main(config=config)
-
-
-
-ent_discount_val = ENTROPY_LOSS_WEIGHT
-
-
-
-model = Model(num_actions)
-optimizer = keras.optimizers.Adam(learning_rate=LR)
-
-train_writer = tf.summary.create_file_writer(STORE_PATH + f"/PPO-CartPole_{dt.datetime.now().strftime('%d%m%Y%H%M')}")
-
-num_steps = 10000000
-episode_reward_sum = 0
-state = env.reset()
-episode = 1
-total_loss = None
-for step in range(num_steps):
-    rewards = []
-    actions = []
-    values = []
-    states = []
-    dones = []
-    probs = []
-    for _ in range(BATCH_SIZE):
-        _, policy_logits = model(state.reshape(1, -1))
-
-        action, value = model.action_value(state.reshape(1, -1))
-        new_state, reward, done, _ = env.step(action.numpy()[0])
-
-        actions.append(action)
-        values.append(value[0])
-        states.append(state)
-        dones.append(done)
-        probs.append(policy_logits)
-        episode_reward_sum += reward
-
-        state = new_state
-
-        if done:
-            rewards.append(0.0)
-            state = env.reset()
-            if total_loss is not None:
-                print(f"Episode: {episode}, latest episode reward: {episode_reward_sum}, "
-                      f"total loss: {np.mean(total_loss)}, critic loss: {np.mean(c_loss)}, "
-                      f"actor loss: {np.mean(act_loss)}, entropy loss {np.mean(ent_loss)}")
-            with train_writer.as_default():
-                tf.summary.scalar('rewards', episode_reward_sum, episode)
-            episode_reward_sum = 0
-
-            episode += 1
-        else:
-            rewards.append(reward)
-
-    _, next_value = model.action_value(state.reshape(1, -1))
-    discounted_rewards, advantages = get_advantages(rewards, dones, values, next_value[0])
-
-    actions = tf.squeeze(tf.stack(actions))
-    probs = tf.nn.softmax(tf.squeeze(tf.stack(probs)))
-    action_inds = tf.stack([tf.range(0, actions.shape[0]), tf.cast(actions, tf.int32)], axis=1)
-
-    total_loss = np.zeros((NUM_TRAIN_EPOCHS))
-    act_loss = np.zeros((NUM_TRAIN_EPOCHS))
-    c_loss = np.zeros(((NUM_TRAIN_EPOCHS)))
-    ent_loss = np.zeros((NUM_TRAIN_EPOCHS))
-    for epoch in range(NUM_TRAIN_EPOCHS):
-        loss_tuple = train_model(action_inds, tf.gather_nd(probs, action_inds),
-                                 states, advantages, discounted_rewards, optimizer,
-                                 ent_discount_val)
-        total_loss[epoch] = loss_tuple[0]
-        c_loss[epoch] = loss_tuple[1]
-        act_loss[epoch] = loss_tuple[2]
-        ent_loss[epoch] = loss_tuple[3]
-    ent_discount_val *= ENT_DISCOUNT_RATE
-
-    with train_writer.as_default():
-        tf.summary.scalar('tot_loss', np.mean(total_loss), step)
-        tf.summary.scalar('critic_loss', np.mean(c_loss), step)
-        tf.summary.scalar('actor_loss', np.mean(act_loss), step)
-        tf.summary.scalar('entropy_loss', np.mean(ent_loss), step)
