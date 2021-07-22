@@ -125,9 +125,11 @@ def main(config):
             states_t = next_states_t
 
 
-        # Store state, action and reward
+        # Compute and store last state value
         for agent_id, done in dones_t.items():
-            if agent_id != "__all__" and done == 0:
+            if agent_id == "__all__":
+                pass
+            if done == 0:
                 # Calculate last values (bootstrap values)
                 if "predator" in agent_id:
                     _, _, next_values_t = ppo_predator.act(
@@ -141,6 +143,12 @@ def main(config):
                     raise Exception(f"Unknown {agent_id}.")
                 # Store last values
                 all_agents[agent_id].add_last_transition(value=next_values_t[agent_id])
+            if done == 1:
+                # Store last values
+                all_agents[agent_id].add_last_transition(value=0)
+
+
+
 
         # Compute generalised advantages
         for _, agent in all_agents.items():
