@@ -1,6 +1,7 @@
 env_para:
   env_name: SMARTS
   headless: True
+  visdom: False
   neighborhood_radius: 80 # Radius (meter) for neighborhood vehicles
   rgb_wh: 110 # Height and width (meter) of RGB image in SMARTS observation
   max_episode_steps: 1800 # 3 minutes. Maximum steps per episode. When using ContinueEpisode wrapper, ensure: max_episode_steps > agent_para.agent_config.max_steps .
@@ -15,13 +16,10 @@ env_para:
   scenarios: 
     - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
     # - /home/kyber/workspaces/SMARTS/scenarios/figure_eight
-    # - /src/scenarios/cloverleaf
-    # - /src/scenarios/figure_eight
-
 
 model_para:
   state_dim: [256, 256, 3]
-  action_dim: 3 
+  action_dim: 5
   
   initial_lr_predator: 0.001
   initial_lr_prey: 0.0005
