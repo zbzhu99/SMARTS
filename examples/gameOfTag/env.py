@@ -112,6 +112,7 @@ class TagEnv(gym.Env):
             scenarios=config["env_para"]["scenarios"],
             agent_specs=agent_specs,
             headless=config["env_para"]["headless"],
+            visdom=config["env_para"]["visdom"],
             seed=seed,
         )
         # Wrap env with FrameStack to stack multiple observations
@@ -218,13 +219,13 @@ def action_adapter(controller):
         def action_adapter_categorical(model_action):
             # Modify action space limits 
             if model_action == 0:
-                # Drive slowly
-                throttle = 0.3
+                # Do nothing
+                throttle = 0
                 brake = 0
                 steering = 0
             elif model_action == 1:
                 # Accelerate
-                throttle = 0.8
+                throttle = 0.6
                 brake = 0
                 steering = 0
             elif model_action == 2:

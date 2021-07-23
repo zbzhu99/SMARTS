@@ -23,7 +23,7 @@ class NeuralNetwork(tf.keras.Model):
         self.dense1 = tf.keras.layers.Dense(units=128, activation=tf.keras.activations.relu)
         self.dense_value = tf.keras.layers.Dense(units=64, activation=tf.keras.activations.relu)
         self.dense_policy = tf.keras.layers.Dense(units=64, activation=tf.keras.activations.relu)
-        self.policy = tf.keras.layers.Dense(units=self.num_actions, activation=tf.keras.activations.tanh)
+        self.policy = tf.keras.layers.Dense(units=self.num_actions)
         self.value = tf.keras.layers.Dense(units=1, activation=None)
 
     def call(self, inputs):
