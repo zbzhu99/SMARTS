@@ -1,5 +1,5 @@
 import numpy as np
-import os
+from pathlib import Path
 import re
 import shutil
 import tensorflow as tf
@@ -51,8 +51,10 @@ class PPO(object):
     def __init__(self, name, config):
         self.name = name
         self.config = config
-        self.model = NeuralNetwork(config['model_para']['action_dim'])
+        self.model = NeuralNetwork(self.config['model_para']['action_dim'])
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=config['model_para']['initial_lr_'+name])
+        path = Path(self.config['model_para']['tensorboard']).joinpath(f"{name}_{datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')}")        
+        self.tb = tf.summary.create_file_writer(path)
 
     def act(self, obs):
         actions = {}
@@ -61,7 +63,7 @@ class PPO(object):
         for vehicle, state in obs.items():
             if self.name in vehicle:
                 actions_t, values_t = self.model(np.expand_dims(state, axis=0))
-                actions_normal_t = tfp.distributions.Normal(loc=actions_t, scale=0.3)
+                actions_normal_t = tfp.distributions.Categorical(logits=actions_t)
 
                 actions[vehicle] = tf.squeeze(actions_t, axis=0)
                 action_samples[vehicle] = tf.squeeze(actions_normal_t.sample(1), axis=0)
@@ -106,6 +108,11 @@ self.entropy_loss = (
     tf.reduce_mean(tf.reduce_sum(self.policy.action_normal.entropy(), axis=-1)) * entropy_scale
 )
     
+
+
+
+
+
 
 class PPO:
     """

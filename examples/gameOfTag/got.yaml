@@ -37,6 +37,9 @@ model_para:
   save_interval: 50
   eval_interval: 50
   
+  tensorboard: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/results/"
+
+
   # filter_arches: # A=421,108 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
   #   - [16, [32, 32], [4, 4]]
   #   - [32, [17, 17], [4, 4]]
@@ -54,8 +57,8 @@ model_para:
   #   - [32, [3, 3], [2, 2]] 
   # hidden_sizes: [256] # MLP layers 
 
-benchmark:
-  base_path: "/home/kyber/workspaces/" # For use in local computer
+# benchmark:
+#   tensorboard: "/home/kyber/workspaces/" # For use in local computer
   # base_path: "/" # For use in server
   # checkpoint_predator: /got/models/predator/
   # checkpoint_prey: /got/models/prey/

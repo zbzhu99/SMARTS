@@ -41,7 +41,7 @@ class TagEnv(gym.Env):
                 width=256, height=256, resolution=self.rgb_wh / 256
             ),
             vehicle_color="blue",
-            action=getattr(smarts_controllers.ActionSpaceType, self.controller),
+            action=getattr(smarts_controllers.ActionSpaceType, "Continuous"),
             done_criteria=smarts_agent_interface.DoneCriteria(
                 collision=False,
                 off_road=True,
@@ -68,7 +68,7 @@ class TagEnv(gym.Env):
                 width=256, height=256, resolution=self.rgb_wh / 256
             ),
             vehicle_color="white",
-            action=getattr(smarts_controllers.ActionSpaceType, self.controller),
+            action=getattr(smarts_controllers.ActionSpaceType, "Continuous"),
             done_criteria=smarts_agent_interface.DoneCriteria(
                 collision=True,
                 off_road=True,
@@ -93,7 +93,7 @@ class TagEnv(gym.Env):
                 agent_builder=got_agent.TagAgent,
                 observation_adapter=observation_adapter,
                 reward_adapter=predator_reward_adapter,
-                action_adapter=action_adapter(config["env_para"]["controller"]),
+                action_adapter=action_adapter(self.controller),
                 info_adapter=info_adapter,
             )
             if "predator" in agent_id
@@ -102,7 +102,7 @@ class TagEnv(gym.Env):
                 agent_builder=got_agent.TagAgent,
                 observation_adapter=observation_adapter,
                 reward_adapter=prey_reward_adapter,
-                action_adapter=action_adapter(config["env_para"]["controller"]),
+                action_adapter=action_adapter(self.controller),
                 info_adapter=info_adapter,
             )
             for agent_id in config["env_para"]["agent_ids"]

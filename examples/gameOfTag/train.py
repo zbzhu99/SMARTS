@@ -57,14 +57,13 @@ def main(config):
     for batch_num in range(max_batch):
         [agent.reset() for _, agent in all_agents.items()]
 
-        print("[INFO] Data collection ...")
+        print("[INFO] New batch data collection ...")
         for _ in range(batch_size):
 
             # Predict and value action given state
-            # π(a_t | s_t; θ_old)
             actions_t = {}
-            values_t = {}
             action_samples_t = {}
+            values_t = {}
             actions_t_predator, action_samples_t_predator, values_t_predator = ppo_predator.act(states_t)
             actions_t_prey, action_samples_t_prey, values_t_prey = ppo_prey.act(states_t)
             actions_t.update(actions_t_predator)
