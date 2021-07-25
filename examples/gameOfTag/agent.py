@@ -12,15 +12,7 @@ class TagAgent:
         else:
             raise Exception(f"Expected predator or prey, but got {name}.")
         self._config = config
-        self._states = []
-        self._actions = []
-        self._values = []
-        self._rewards = []
-        self._dones = []
-        self._probs = []
-        self._advantages = None
-        self._returns = None
-        self._last_value = None
+        self.reset()
         self._gamma = config['model_para']['gamma']
 
     def reset(self):

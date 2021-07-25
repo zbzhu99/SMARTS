@@ -24,7 +24,7 @@ class NeuralNetwork(tf.keras.Model):
         self.dense_value = tf.keras.layers.Dense(units=64, activation=tf.keras.activations.relu)
         self.dense_policy = tf.keras.layers.Dense(units=64, activation=tf.keras.activations.relu)
         self.policy = tf.keras.layers.Dense(units=self.num_actions)
-        self.value = tf.keras.layers.Dense(units=1, activation=None)
+        self.value = tf.keras.layers.Dense(units=1)
 
     def call(self, inputs):
         """
@@ -53,6 +53,7 @@ class PPO(object):
         self.config = config
         self.model = NeuralNetwork(self.config['model_para']['action_dim'])
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=config['model_para']['initial_lr_'+name])
+        self.model_path = Path(self.config['model_para']['model_path']).joinpath(f"{name}_{datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')}")
         path = Path(self.config['model_para']['tensorboard']).joinpath(f"{name}_{datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')}")        
         self.tb = tf.summary.create_file_writer(path)
 
@@ -63,29 +64,23 @@ class PPO(object):
         for vehicle, state in obs.items():
             if self.name in vehicle:
                 actions_t, values_t = self.model(np.expand_dims(state, axis=0))
-                actions_normal_t = tfp.distributions.Categorical(logits=actions_t)
+                actions_dist_t = tfp.distributions.Categorical(logits=actions_t)
 
                 actions[vehicle] = tf.squeeze(actions_t, axis=0)
-                action_samples[vehicle] = tf.squeeze(actions_normal_t.sample(1), axis=0)
+                action_samples[vehicle] = tf.squeeze(actions_dist_t.sample(1), axis=0)
                 values[vehicle] = tf.squeeze(values_t, axis=-1)
         return actions, action_samples, values
 
-        # # Get the log probability of taken actions
-        # # log π(a_t | s_t; θ)
-        # self.action_log_prob = tf.reduce_sum(
-        #     self.action_normal.log_prob(taken_actions), axis=-1, keepdims=True
-        # )
-
     def save(self):
-        return self.model.save()
+        return self.model.save(self.model_path)
 
     def restore(self):
         return 
 
-def train_model(model, optimizer, action_inds, old_probs, states, advantages, discounted_rewards, ent_discount_val):
+def train_model(self, model, optimizer, action_inds, old_probs, states, advantages, discounted_rewards, ent_discount_val, clip_value):
     with tf.GradientTape() as tape:
-        values, policy_logits = model(tf.stack(states))
-        act_loss = actor_loss(advantages, old_probs, action_inds, policy_logits)
+        policy_logits, values = model(tf.stack(states))
+        act_loss = actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value)
         ent_loss = entropy_loss(policy_logits, ent_discount_val)
         c_loss = critic_loss(discounted_rewards, values)
         tot_loss = act_loss + ent_loss + c_loss
@@ -93,22 +88,26 @@ def train_model(model, optimizer, action_inds, old_probs, states, advantages, di
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
     return tot_loss, c_loss, act_loss, ent_loss
 
+def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
+    probs = tf.nn.softmax(policy_logits)
+    new_probs = tf.gather_nd(probs, action_inds)
 
-def critic_loss(discounted_rewards, value_est, critic_loss_weight):
-    return tf.cast(tf.reduce_mean(tf.keras.losses.mean_squared_error(discounted_rewards, value_est)) * critic_loss_weight,
-                   tf.float32)
+    ratio = new_probs / old_probs
+
+    policy_loss = -tf.reduce_mean(tf.math.minimum(
+        ratio * advantages,
+        tf.clip_by_value(ratio, 1.0 - clip_value, 1.0 + clip_value) * advantages
+    ))
+    return policy_loss
 
 def entropy_loss(policy_logits, ent_discount_val):
     probs = tf.nn.softmax(policy_logits)
     entropy_loss = -tf.reduce_mean(tf.keras.losses.categorical_crossentropy(probs, probs))
     return entropy_loss * ent_discount_val
 
-# Entropy loss
-self.entropy_loss = (
-    tf.reduce_mean(tf.reduce_sum(self.policy.action_normal.entropy(), axis=-1)) * entropy_scale
-)
-    
-
+def critic_loss(discounted_rewards, value_est):
+    return tf.cast(tf.reduce_mean(tf.keras.losses.mean_squared_error(discounted_rewards, value_est)) * CRITIC_LOSS_WEIGHT,
+                tf.float32)
 
 
 
