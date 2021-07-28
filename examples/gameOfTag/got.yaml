@@ -38,7 +38,7 @@ model_para:
   eval_interval: 50
   
   tensorboard: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
-  model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
+  model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/1/"
 
   # filter_arches: # A=421,108 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
   #   - [16, [32, 32], [4, 4]]

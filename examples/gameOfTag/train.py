@@ -157,162 +157,84 @@ def main(config):
         for _, agent in all_agents.items():
             agent.compute_advantages()
             actions = tf.squeeze(tf.stack(agent.actions))
-            probs = tf.nn.softmax(tf.squeeze(tf.stack(agent.probs)))
+            probs_softmax = tf.nn.softmax(tf.squeeze(tf.stack(agent.probs)))
+            agent.probs_softmax = probs_softmax
             action_inds = tf.stack([tf.range(0, actions.shape[0]), tf.cast(actions, tf.int32)], axis=1)
+            agent.action_inds = action_inds
 
+        predator_total_loss = np.zeros((num_train_epochs))
+        predator_actor_loss = np.zeros((num_train_epochs))
+        predator_critic_loss = np.zeros(((num_train_epochs)))
+        predator_entropy_loss = np.zeros((num_train_epochs))
 
-        total_loss = np.zeros((num_train_epochs))
-        act_loss = np.zeros((num_train_epochs))
-        c_loss = np.zeros(((num_train_epochs)))
-        ent_loss = np.zeros((num_train_epochs))
+        prey_total_loss = np.zeros((num_train_epochs))
+        prey_actor_loss = np.zeros((num_train_epochs))
+        prey_critic_loss = np.zeros(((num_train_epochs)))
+        prey_entropy_loss = np.zeros((num_train_epochs))
+
+        # Train predator
         for epoch in range(num_train_epochs):
-            loss_tuple = got_ppo.train_model(ppo_predator.model, ppo_predator.optimizer, action_inds, tf.gather_nd(probs, action_inds),
-                                    states, advantages, discounted_rewards, optimizer,
-                                    ent_discount_val, clip_value, critic_loss_weight)
-            total_loss[epoch] = loss_tuple[0]
-            c_loss[epoch] = loss_tuple[1]
-            act_loss[epoch] = loss_tuple[2]
-            ent_loss[epoch] = loss_tuple[3]
+            for agent_id, agent in all_agents:
+                if agent_id in all_predators_id:
+                    loss_tuple = got_ppo.train_model(ppo_predator.model, ppo_predator.optimizer, 
+                        agent.action_inds, tf.gather_nd(agent.probs, agent.action_inds),
+                        agent.states, agent.advantages, agent.discounted_rewards,
+                        ent_discount_val, clip_value, critic_loss_weight)
+                    predator_total_loss[epoch] += loss_tuple[0]
+                    predator_critic_loss[epoch] += loss_tuple[1]
+                    predator_actor_loss[epoch] += loss_tuple[2]
+                    predator_entropy_loss[epoch] += loss_tuple[3]
 
-        for epoch in range(num_train_epochs):
-            loss_tuple = got_ppo.train_model(ppo_prey.model, ppo_prey.optimizer, action_inds, tf.gather_nd(probs, action_inds),
-                                    states, advantages, discounted_rewards, optimizer,
-                                    ent_discount_val, clip_value, critic_loss_weight)
-            total_loss[epoch] = loss_tuple[0]
-            c_loss[epoch] = loss_tuple[1]
-            act_loss[epoch] = loss_tuple[2]
-            ent_loss[epoch] = loss_tuple[3]
+                if agent_id in all_preys_id:
+                    loss_tuple = got_ppo.train_model(ppo_predator.model, ppo_predator.optimizer, 
+                        agent.action_inds, tf.gather_nd(agent.probs, agent.action_inds),
+                        agent.states, agent.advantages, agent.discounted_rewards,
+                        ent_discount_val, clip_value, critic_loss_weight)
+                    prey_total_loss[epoch] += loss_tuple[0]
+                    prey_critic_loss[epoch] += loss_tuple[1]
+                    prey_actor_loss[epoch] += loss_tuple[2]
+                    prey_entropy_loss[epoch] += loss_tuple[3]
     
         ent_discount_val *= ent_discount_rate
 
+        # Elapsed steps
+        step = batch_num*batch_size
 
-        with train_writer.as_default():
-            tf.summary.scalar('tot_loss', np.mean(total_loss), step)
-            tf.summary.scalar('critic_loss', np.mean(c_loss), step)
-            tf.summary.scalar('actor_loss', np.mean(act_loss), step)
-            tf.summary.scalar('entropy_loss', np.mean(ent_loss), step)
+        # Record predator performance
+        records = []
+        records.append(('predator_tot_loss', np.mean(predator_total_loss), step))
+        records.append(('predator_critic_loss', np.mean(predator_critic_loss), step))
+        records.append(('predator_actor_loss', np.mean(predator_actor_loss), step))
+        records.append(('predator_entropy_loss', np.mean(predator_entropy_loss), step))
+        ppo_predator.write_to_tb(records)
 
+        # Record prey perfromance
+        records = []
+        records.append(('prey_tot_loss', np.mean(prey_total_loss), step))
+        records.append(('prey_critic_loss', np.mean(prey_critic_loss), step))
+        records.append(('prey_actor_loss', np.mean(prey_actor_loss), step))
+        records.append(('prey_entropy_loss', np.mean(prey_entropy_loss), step))
+        ppo_prey.write_to_tb(records)
 
+        # # Evaluate model
+        # if episode % eval_interval == 0:
+        #     print("[INFO] Running evaluation...")
+        #     (
+        #         avg_reward_predator,
+        #         avg_reward_prey,
+        #         value_error_predator,
+        #         value_error_prey,
+        #     ) = evaluate.evaluate(model_predator, model_prey, config)
+        #     model_predator.write_to_summary("eval_avg_reward", avg_reward_predator)
+        #     model_predator.write_to_summary("eval_value_error", value_error_predator)
+        #     model_prey.write_to_summary("eval_avg_reward", avg_reward_prey)
+        #     model_prey.write_to_summary("eval_value_error", value_error_prey)
 
-
-
-        # Flatten arrays
-        states_predator = []
-        actions_predator = []
-        returns_predator = []
-        advantages_predator = []
-        for agent_id in all_predators_id:
-            states_predator.extend(all_agents[agent_id].states)
-            actions_predator.extend(all_agents[agent_id].actions)
-            returns_predator.extend(all_agents[agent_id].returns)
-            advantages_predator.extend(all_agents[agent_id].advantages)
-        states_predator = np.array(states_predator)
-        actions_predator = np.array(actions_predator)
-        returns_predator = np.array(returns_predator).flatten()
-        advantages_predator = np.array(advantages_predator).flatten()
-
-        states_prey = []
-        actions_prey = []
-        returns_prey = []
-        advantages_prey = []
-        for agent_id in all_preys_id:
-            states_prey.extend(all_agents[agent_id].states)
-            actions_prey.extend(all_agents[agent_id].actions)
-            returns_prey.extend(all_agents[agent_id].returns)
-            advantages_prey.extend(all_agents[agent_id].advantages)
-        states_prey = np.array(states_prey)
-        actions_prey = np.array(actions_prey)
-        returns_prey = np.array(returns_prey).flatten()
-        advantages_prey = np.array(advantages_prey).flatten()
-
-        # print("----------shapes--------------------")
-        # print("states_predator.shape: ",states_predator.shape)
-        # print("states_prey.shape: ",states_prey.shape)
-        # print("actions_predator.shape: ",actions_predator.shape)
-        # print("actions_prey.shape: ",actions_prey.shape)
-        # print("returns_predator.shape: ",returns_predator.shape)
-        # print("returns_prey.shape: ",returns_prey.shape)
-        # print("advantages_predator.shape: ",advantages_predator.shape)
-        # print("advantages_prey.shape: ",advantages_prey.shape)
-
-        # Verify shapes
-        # actions_prey_check = [np.array(all_agents[agent_id].actions) for agent_id in all_preys_id]
-        # T = actions_prey_check[0].shape[0] + actions_prey_check[1].shape[0]
-        # N = 1
-        # print(f"T: {T}")
-        # assert states_prey.shape == (T * N, *input_shape)
-        # assert actions_prey.shape == (T * N, num_actions)
-        # assert returns_prey.shape == (T * N,)
-        # assert advantages_prey.shape == (T * N,)
-
-        # Train for some number of epochs
-        model_predator.update_old_policy()  # θ_old <- θ
-        model_prey.update_old_policy()  # θ_old <- θ
-
-        print("[INFO] Training ...")
-        # Train predator
-        for _ in range(num_epochs):
-            num_samples = len(states_predator)
-            indices = np.arange(num_samples)
-            np.random.shuffle(indices)
-            for i in range(int(np.ceil(num_samples / batch_size))):
-                # Sample mini-batch randomly
-                begin = i * batch_size
-                end = begin + batch_size
-                if end > num_samples:
-                    end = None
-                mb_idx = indices[begin:end]
-
-                # Optimize network
-                model_predator.train(
-                    states_predator[mb_idx],
-                    actions_predator[mb_idx],
-                    returns_predator[mb_idx],
-                    advantages_predator[mb_idx],
-                    learning_rate=config["model_para"]["initial_lr_predator"],
-                )
-
-        # Train prey
-        for _ in range(num_epochs):
-            num_samples = len(states_prey)
-            indices = np.arange(num_samples)
-            np.random.shuffle(indices)
-            for i in range(int(np.ceil(num_samples / batch_size))):
-                # Sample mini-batch randomly
-                begin = i * batch_size
-                end = begin + batch_size
-                if end > num_samples:
-                    end = None
-                mb_idx = indices[begin:end]
-
-                # Optimize network
-                model_prey.train(
-                    states_prey[mb_idx],
-                    actions_prey[mb_idx],
-                    returns_prey[mb_idx],
-                    advantages_prey[mb_idx],
-                    learning_rate=config["model_para"]["initial_lr_prey"],
-                )
-
-        # Evaluate model
-        if episode % eval_interval == 0:
-            print("[INFO] Running evaluation...")
-            (
-                avg_reward_predator,
-                avg_reward_prey,
-                value_error_predator,
-                value_error_prey,
-            ) = evaluate.evaluate(model_predator, model_prey, config)
-            model_predator.write_to_summary("eval_avg_reward", avg_reward_predator)
-            model_predator.write_to_summary("eval_value_error", value_error_predator)
-            model_prey.write_to_summary("eval_avg_reward", avg_reward_prey)
-            model_prey.write_to_summary("eval_value_error", value_error_prey)
-
-        # Save model
-        if episode % save_interval == 0:
-            print("[INFO] Saving model...")
-            model_predator.save()
-            model_prey.save()
+        # # Save model
+        # if episode % save_interval == 0:
+        #     print("[INFO] Saving model...")
+        #     model_predator.save()
+        #     model_prey.save()
 
     # Close env
     env.close()

@@ -72,17 +72,26 @@ class PPO(object):
         return actions, action_samples, values
 
     def save(self):
-        return self.model.save(self.model_path)
+        tf.saved_model.save(self.model, self.model_path)
+
+    def load(self):
+        self.model = tf.saved_model.load(self.model_path)
 
     def restore(self):
         return 
 
-def train_model(self, model, optimizer, action_inds, old_probs, states, advantages, discounted_rewards, ent_discount_val, clip_value):
+    def write_to_tb(self, records): 
+        with self.tb.as_default():
+            for name, value, step in records:
+                tf.summary.scalar(name, value, step)
+
+
+def train_model(model, optimizer, action_inds, old_probs, states, advantages, discounted_rewards, ent_discount_val, clip_value, critic_loss_weight):
     with tf.GradientTape() as tape:
         policy_logits, values = model(tf.stack(states))
         act_loss = actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value)
         ent_loss = entropy_loss(policy_logits, ent_discount_val)
-        c_loss = critic_loss(discounted_rewards, values)
+        c_loss = critic_loss(discounted_rewards, values, critic_loss_weight)
         tot_loss = act_loss + ent_loss + c_loss
     grads = tape.gradient(tot_loss, model.trainable_variables)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
@@ -105,8 +114,8 @@ def entropy_loss(policy_logits, ent_discount_val):
     entropy_loss = -tf.reduce_mean(tf.keras.losses.categorical_crossentropy(probs, probs))
     return entropy_loss * ent_discount_val
 
-def critic_loss(discounted_rewards, value_est):
-    return tf.cast(tf.reduce_mean(tf.keras.losses.mean_squared_error(discounted_rewards, value_est)) * CRITIC_LOSS_WEIGHT,
+def critic_loss(discounted_rewards, value_est, critic_loss_weight):
+    return tf.cast(tf.reduce_mean(tf.keras.losses.mean_squared_error(discounted_rewards, value_est)) * critic_loss_weight,
                 tf.float32)
 
 

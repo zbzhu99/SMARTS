@@ -1,5 +1,4 @@
 import numpy as np
-import utils
 from examples.gameOfTag import model as got_model
 from typing import Sequence, Union
 
@@ -22,9 +21,24 @@ class TagAgent:
         self._rewards = []
         self._dones = []
         self._probs = []
+        self._discounted_rewards = None
         self._advantages = None
         self._returns = None
         self._last_value = None
+        self._probs_softmax = None
+        self._action_inds = None
+
+    @property
+    def states(self):
+        return self._states
+
+    @property
+    def advantages(self):
+        return self._advantages    
+
+    @property
+    def discounted_rewards(self):
+        return self._discounted_rewards
 
     @property
     def actions(self):
@@ -33,6 +47,22 @@ class TagAgent:
     @property
     def probs(self):
         return self._probs
+
+    @property
+    def probs_softmax(self):
+        return self._probs_softmax
+
+    @probs_softmax.setter
+    def probs_softmax(self, x):
+ 	    self._probs_softmax = x
+
+    @property
+    def action_inds(self):
+        return self._action_inds
+
+    @probs_softmax.setter
+    def action_inds(self, x):
+ 	    self._action_inds = x
 
     def add_trajectory(self, action, value, state, done, prob, reward):
         self._states.append(state)
@@ -44,28 +74,6 @@ class TagAgent:
 
     def add_last_transition(self, value):
         self._last_value = value
-
-
-    def compute_gae(self):
-        advantages = utils.compute_gae(
-            rewards=self.rewards,
-            values=self.values,
-            bootstrap_values=self.last_value,
-            terminals=self.dones,
-            gamma=self.config["model_para"]["discount_factor"],
-            lam=self.config["model_para"]["gae_lambda"],
-        )
-        self.advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
-        self.returns = advantages + self.values
-
-    def compute_returns(self):
-        returns = utils.compute_returns(
-            rewards=np.transpose([self.rewards], [1, 0]),
-            bootstrap_value=[0],
-            terminals=np.transpose([self.dones], [1, 0]),
-            gamma=self.config["model_para"]["discount_factor"],
-        )
-        return returns
 
     def compute_advantages(self):
         discounted_rewards = np.array(self._rewards + [self._last_value])
@@ -83,4 +91,5 @@ class TagAgent:
         discounted_rewards -= np.mean(discounted_rewards)
         discounted_rewards /= (np.std(discounted_rewards) + 1e-8)
 
-        return discounted_rewards, advantages
+        self._discounted_rewards = discounted_rewards
+        self._advantages = advantages
