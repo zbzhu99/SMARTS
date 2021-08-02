@@ -15,7 +15,7 @@ class NeuralNetwork(tf.keras.Model):
         Args:
             num_actions (int): Number of continuous actions to output
         """
-        super().__init__()
+        super(NeuralNetwork, self).__init__()
         self.num_actions = num_actions
         self.conv1 = tf.keras.layers.Conv2D(filters=16, kernel_size=32, strides=(4,4), padding='valid', activation=tf.keras.activations.relu)
         self.conv2 = tf.keras.layers.Conv2D(filters=32, kernel_size=17, strides=(4,4), padding='valid', activation=tf.keras.activations.relu)

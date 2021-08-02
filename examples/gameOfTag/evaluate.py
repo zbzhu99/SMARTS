@@ -2,17 +2,20 @@ import numpy as np
 import os
 import tensorflow as tf
 import yaml
+
 from examples.gameOfTag import agent as got_agent
 from examples.gameOfTag import env as got_env
 from pathlib import Path
 
 
-def evaluate(model_predator, model_prey, config):
-    total_reward = 0
-
+def evaluate(ppo_predator, ppo_prey, config):
     # Create env
+    print("[INFO] Creating environments")
     seed = 42
     env = got_env.TagEnv(config, seed)
+
+    # Create agent
+    print("[INFO] Creating agents")
     all_agents = {
         name: got_agent.TagAgent(name, config)
         for name in config["env_para"]["agent_ids"]
@@ -20,38 +23,49 @@ def evaluate(model_predator, model_prey, config):
     all_predators_id = env.predators
     all_preys_id = env.preys
 
+    print("[INFO] Loop ...")
     states_t = env.reset()
-    steps = 0
+    episode = 0
+    steps_t = 0
+    episode_reward_predator = 0 
+    episode_reward_prey = 0
+    [agent.reset() for _, agent in all_agents.items()]
     while True:
-        if steps % 100 == 0:
-            print(f"Evaluation. Seed: {seed}, Steps: {steps}")
+        if steps_t % 100 == 0:
+            print(f"Evaluation. Seed: {seed}, Steps: {steps_t}")
 
-        # Predict action given state: π(a_t | s_t; θ)
+        # Predict and value action given state
         actions_t = {}
+        action_samples_t = {}
         values_t = {}
-        actions_t_predator, values_t_predator = model_predator.act(states_t)
-        actions_t_prey, values_t_prey = model_prey.act(states_t)
+        actions_t_predator, action_samples_t_predator, values_t_predator = ppo_predator.act(states_t)
+        actions_t_prey, action_samples_t_prey, values_t_prey = ppo_prey.act(states_t)
         actions_t.update(actions_t_predator)
         actions_t.update(actions_t_prey)
+        action_samples_t.update(action_samples_t_predator)
+        action_samples_t.update(action_samples_t_prey)
         values_t.update(values_t_predator)
         values_t.update(values_t_prey)
 
-        next_states_t, rewards_t, dones_t, _ = env.step(actions_t)
+        # Sample action from a distribution
+        action_numpy_t = {vehicle: action_sample_t.numpy() for vehicle, action_sample_t in action_samples_t.items()}
+        next_states_t, rewards_t, dones_t, _ = env.step(action_numpy_t)
+        steps_t += 1
 
         # Store state, action and reward
-        for agent_id, _ in rewards_t.items():
+        for agent_id, reward in rewards_t.items():
             all_agents[agent_id].add_trajectory(
-                state=states_t[agent_id],
-                action=actions_t[agent_id],
-                value=values_t[agent_id],
-                reward=rewards_t[agent_id],
-                done=int(dones_t[agent_id]),
+                reward=reward,
             )
+            if "predator" in agent_id.name:
+                episode_reward_predator += reward 
+            else:
+                episode_reward_prey += reward   
             if dones_t[agent_id] == 1:
                 # Remove done agents
                 del next_states_t[agent_id]
                 # Print done agents
-                print(f"Done: {agent_id}. Step: {steps}.")
+                print(f"Done: {agent_id}. Step: {steps_t}.")
 
         # Break when episode completes
         if dones_t["__all__"]:
@@ -59,49 +73,19 @@ def evaluate(model_predator, model_prey, config):
 
         # Assign next_states to states
         states_t = next_states_t
-        steps += 1
+
 
     # Close env
     env.close()
 
-    total_reward = [
-        np.sum(all_agents[agent_id].rewards) for agent_id in all_predators_id
-    ]
-    total_reward_predator = np.sum(total_reward)
-    total_reward = [np.sum(all_agents[agent_id].rewards) for agent_id in all_preys_id]
-    total_reward_prey = np.sum(total_reward)
-
-    value_errors = [
-        value_error(
-            np.array(all_agents[agent_id].values),
-            all_agents[agent_id].compute_returns(),
-        )
-        for agent_id in all_predators_id
-    ]
-    value_error_predator = np.mean(value_errors)
-    value_errors = [
-        value_error(
-            np.array(all_agents[agent_id].values),
-            all_agents[agent_id].compute_returns(),
-        )
-        for agent_id in all_preys_id
-    ]
-    value_error_prey = np.mean(value_errors)
-
     return (
-        total_reward_predator,
-        total_reward_prey,
-        value_error_predator,
-        value_error_prey,
+        episode_reward_predator,
+        episode_reward_prey,
     )
 
 
-def value_error(values, returns):
-    return np.mean(np.square(values - returns))
-
-
 if __name__ == "__main__":
-    config_yaml = (Path(__file__).absolute().parent).joinpath("smarts.yaml")
+    config_yaml = (Path(__file__).absolute().parent).joinpath("got.yaml")
     with open(config_yaml, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
@@ -109,9 +93,6 @@ if __name__ == "__main__":
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
     tf.random.set_seed(42)
     np.random.seed(42)
-
-    # Create env
-    env = got_env.TagEnv(config, 42)
 
     # Load saved models
     if "checkpoint_predator" not in config["benchmark"]:
@@ -132,9 +113,6 @@ if __name__ == "__main__":
     model_prey = got_agent.TagModel(
         "prey", env, config, model_checkpoint=model_checkpoint_prey
     )
-
-    # Close env
-    env.close()
 
     # Evaluate
     (

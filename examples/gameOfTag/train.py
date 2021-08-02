@@ -216,19 +216,17 @@ def main(config):
         records.append(('prey_entropy_loss', np.mean(prey_entropy_loss), step))
         ppo_prey.write_to_tb(records)
 
-        # # Evaluate model
-        # if episode % eval_interval == 0:
-        #     print("[INFO] Running evaluation...")
-        #     (
-        #         avg_reward_predator,
-        #         avg_reward_prey,
-        #         value_error_predator,
-        #         value_error_prey,
-        #     ) = evaluate.evaluate(model_predator, model_prey, config)
-        #     model_predator.write_to_summary("eval_avg_reward", avg_reward_predator)
-        #     model_predator.write_to_summary("eval_value_error", value_error_predator)
-        #     model_prey.write_to_summary("eval_avg_reward", avg_reward_prey)
-        #     model_prey.write_to_summary("eval_value_error", value_error_prey)
+        # Evaluate model
+        if batch_num % eval_interval == 0:
+            print("[INFO] Running evaluation...")
+            (
+                avg_reward_predator,
+                avg_reward_prey,
+            ) = evaluate.evaluate(ppo_predator, ppo_prey, config)
+            model_predator.write_to_summary("eval_avg_reward", avg_reward_predator)
+            model_predator.write_to_summary("eval_value_error", value_error_predator)
+            model_prey.write_to_summary("eval_avg_reward", avg_reward_prey)
+            model_prey.write_to_summary("eval_value_error", value_error_prey)
 
         # # Save model
         # if episode % save_interval == 0:
@@ -247,5 +245,11 @@ if __name__ == "__main__":
 
     # Silence the logs of TF
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
+    # Check for GPU device
+    device_name = tf.test.gpu_device_name()
+    if device_name != '/device:GPU:0':
+        print("Not configured to use GPU or GPU not available.")
+        # raise SystemError('GPU device not found')
 
     main(config=config)
