@@ -48,7 +48,7 @@ setup(
         "matplotlib",
         "scikit-image",
         # The following are for /smarts/zoo
-        "grpcio==1.37.0",
+        "grpcio==1.32.0",
         "PyYAML",
         "twisted",
         # The following are used for imitation learning
@@ -64,10 +64,10 @@ setup(
             "pytest-notebook",
             "pytest-xdist",
             "ray[rllib]==1.0.1.post1",  # We use Ray for our multiprocessing needs
-            "tensorflow==2.2.1",  # For rllib tests
+            "tensorflow==2.4.0",  # For rllib tests
         ],
         "train": [
-            "tensorflow==2.2.1",
+            "tensorflow==2.4.0",
             # XXX: TF requires specific version of scipy
             "scipy==1.4.1",
             "torch==1.4.0",
@@ -76,7 +76,7 @@ setup(
         ],
         "dev": [
             "black==20.8b1",
-            "grpcio-tools==1.37.0",
+            "grpcio-tools==1.32.0",
             "isort==5.7.0",
             "sphinx",
             "sphinx-rtd-theme",
