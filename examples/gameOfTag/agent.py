@@ -1,6 +1,4 @@
 import numpy as np
-from examples.gameOfTag import model as got_model
-from typing import Sequence, Union
 
 
 class TagAgent:
@@ -12,7 +10,7 @@ class TagAgent:
             raise Exception(f"Expected predator or prey, but got {name}.")
         self._config = config
         self.reset()
-        self._gamma = config['model_para']['gamma']
+        self._gamma = config["model_para"]["gamma"]
 
     def reset(self):
         self._states = []
@@ -34,7 +32,7 @@ class TagAgent:
 
     @property
     def advantages(self):
-        return self._advantages    
+        return self._advantages
 
     @property
     def discounted_rewards(self):
@@ -54,7 +52,7 @@ class TagAgent:
 
     @probs_softmax.setter
     def probs_softmax(self, x):
- 	    self._probs_softmax = x
+        self._probs_softmax = x
 
     @property
     def action_inds(self):
@@ -62,7 +60,7 @@ class TagAgent:
 
     @probs_softmax.setter
     def action_inds(self, x):
- 	    self._action_inds = x
+        self._action_inds = x
 
     def add_trajectory(self, action, value, state, done, prob, reward):
         self._states.append(state)
@@ -79,17 +77,19 @@ class TagAgent:
         discounted_rewards = np.array(self._rewards + [self._last_value])
 
         for t in reversed(range(len(self._rewards))):
-            discounted_rewards[t] = self._rewards[t] + self._gamma * discounted_rewards[t+1] * (1-self._dones[t])
+            discounted_rewards[t] = self._rewards[t] + self._gamma * discounted_rewards[
+                t + 1
+            ] * (1 - self._dones[t])
 
         discounted_rewards = discounted_rewards[:-1]
         # advantages are bootstrapped discounted rewards - values, using Bellman's equation
         advantages = discounted_rewards - np.stack(self._values)[:, 0]
         # standardise advantages
         advantages -= np.mean(advantages)
-        advantages /= (np.std(advantages) + 1e-10)
+        advantages /= np.std(advantages) + 1e-10
         # standardise rewards too
         discounted_rewards -= np.mean(discounted_rewards)
-        discounted_rewards /= (np.std(discounted_rewards) + 1e-8)
+        discounted_rewards /= np.std(discounted_rewards) + 1e-8
 
         self._discounted_rewards = discounted_rewards
         self._advantages = advantages

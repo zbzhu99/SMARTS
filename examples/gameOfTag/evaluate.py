@@ -27,7 +27,7 @@ def evaluate(ppo_predator, ppo_prey, config):
     states_t = env.reset()
     episode = 0
     steps_t = 0
-    episode_reward_predator = 0 
+    episode_reward_predator = 0
     episode_reward_prey = 0
     [agent.reset() for _, agent in all_agents.items()]
     while True:
@@ -38,7 +38,11 @@ def evaluate(ppo_predator, ppo_prey, config):
         actions_t = {}
         action_samples_t = {}
         values_t = {}
-        actions_t_predator, action_samples_t_predator, values_t_predator = ppo_predator.act(states_t)
+        (
+            actions_t_predator,
+            action_samples_t_predator,
+            values_t_predator,
+        ) = ppo_predator.act(states_t)
         actions_t_prey, action_samples_t_prey, values_t_prey = ppo_prey.act(states_t)
         actions_t.update(actions_t_predator)
         actions_t.update(actions_t_prey)
@@ -48,7 +52,10 @@ def evaluate(ppo_predator, ppo_prey, config):
         values_t.update(values_t_prey)
 
         # Sample action from a distribution
-        action_numpy_t = {vehicle: action_sample_t.numpy() for vehicle, action_sample_t in action_samples_t.items()}
+        action_numpy_t = {
+            vehicle: action_sample_t.numpy()
+            for vehicle, action_sample_t in action_samples_t.items()
+        }
         next_states_t, rewards_t, dones_t, _ = env.step(action_numpy_t)
         steps_t += 1
 
@@ -58,9 +65,9 @@ def evaluate(ppo_predator, ppo_prey, config):
                 reward=reward,
             )
             if "predator" in agent_id.name:
-                episode_reward_predator += reward 
+                episode_reward_predator += reward
             else:
-                episode_reward_prey += reward   
+                episode_reward_prey += reward
             if dones_t[agent_id] == 1:
                 # Remove done agents
                 del next_states_t[agent_id]
@@ -73,7 +80,6 @@ def evaluate(ppo_predator, ppo_prey, config):
 
         # Assign next_states to states
         states_t = next_states_t
-
 
     # Close env
     env.close()

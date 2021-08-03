@@ -208,16 +208,17 @@ def action_adapter(controller):
         def action_adapter_continuous(model_action):
             throttle, brake, steering = model_action
             # Modify action space limits
-            throttle = (throttle + 1)/2
-            brake = (brake + 1)/2
+            throttle = (throttle + 1) / 2
+            brake = (brake + 1) / 2
             # steering = steering
             return np.array([throttle, brake, steering], dtype=np.float32)
+
         return action_adapter_continuous
-    
+
     elif controller == "Categorical":
         # For Categorical action space
         def action_adapter_categorical(model_action):
-            # Modify action space limits 
+            # Modify action space limits
             if model_action == 0:
                 # Do nothing
                 throttle = 0
@@ -246,6 +247,7 @@ def action_adapter(controller):
             else:
                 raise Exception("Unknown model action category.")
             return np.array([throttle, brake, steering], dtype=np.float32)
+
         return action_adapter_categorical
 
     else:
@@ -345,7 +347,7 @@ def predator_reward_adapter(obs, env_reward):
 
     # Penalty for not moving
     # if obs.events.not_moving:
-        # reward -= 10
+    # reward -= 10
 
     # Penalty for each step spent without catching prey
     # if not obs.events.collisions and \
