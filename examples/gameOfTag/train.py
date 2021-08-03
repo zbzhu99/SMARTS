@@ -3,14 +3,13 @@ import os
 import random
 import signal
 import sys
+import tensorflow as tf
 import yaml
+
 from examples.gameOfTag import env as got_env
-from examples.gameOfTag import evaluate
 from examples.gameOfTag import agent as got_agent
 from examples.gameOfTag import ppo as got_ppo
 from pathlib import Path
-
-import tensorflow as tf
 
 
 def main(config):
