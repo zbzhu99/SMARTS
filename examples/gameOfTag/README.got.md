@@ -65,7 +65,14 @@ $ python3.7 ./examples/gameOfTag/evaluate.py
 
 # Useful commands
 ```bash
-$ sudo docker run --gpus all -it --network=host -v /home/kyber/workspaces/SMARTS/:/src/ tensorflow/tensorflow:2.4.0-gpu bash
+$ export VERSION=v0.4.18
+
+$ docker build --network=host -f ./utils/docker/Dockerfile.tensorflow -t adaickalavan/smarts:$VERSION-tensorflow .   
+
+$ docker login
+$ docker push adaickalavan/smarts:$VERSION-tensorflow
+
+$ docker run --rm -it --gpus=all --network=host --volume=/home/kyber/workspaces/SMARTS/:/src/ adaickalavan/smarts:v0.4.18-tensorflow
 
 $ cd /src
 $ source ./examples/gameOfTag/.venv/bin/activate
