@@ -14,8 +14,9 @@ env_para:
     - prey2
   controller: Categorical
   scenarios: 
-    - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
+    # - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
     # - /home/kyber/workspaces/SMARTS/scenarios/figure_eight
+    - /src/SMARTS/scenarios/cloverleaf
 
 model_para:
   state_dim: [256, 256, 3]

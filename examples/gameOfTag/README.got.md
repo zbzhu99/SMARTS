@@ -64,8 +64,10 @@ $ python3.7 ./examples/gameOfTag/evaluate.py
 
 
 # Useful commands
-sudo docker run --gpus all -it --network=host -v /home/kyber/workspaces/SMARTS/:/src/ tensorflow/tensorflow:2.4.0-gpu bash
+```bash
+$ sudo docker run --gpus all -it --network=host -v /home/kyber/workspaces/SMARTS/:/src/ tensorflow/tensorflow:2.4.0-gpu bash
 
-cd /src
-source .examples/gameOfTag/.venv/bin/activate
-
+$ cd /src
+$ source ./examples/gameOfTag/.venv/bin/activate
+$ python3.7 ./examples/gameOfTag/train.py
+```
