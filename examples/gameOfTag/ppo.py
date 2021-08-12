@@ -65,6 +65,7 @@ class PPO(object):
     def __init__(self, name, config):
         self.name = name
         self.config = config
+        self.seed = config["model_para"]["seed"]
         self.optimizer = tf.keras.optimizers.Adam(
             learning_rate=config["model_para"]["initial_lr_" + name]
         )
@@ -74,9 +75,9 @@ class PPO(object):
             f"{name}_{datetime.now().strftime('%Y_%m_%d_%H_%M')}"
         )
         self.model = None
-        if self.config['model_para']['model_initial']:
-            self.model = _load(self.config['model_para']['model_path'])
-        else:    
+        if self.config["model_para"]["model_initial"]:
+            self.model = _load(self.config["model_para"]["model_path"])
+        else:
             self.model = NeuralNetwork(self.config["model_para"]["action_dim"])
 
         # Tensorboard
@@ -94,12 +95,16 @@ class PPO(object):
         values = {}
         for vehicle, state in obs.items():
             if self.name in vehicle:
-                actions_t, values_t = self.model(np.expand_dims(state, axis=0))
+                actions_t, values_t = self.model.predict_on_batch(
+                    np.expand_dims(state, axis=0)
+                )
                 actions_dist_t = tfp.distributions.Categorical(logits=actions_t)
 
                 actions[vehicle] = tf.squeeze(actions_t, axis=0)
-                action_samples[vehicle] = tf.squeeze(actions_dist_t.sample(1), axis=0)
-                values[vehicle] = tf.squeeze(values_t, axis=-1)
+                action_samples[vehicle] = tf.squeeze(
+                    actions_dist_t.sample(1, seed=self.seed), axis=0
+                )
+                values[vehicle] = tf.squeeze(values_t, axis=0)
         return actions, action_samples, values
 
     def write_to_tb(self, records):
@@ -110,6 +115,7 @@ class PPO(object):
 
 def _load(model_path):
     return tf.saved_model.load(model_path)
+
 
 def train_model(
     model,
@@ -124,7 +130,7 @@ def train_model(
     critic_loss_weight,
 ):
     with tf.GradientTape() as tape:
-        policy_logits, values = model(tf.stack(states))
+        policy_logits, values = model.predict_on_batch(tf.stack(states))
         act_loss = actor_loss(
             advantages, old_probs, action_inds, policy_logits, clip_value
         )

@@ -21,6 +21,7 @@ env_para:
 model_para:
   state_dim: [256, 256, 3]
   action_dim: 5
+  seed: 42
   
   initial_lr_predator: 0.001
   initial_lr_prey: 0.0005
