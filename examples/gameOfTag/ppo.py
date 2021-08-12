@@ -1,10 +1,9 @@
 import numpy as np
-from pathlib import Path
 import tensorflow as tf
+import tensorflow_probability as tfp
 
 from datetime import datetime
-
-import tensorflow_probability as tfp
+from pathlib import Path
 
 
 class NeuralNetwork(tf.keras.Model):
@@ -25,11 +24,11 @@ class NeuralNetwork(tf.keras.Model):
         self.conv2 = tf.keras.layers.Conv2D(
             filters=32,
             kernel_size=17,
-            strides=(4, 4),
+            strides=(2, 2),
             padding="valid",
             activation=tf.keras.activations.relu,
         )
-        self.flatten = tf.keras.layers.flatten()
+        self.flatten = tf.keras.layers.Flatten()
         self.dense1 = tf.keras.layers.Dense(
             units=128, activation=tf.keras.activations.relu
         )
@@ -53,8 +52,7 @@ class NeuralNetwork(tf.keras.Model):
         """
         conv1_out = self.conv1(inputs)
         conv2_out = self.conv2(conv1_out)
-        conv3_out = self.conv3(conv2_out)
-        flatten_out = self.flatten(conv3_out)
+        flatten_out = self.flatten(conv2_out)
         dense1_out = self.dense1(flatten_out)
         dense_policy_out = self.dense_policy(dense1_out)
         dense_value_out = self.dense_value(dense1_out)
@@ -70,17 +68,25 @@ class PPO(object):
         self.optimizer = tf.keras.optimizers.Adam(
             learning_rate=config["model_para"]["initial_lr_" + name]
         )
-        self.model_path = Path(self.config["model_para"]["model_path"]).joinpath(
-            f"{name}_{datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')}"
-        )
-        path = Path(self.config["model_para"]["tensorboard"]).joinpath(
-            f"{name}_{datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')}"
-        )
-        self.tb = tf.summary.create_file_writer(path)
 
-        # if self.config['model_para']['model_initial']:
-        #     self.model = self._load(self.config['model_para']['model_path'])
-        self.model = NeuralNetwork(self.config["model_para"]["action_dim"])
+        # Model
+        self.model_path = Path(self.config["model_para"]["model_path"]).joinpath(
+            f"{name}_{datetime.now().strftime('%Y_%m_%d_%H_%M')}"
+        )
+        self.model = None
+        if self.config['model_para']['model_initial']:
+            self.model = _load(self.config['model_para']['model_path'])
+        else:    
+            self.model = NeuralNetwork(self.config["model_para"]["action_dim"])
+
+        # Tensorboard
+        path = Path(self.config["model_para"]["tensorboard"]).joinpath(
+            f"{name}_{datetime.now().strftime('%Y_%m_%d_%H_%M')}"
+        )
+        self.tb = tf.summary.create_file_writer(str(path))
+
+    def save(self):
+        tf.saved_model.save(self.model, self.model_path)
 
     def act(self, obs):
         actions = {}
@@ -96,18 +102,14 @@ class PPO(object):
                 values[vehicle] = tf.squeeze(values_t, axis=-1)
         return actions, action_samples, values
 
-    def save(self):
-        tf.saved_model.save(self.model, self.model_path)
-
-    @staticmethod
-    def _load(model_path):
-        return tf.saved_model.load(model_path)
-
     def write_to_tb(self, records):
         with self.tb.as_default():
             for name, value, step in records:
                 tf.summary.scalar(name, value, step)
 
+
+def _load(model_path):
+    return tf.saved_model.load(model_path)
 
 def train_model(
     model,

@@ -1,9 +1,21 @@
+import tensorflow as tf
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+  try:
+    # Currently, memory growth needs to be the same across GPUs
+    for gpu in gpus:
+      tf.config.experimental.set_memory_growth(gpu, True)
+    logical_gpus = tf.config.list_logical_devices('GPU')
+    print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+  except RuntimeError as e:
+    # Memory growth must be set before GPUs have been initialized
+    print(e)
+    
 import numpy as np
 import os
 import random
 import signal
 import sys
-import tensorflow as tf
 import yaml
 
 from examples.gameOfTag import env as got_env
@@ -13,6 +25,8 @@ from pathlib import Path
 
 
 def main(config):
+
+    print("[INFO] Train")
     # Save and eval interval
     save_interval = config["model_para"].get("save_interval", 50)
     eval_interval = config["model_para"].get("eval_interval", 50)
@@ -24,7 +38,7 @@ def main(config):
     clip_value = config["model_para"]["clip_value"]
     critic_loss_weight = config["model_para"]["critic_loss_weight"]
     ent_discount_val = config["model_para"]["entropy_loss_weight"]
-    ent_discount_rate = config["model_para"]["entropy_loss_rate"]
+    ent_discount_rate = config["model_para"]["entropy_loss_discount_rate"]
 
     # Create env
     print("[INFO] Creating environments")
@@ -42,8 +56,8 @@ def main(config):
 
     # Create model
     print("[INFO] Creating model")
-    ppo_predator = got_ppo("predator", env, config, model_checkpoint=None)
-    ppo_prey = got_ppo("prey", env, config, model_checkpoint=None)
+    ppo_predator = got_ppo.PPO("predator", config)
+    ppo_prey = got_ppo.PPO("prey", config)
 
     def interrupt(*args):
         ppo_predator.save()
@@ -54,7 +68,7 @@ def main(config):
     # Catch keyboard interrupt and terminate signal
     signal.signal(signal.SIGINT, interrupt)
 
-    print("[INFO] Loop ...")
+    print("[INFO] Batch loop")
     states_t = env.reset()
     episode = 0
     steps_t = 0
@@ -64,7 +78,7 @@ def main(config):
         [agent.reset() for _, agent in all_agents.items()]
         active_agents = {}
 
-        print("[INFO] New batch data collection ...")
+        print("[INFO] New batch data collection")
         for _ in range(batch_size):
 
             # Update all agents which were active in this batch
@@ -104,10 +118,10 @@ def main(config):
                     value=values_t[agent_id],
                     state=states_t[agent_id],
                     done=int(dones_t[agent_id]),
-                    probs=actions_t[agent_id],
+                    prob=actions_t[agent_id],
                     reward=rewards_t[agent_id],
                 )
-                if "predator" in agent_id.name:
+                if "predator" in agent_id:
                     episode_reward_predator += rewards_t[agent_id]
                 else:
                     episode_reward_prey += rewards_t[agent_id]
@@ -284,9 +298,9 @@ if __name__ == "__main__":
     device_name = tf.test.gpu_device_name()
     if device_name != "/device:GPU:0":
         print("Not configured to use GPU or GPU not available.")
-        # raise SystemError('GPU device not found')
+        raise SystemError('GPU device not found')
 
-    strategy = tf.distribute.MirroredStrategy()
-    print("Number of devices: {}".format(strategy.num_replicas_in_sync))
+    # strategy = tf.distribute.MirroredStrategy()
+    # print("Number of devices: {}".format(strategy.num_replicas_in_sync))
 
     main(config=config)

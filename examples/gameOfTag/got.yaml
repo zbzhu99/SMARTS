@@ -14,9 +14,9 @@ env_para:
     - prey2
   controller: Categorical
   scenarios: 
-    # - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
+    - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
     # - /home/kyber/workspaces/SMARTS/scenarios/figure_eight
-    - /src/SMARTS/scenarios/cloverleaf
+    # - /src/scenarios/cloverleaf
 
 model_para:
   state_dim: [256, 256, 3]
@@ -27,7 +27,7 @@ model_para:
 
   critic_loss_weight: 0.5
   entropy_loss_weight: 0.01
-  ent_discount_rate: 0.995
+  entropy_loss_discount_rate: 0.995
   gamma: 0.99
   clip_value: 0.2
 
@@ -38,9 +38,11 @@ model_para:
   save_interval: 50
   eval_interval: 50
   
-  tensorboard: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
   model_initial: False
-  model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/1/"
+  model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
+  tensorboard: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
+  # model_path: "/src/examples/gameOfTag/models/"
+  # tensorboard: "/src/examples/gameOfTag/logs/"
 
   # filter_arches: # A=421,108 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
   #   - [16, [32, 32], [4, 4]]

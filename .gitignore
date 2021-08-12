@@ -134,3 +134,6 @@ ultra/ultra/scenarios/task*/*/
 
 # Singularity
 *.sif
+
+# Tensorflow
+events.out.tfevents.*

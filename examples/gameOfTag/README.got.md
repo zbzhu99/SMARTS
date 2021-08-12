@@ -72,7 +72,7 @@ $ docker build --network=host -f ./utils/docker/Dockerfile.tensorflow -t adaicka
 $ docker login
 $ docker push adaickalavan/smarts:$VERSION-tensorflow
 
-$ docker run --rm -it --gpus=all --network=host --volume=/home/kyber/workspaces/SMARTS/:/src/ adaickalavan/smarts:v0.4.18-tensorflow
+$ docker run --rm -it --gpus=all --network=host --volume=/home/kyber/workspaces/SMARTS/:/src/ adaickalavan/smarts:$VERSION-tensorflow
 
 $ cd /src
 $ source ./examples/gameOfTag/.venv/bin/activate
