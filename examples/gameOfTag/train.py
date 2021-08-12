@@ -295,10 +295,10 @@ if __name__ == "__main__":
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
     # Check for GPU device
-    device_name = tf.test.gpu_device_name()
-    if device_name != "/device:GPU:0":
-        print("Not configured to use GPU or GPU not available.")
-        raise SystemError('GPU device not found')
+    # device_name = tf.test.gpu_device_name()
+    # if device_name != "/device:GPU:0":
+    #     print("Not configured to use GPU or GPU not available.")
+    #     raise SystemError('GPU device not found')
 
     # strategy = tf.distribute.MirroredStrategy()
     # print("Number of devices: {}".format(strategy.num_replicas_in_sync))
