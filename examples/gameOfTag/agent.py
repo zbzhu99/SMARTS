@@ -58,7 +58,7 @@ class TagAgent:
     def action_inds(self):
         return self._action_inds
 
-    @probs_softmax.setter
+    @action_inds.setter
     def action_inds(self, x):
         self._action_inds = x
 

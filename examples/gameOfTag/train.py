@@ -187,11 +187,11 @@ def main(config):
         # Compute generalised advantages
         for agent_id in active_agents.keys():
             all_agents[agent_id].compute_advantages()
-            actions = tf.squeeze(tf.stack(all_agents[agent_id].actions))
             probs_softmax = tf.nn.softmax(
                 tf.squeeze(tf.stack(all_agents[agent_id].probs))
             )
             all_agents[agent_id].probs_softmax = probs_softmax
+            actions = tf.squeeze(tf.stack(all_agents[agent_id].actions))
             action_inds = tf.stack(
                 [tf.range(0, actions.shape[0]), tf.cast(actions, tf.int32)], axis=1
             )
@@ -216,7 +216,7 @@ def main(config):
                         ppo_predator.model,
                         ppo_predator.optimizer,
                         agent.action_inds,
-                        tf.gather_nd(agent.probs, agent.action_inds),
+                        tf.gather_nd(agent.probs_softmax, agent.action_inds),
                         agent.states,
                         agent.advantages,
                         agent.discounted_rewards,
@@ -234,7 +234,7 @@ def main(config):
                         ppo_predator.model,
                         ppo_predator.optimizer,
                         agent.action_inds,
-                        tf.gather_nd(agent.probs, agent.action_inds),
+                        tf.gather_nd(agent.probs_softmax, agent.action_inds),
                         agent.states,
                         agent.advantages,
                         agent.discounted_rewards,
