@@ -211,6 +211,8 @@ def main(config):
         for epoch in range(num_train_epochs):
             for agent_id in active_agents.keys():
                 agent = all_agents[agent_id]
+                print("OLD PROBS inside agent")
+                print(agent.probs_softmax)
                 if agent_id in all_predators_id:
                     loss_tuple = got_ppo.train_model(
                         ppo_predator.model,

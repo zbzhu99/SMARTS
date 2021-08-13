@@ -130,7 +130,7 @@ def train_model(
     critic_loss_weight,
 ):
     with tf.GradientTape() as tape:
-        policy_logits, values = model.predict_on_batch(tf.stack(states))
+        policy_logits, values = model.call(tf.stack(states))
         act_loss = actor_loss(
             advantages, old_probs, action_inds, policy_logits, clip_value
         )
@@ -142,12 +142,17 @@ def train_model(
     return tot_loss, c_loss, act_loss, ent_loss
 
 
-@tf.function
+# @tf.function
 def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
     probs = tf.nn.softmax(policy_logits)
     new_probs = tf.gather_nd(probs, action_inds)
 
-    ratio = new_probs / old_probs
+    ratio = new_probs / old_probs # Useful if the model has been updated since last training
+
+    print("new probs -- ",probs)
+    print(tf.gather_nd(probs, action_inds))
+    print(ratio)
+    raise Exception("TEST -------------")
 
     policy_loss = -tf.reduce_mean(
         tf.math.minimum(
@@ -158,7 +163,7 @@ def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
     return policy_loss
 
 
-@tf.function
+# @tf.function
 def entropy_loss(policy_logits, ent_discount_val):
     probs = tf.nn.softmax(policy_logits)
     entropy_loss = -tf.reduce_mean(
@@ -167,7 +172,7 @@ def entropy_loss(policy_logits, ent_discount_val):
     return entropy_loss * ent_discount_val
 
 
-@tf.function
+# @tf.function
 def critic_loss(discounted_rewards, value_est, critic_loss_weight):
     return tf.cast(
         tf.reduce_mean(
