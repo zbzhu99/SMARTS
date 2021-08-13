@@ -1,16 +1,17 @@
 import tensorflow as tf
-gpus = tf.config.list_physical_devices('GPU')
-if gpus:
-  try:
-    # Currently, memory growth needs to be the same across GPUs
-    for gpu in gpus:
-      tf.config.experimental.set_memory_growth(gpu, True)
-    logical_gpus = tf.config.list_logical_devices('GPU')
-    print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
-  except RuntimeError as e:
-    # Memory growth must be set before GPUs have been initialized
-    print(e)
-    
+
+# gpus = tf.config.list_physical_devices("GPU")
+# if gpus:
+#     try:
+#         # Currently, memory growth needs to be the same across GPUs
+#         for gpu in gpus:
+#             tf.config.experimental.set_memory_growth(gpu, True)
+#         logical_gpus = tf.config.list_logical_devices("GPU")
+#         print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+#     except RuntimeError as e:
+#         # Memory growth must be set before GPUs have been initialized
+#         print(e)
+
 import numpy as np
 import os
 import random
@@ -105,7 +106,7 @@ def main(config):
 
             # Sample action from a distribution
             action_numpy_t = {
-                vehicle: action_sample_t.numpy()
+                vehicle: action_sample_t.numpy()[0]
                 for vehicle, action_sample_t in action_samples_t.items()
             }
             next_states_t, rewards_t, dones_t, _ = env.step(action_numpy_t)
@@ -115,7 +116,7 @@ def main(config):
             for agent_id, _ in states_t.items():
                 all_agents[agent_id].add_trajectory(
                     action=action_samples_t[agent_id],
-                    value=values_t[agent_id],
+                    value=values_t[agent_id].numpy()[0],
                     state=states_t[agent_id],
                     done=int(dones_t[agent_id]),
                     prob=actions_t[agent_id],
@@ -175,7 +176,9 @@ def main(config):
                 else:
                     raise Exception(f"Unknown {agent_id}.")
                 # Store last values
-                all_agents[agent_id].add_last_transition(value=next_values_t[agent_id])
+                all_agents[agent_id].add_last_transition(
+                    value=next_values_t[agent_id].numpy()[0]
+                )
             else:  # Agent done
                 # Store last values
                 all_agents[agent_id].add_last_transition(value=0)
@@ -184,6 +187,9 @@ def main(config):
         for agent_id in active_agents.keys():
             all_agents[agent_id].compute_advantages()
             actions = tf.squeeze(tf.stack(all_agents[agent_id].actions))
+            
+            print("-------------")
+            
             probs_softmax = tf.nn.softmax(
                 tf.squeeze(tf.stack(all_agents[agent_id].probs))
             )
