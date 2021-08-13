@@ -43,7 +43,8 @@ def main(config):
 
     # Create env
     print("[INFO] Creating environments")
-    seed = random.randint(0, 4294967295)  # [0, 2^32 -1)
+    seed = config["env_para"]["seed"]
+    # seed = random.randint(0, 4294967295)  # [0, 2^32 -1)
     env = got_env.TagEnv(config, seed)
 
     # Create agent
@@ -187,9 +188,6 @@ def main(config):
         for agent_id in active_agents.keys():
             all_agents[agent_id].compute_advantages()
             actions = tf.squeeze(tf.stack(all_agents[agent_id].actions))
-            
-            print("-------------")
-            
             probs_softmax = tf.nn.softmax(
                 tf.squeeze(tf.stack(all_agents[agent_id].probs))
             )
@@ -252,7 +250,7 @@ def main(config):
         ent_discount_val *= ent_discount_rate
 
         # Elapsed steps
-        step = batch_num * batch_size
+        step = (batch_num + 1) * batch_size
 
         # Record predator performance
         records = []

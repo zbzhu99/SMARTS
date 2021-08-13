@@ -65,7 +65,7 @@ class PPO(object):
     def __init__(self, name, config):
         self.name = name
         self.config = config
-        self.seed = config["model_para"]["seed"]
+        self.seed = config["env_para"]["seed"]
         self.optimizer = tf.keras.optimizers.Adam(
             learning_rate=config["model_para"]["initial_lr_" + name]
         )

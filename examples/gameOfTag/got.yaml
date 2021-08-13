@@ -1,5 +1,6 @@
 env_para:
   env_name: SMARTS
+  seed: 42
   headless: True
   visdom: False
   neighborhood_radius: 80 # Radius (meter) for neighborhood vehicles
@@ -21,7 +22,6 @@ env_para:
 model_para:
   state_dim: [256, 256, 3]
   action_dim: 5
-  seed: 42
   
   initial_lr_predator: 0.001
   initial_lr_prey: 0.0005
