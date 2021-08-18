@@ -28,7 +28,7 @@ import yaml
 
 from . import models
 from .chassis import AckermannChassis, BoxChassis, Chassis
-from .colors import SceneColors
+from .colors import Colors, SceneColors
 from .coordinates import Dimensions, Heading, Pose
 from .sensors import (
     AccelerometerSensor,
