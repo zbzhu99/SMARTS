@@ -147,9 +147,12 @@ def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
     probs = tf.nn.softmax(policy_logits)
     new_probs = tf.gather_nd(probs, action_inds)
 
-    ratio = new_probs / old_probs # Useful if the model has been updated since last training
+    # Useful if the model has been updated since last training
+    ratio = (
+        new_probs / old_probs
+    )  
 
-    print("new probs -- ",probs)
+    print("new probs -- ", probs)
     print(tf.gather_nd(probs, action_inds))
     print(ratio)
     raise Exception("TEST -------------")

@@ -408,18 +408,6 @@ class Sensors:
             or agents_alive_done
         )
 
-        # if done == True:
-        #     print(f"Done criteria: {agent_id}")
-        #     print(f"off_road: {(is_off_road and done_criteria.off_road)}.")
-        #     print(f"reached_goal: {reached_goal}.")
-        #     print(f"reached_max_episode_steps: {reached_max_episode_steps}.")
-        #     print(f"on_shoulder: {(is_on_shoulder and done_criteria.on_shoulder)}.")
-        #     print(f"collision: {(collided and done_criteria.collision)}.")
-        #     print(f"not_moving: {(is_not_moving and done_criteria.not_moving)}.")
-        #     print(f"off_route: {(is_off_route and done_criteria.off_route)}.")
-        #     print(f"wrong_way: {(is_wrong_way and done_criteria.wrong_way)}.")
-        #     print(f"agents_alive_done: {agents_alive_done}.")
-
         events = Events(
             collisions=sim.vehicle_collisions(vehicle.id),
             off_road=is_off_road,
