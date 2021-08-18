@@ -215,16 +215,16 @@ def main(config):
                 print(agent.probs_softmax)
                 if agent_id in all_predators_id:
                     loss_tuple = got_ppo.train_model(
-                        ppo_predator.model,
-                        ppo_predator.optimizer,
-                        agent.action_inds,
-                        tf.gather_nd(agent.probs_softmax, agent.action_inds),
-                        agent.states,
-                        agent.advantages,
-                        agent.discounted_rewards,
-                        ent_discount_val,
-                        clip_value,
-                        critic_loss_weight,
+                        model=ppo_predator.model,
+                        optimizer=ppo_predator.optimizer,
+                        action_inds=agent.action_inds,
+                        old_probs=tf.gather_nd(agent.probs_softmax, agent.action_inds),
+                        states=agent.states,
+                        advantages=agent.advantages,
+                        discounted_rewards=agent.discounted_rewards,
+                        ent_discount_val=ent_discount_val,
+                        clip_value=clip_value,
+                        critic_loss_weight=critic_loss_weight,
                     )
                     predator_total_loss[epoch] += loss_tuple[0]
                     predator_critic_loss[epoch] += loss_tuple[1]
@@ -233,16 +233,16 @@ def main(config):
 
                 if agent_id in all_preys_id:
                     loss_tuple = got_ppo.train_model(
-                        ppo_predator.model,
-                        ppo_predator.optimizer,
-                        agent.action_inds,
-                        tf.gather_nd(agent.probs_softmax, agent.action_inds),
-                        agent.states,
-                        agent.advantages,
-                        agent.discounted_rewards,
-                        ent_discount_val,
-                        clip_value,
-                        critic_loss_weight,
+                        model=ppo_predator.model,
+                        optimizer=ppo_predator.optimizer,
+                        action_inds=agent.action_inds,
+                        old_probs=tf.gather_nd(agent.probs_softmax, agent.action_inds),
+                        states=agent.states,
+                        advantages=agent.advantages,
+                        discounted_rewards=agent.discounted_rewards,
+                        ent_discount_val=ent_discount_val,
+                        clip_value=clip_value,
+                        critic_loss_weight=critic_loss_weight,
                     )
                     prey_total_loss[epoch] += loss_tuple[0]
                     prey_critic_loss[epoch] += loss_tuple[1]

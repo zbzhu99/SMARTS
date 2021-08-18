@@ -137,6 +137,11 @@ def train_model(
         ent_loss = entropy_loss(policy_logits, ent_discount_val)
         c_loss = critic_loss(discounted_rewards, values, critic_loss_weight)
         tot_loss = act_loss + ent_loss + c_loss
+
+    watched = [var.name for var in tape.watched_variables()]
+    print(watched)
+    raise Exception("TEST -------------------")
+
     grads = tape.gradient(tot_loss, model.trainable_variables)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
     return tot_loss, c_loss, act_loss, ent_loss
@@ -146,16 +151,10 @@ def train_model(
 def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
     probs = tf.nn.softmax(policy_logits)
     new_probs = tf.gather_nd(probs, action_inds)
+    ratio = new_probs / old_probs
 
-    # Useful if the model has been updated since last training
-    ratio = (
-        new_probs / old_probs
-    )  
-
-    print("new probs -- ", probs)
-    print(tf.gather_nd(probs, action_inds))
-    print(ratio)
-    raise Exception("TEST -------------")
+    print(ratio * advantages)
+    print(tf.clip_by_value(ratio, 1.0 - clip_value, 1.0 + clip_value) * advantages)
 
     policy_loss = -tf.reduce_mean(
         tf.math.minimum(
