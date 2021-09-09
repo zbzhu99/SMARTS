@@ -3,7 +3,7 @@
 ## Build manually and run locally
 Currently, do not install `smarts` directly from pypi. Instead, install `smarts` from the `xtsmarts` branch of `huaweinoah/smarts` repository. 
 
-The steps to install and run xtSmarts is as follows.
+The steps to install and run smarts-got is as follows.
 
 ```bash
 # Install Smarts and build scenarios

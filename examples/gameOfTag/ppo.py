@@ -151,20 +151,23 @@ def train_model(
 def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
     probs = tf.nn.softmax(policy_logits)
     new_probs = tf.gather_nd(probs, action_inds)
-    ratio = new_probs / old_probs
+    ratio = new_probs / old_probs  # Ratio is always positive
 
-    print(ratio * advantages)
+    print("ACTOR LOSS --------- ")
+    print(ratio, advantages)
     print(tf.clip_by_value(ratio, 1.0 - clip_value, 1.0 + clip_value) * advantages)
 
-    policy_loss = -tf.reduce_mean(
+    policy_loss = -tf.reduce_mean( # -Expectation
         tf.math.minimum(
             ratio * advantages,
             tf.clip_by_value(ratio, 1.0 - clip_value, 1.0 + clip_value) * advantages,
         )
     )
+    print("POLICY LOSS ------ ", policy_loss)
     return policy_loss
 
 
+# Entropy term to encourage exploration
 # @tf.function
 def entropy_loss(policy_logits, ent_discount_val):
     probs = tf.nn.softmax(policy_logits)
@@ -174,6 +177,7 @@ def entropy_loss(policy_logits, ent_discount_val):
     return entropy_loss * ent_discount_val
 
 
+# Error term on value estimation
 # @tf.function
 def critic_loss(discounted_rewards, value_est, critic_loss_weight):
     return tf.cast(

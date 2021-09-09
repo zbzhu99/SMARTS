@@ -1,4 +1,34 @@
+# Silence the logs of TF
+import os
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+os.environ["PYTHONHASHSEED"] = "42"
+
+# Silence deprecation warnings
+import warnings
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+# The below is necessary for starting Numpy generated random numbers
+# in a well-defined initial state.
+import numpy as np
+
+np.random.seed(123)
+
+# The below is necessary for starting core Python generated random numbers
+# in a well-defined state.
+import random as python_random
+
+python_random.seed(123)
+
+# The below set_seed() will make random number generation
+# in the TensorFlow backend have a well-defined initial state.
+# For further details, see:
+# https://www.tensorflow.org/api_docs/python/tf/random/set_seed
 import tensorflow as tf
+
+tf.random.set_seed(1234)
+
 
 # gpus = tf.config.list_physical_devices("GPU")
 # if gpus:
@@ -12,9 +42,7 @@ import tensorflow as tf
 #         # Memory growth must be set before GPUs have been initialized
 #         print(e)
 
-import numpy as np
-import os
-import random
+
 import signal
 import sys
 import yaml
@@ -211,8 +239,6 @@ def main(config):
         for epoch in range(num_train_epochs):
             for agent_id in active_agents.keys():
                 agent = all_agents[agent_id]
-                print("OLD PROBS inside agent")
-                print(agent.probs_softmax)
                 if agent_id in all_predators_id:
                     loss_tuple = got_ppo.train_model(
                         model=ppo_predator.model,
@@ -296,9 +322,6 @@ if __name__ == "__main__":
     config_yaml = (Path(__file__).absolute().parent).joinpath("got.yaml")
     with open(config_yaml, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
-
-    # Silence the logs of TF
-    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
     # Check for GPU device
     # device_name = tf.test.gpu_device_name()
