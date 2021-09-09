@@ -42,7 +42,6 @@ tf.random.set_seed(1234)
 #         # Memory growth must be set before GPUs have been initialized
 #         print(e)
 
-
 import signal
 import sys
 import yaml

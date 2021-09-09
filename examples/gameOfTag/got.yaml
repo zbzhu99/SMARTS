@@ -29,7 +29,7 @@ model_para:
   critic_loss_weight: 0.5
   entropy_loss_weight: 0.01
   entropy_loss_discount_rate: 0.995
-  gamma: 0.99
+  gamma: 0.99 # Reward discount
   clip_value: 0.2
 
   batch_size: 64

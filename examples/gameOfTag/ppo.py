@@ -135,8 +135,8 @@ def train_model(
             advantages, old_probs, action_inds, policy_logits, clip_value
         )
         ent_loss = entropy_loss(policy_logits, ent_discount_val)
-        c_loss = critic_loss(discounted_rewards, values, critic_loss_weight)
-        tot_loss = act_loss + ent_loss + c_loss
+        cri_loss = critic_loss(discounted_rewards, values, critic_loss_weight)
+        tot_loss = act_loss + ent_loss + cri_loss
 
     watched = [var.name for var in tape.watched_variables()]
     print(watched)
@@ -144,9 +144,10 @@ def train_model(
 
     grads = tape.gradient(tot_loss, model.trainable_variables)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
-    return tot_loss, c_loss, act_loss, ent_loss
+    return tot_loss, cri_loss, act_loss, ent_loss
 
 
+# Clipped objective term, to be maximized
 # @tf.function
 def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
     probs = tf.nn.softmax(policy_logits)
@@ -154,10 +155,11 @@ def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
     ratio = new_probs / old_probs  # Ratio is always positive
 
     print("ACTOR LOSS --------- ")
-    print(ratio, advantages)
+    print(ratio)
+    print(advantages)
     print(tf.clip_by_value(ratio, 1.0 - clip_value, 1.0 + clip_value) * advantages)
 
-    policy_loss = -tf.reduce_mean( # -Expectation
+    policy_loss = -tf.reduce_mean(  # -Expectation
         tf.math.minimum(
             ratio * advantages,
             tf.clip_by_value(ratio, 1.0 - clip_value, 1.0 + clip_value) * advantages,
@@ -167,9 +169,9 @@ def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
     return policy_loss
 
 
-# Entropy term to encourage exploration
+# Entropy term to encourage exploration, to be maximized
 # @tf.function
-def entropy_loss(policy_logits, ent_discount_val):
+def entropy_loss(policy_logits, ent_discount_val) -> tf.float32:
     probs = tf.nn.softmax(policy_logits)
     entropy_loss = -tf.reduce_mean(
         tf.keras.losses.categorical_crossentropy(probs, probs)
@@ -177,13 +179,12 @@ def entropy_loss(policy_logits, ent_discount_val):
     return entropy_loss * ent_discount_val
 
 
-# Error term on value estimation
+# Error term on value estimation, to be minimized
 # @tf.function
-def critic_loss(discounted_rewards, value_est, critic_loss_weight):
-    return tf.cast(
+def critic_loss(discounted_rewards, value_est, critic_loss_weight) -> tf.float32:
+    return (
         tf.reduce_mean(
             tf.keras.losses.mean_squared_error(discounted_rewards, value_est)
         )
-        * critic_loss_weight,
-        tf.float32,
+        * critic_loss_weight
     )
