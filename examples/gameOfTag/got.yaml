@@ -5,7 +5,7 @@ env_para:
   visdom: False
   neighborhood_radius: 80 # Radius (meter) for neighborhood vehicles
   rgb_wh: 110 # Height and width (meter) of RGB image in SMARTS observation
-  max_episode_steps: 1800 # 3 minutes. Maximum steps per episode. When using ContinueEpisode wrapper, ensure: max_episode_steps > agent_para.agent_config.max_steps .
+  max_episode_steps: 1800 # 3 minutes. Maximum steps per episode.
   agent_num: 5
   agent_ids: 
     - predator1
@@ -62,4 +62,6 @@ model_para:
   #   - [32, [3, 3], [2, 2]] 
   # hidden_sizes: [256] # MLP layers 
 
-# minibatch K = 3-15, batch size M = 64-4096, trajectory size T (horizon) = 128-2048
+# minibatch K = 3-15, 
+# batch size M = 64-4096, 
+# trajectory size T (horizon) = 128-2048

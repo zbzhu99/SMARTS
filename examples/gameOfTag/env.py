@@ -323,7 +323,7 @@ def predator_reward_adapter(obs, env_reward):
 
     # Penalty for driving off road
     if obs.events.off_road:
-        reward -= 50
+        reward -= 10
         return np.float32(reward)
 
     # Distance based reward
@@ -333,17 +333,18 @@ def predator_reward_adapter(obs, env_reward):
         min_distance = np.amin(distances)
         # dist_reward = exponential_negative(min_distance)
         dist_reward = inverse(min_distance)
-        reward += np.clip(dist_reward, 0, 80)
-    # else: # No neighborhood preys
-    #     reward -= 10
+        reward += np.clip(dist_reward, 0, 80)/10 # Reward [0:8]
+    else: # No neighborhood preys
+        reward -= 1
 
     # Reward for colliding
     for c in obs.events.collisions:
         if "prey" in c.collidee_id:
-            reward += 100
-            print(f"Predator {ego.id} collided with vehicle {c.collidee_id}.")
+            reward += 10
+            print(f"Predator {ego.id} collided with prey vehicle {c.collidee_id}.")
         else:
-            reward -= 30
+            reward -= 10
+            print(f"Predator {ego.id} collided with predator vehicle {c.collidee_id}.")
 
     # Penalty for not moving
     # if obs.events.not_moving:
@@ -363,7 +364,7 @@ def prey_reward_adapter(obs, env_reward):
 
     # Penalty for driving off road
     if obs.events.off_road:
-        reward -= 50
+        reward -= 10
         return np.float32(reward)
 
     # Distance based reward
@@ -373,17 +374,18 @@ def prey_reward_adapter(obs, env_reward):
         ave_distance = np.average(distances)
         # dist_reward = exponential_positive(ave_distance)
         dist_reward = linear(ave_distance)
-        reward += np.clip(dist_reward, 0, 80)
-    # else: # No neighborhood predators
-    #     reward += 80
+        reward += np.clip(dist_reward, 0, 80)/10 # Reward [0:8]
+    else: # No neighborhood predators
+        reward += 10
 
     # Penalty for colliding
     for c in obs.events.collisions:
         if "predator" in c.collidee_id:
-            reward -= 100
+            reward -= 10
+            print(f"Prey {ego.id} collided with predator vehicle {c.collidee_id}.")
         else:
-            reward -= 30
-        print(f"Prey {ego.id} collided with vehicle {c.collidee_id}.")
+            reward -= 10
+            print(f"Prey {ego.id} collided with prey vehicle {c.collidee_id}.")
 
     # Penalty for not moving
     # if obs.events.not_moving:

@@ -120,7 +120,7 @@ def _load(model_path):
 
 def train_model(
     model: tf.keras.Model,
-    optimizer: tf.python.keras.optimizer_v2.OptimizerV2,
+    optimizer: tf.keras.optimizers,
     action_inds: tf.TensorSpec(shape=(None, 2), dtype=tf.dtypes.int32),
     old_probs,
     states: List[np.ndarray],
