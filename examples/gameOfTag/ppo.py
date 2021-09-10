@@ -4,7 +4,7 @@ import tensorflow_probability as tfp
 
 from datetime import datetime
 from pathlib import Path
-from typing import Tuple
+from typing import List, Tuple
 
 
 class NeuralNetwork(tf.keras.Model):
@@ -119,22 +119,24 @@ def _load(model_path):
 
 
 def train_model(
-    model,
-    optimizer,
-    action_inds,
+    model: tf.keras.Model,
+    optimizer: tf.python.keras.optimizer_v2.OptimizerV2,
+    action_inds: tf.TensorSpec(shape=(None, 2), dtype=tf.dtypes.int32),
     old_probs,
-    states,
-    advantages,
-    discounted_rewards,
-    ent_discount_val,
-    clip_value,
-    critic_loss_weight,
-) -> Tuple(
-    tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
-    tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
-    tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
-    tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
+    states: List[np.ndarray],
+    advantages: np.ndarray,
+    discounted_rewards: np.ndarray,
+    ent_discount_val: float,
+    clip_value: float,
+    critic_loss_weight: float,
 ):
+    # -> Tuple[
+    #     tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
+    #     tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
+    #     tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
+    #     tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
+    # ]:
+
     with tf.GradientTape() as tape:
         policy_logits, values = model.call(tf.stack(states))
         act_loss = actor_loss(
@@ -142,7 +144,7 @@ def train_model(
         )
         cri_loss = critic_loss(discounted_rewards, values, critic_loss_weight)
         ent_loss = entropy_loss(policy_logits, ent_discount_val)
-        tot_loss = act_loss + cri_loss + ent_loss 
+        tot_loss = act_loss + cri_loss + ent_loss
 
     grads = tape.gradient(tot_loss, model.trainable_variables)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
