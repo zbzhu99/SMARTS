@@ -78,3 +78,9 @@ $ cd /src
 $ source ./examples/gameOfTag/.venv/bin/activate
 $ python3.7 ./examples/gameOfTag/train.py
 ```
+
+
+# Tensorboard
+```
+$ tensorboard --logdir=/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs
+```

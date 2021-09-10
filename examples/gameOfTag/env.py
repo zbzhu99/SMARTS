@@ -348,12 +348,12 @@ def predator_reward_adapter(obs, env_reward):
 
     # Penalty for not moving
     # if obs.events.not_moving:
-    # reward -= 10
+    # reward -= 2
 
     # Penalty for each step spent without catching prey
     # if not obs.events.collisions and \
     #     not obs.events.not_moving:
-    #     reward -= 5
+    #     reward -= 2
 
     return np.float32(reward)
 
@@ -389,10 +389,10 @@ def prey_reward_adapter(obs, env_reward):
 
     # Penalty for not moving
     # if obs.events.not_moving:
-    #     reward -= 20
+    #     reward -= 2
 
     # Reward for each step spent without being caught by predator
     # if not obs.events.collisions:
-    #     reward += 20
+    #     reward += 2
 
     return np.float32(reward)

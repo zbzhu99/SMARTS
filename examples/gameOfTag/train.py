@@ -42,6 +42,7 @@ import tensorflow as tf
 #         # Memory growth must be set before GPUs have been initialized
 #         print(e)
 
+import multiprocessing as mp
 import signal
 import sys
 import yaml
@@ -316,6 +317,49 @@ def main(config):
 
     # Close env
     env.close()
+
+
+# def _train(num_train_epochs):
+#     num_train_epochs = num_train_epochs
+
+#     for epoch in range(num_train_epochs):
+#         for agent_id in active_agents.keys():
+#             agent = all_agents[agent_id]
+#             if agent_id in all_predators_id:
+#                 loss_tuple = got_ppo.train_model(
+#                     model=ppo_predator.model,
+#                     optimizer=ppo_predator.optimizer,
+#                     action_inds=agent.action_inds,
+#                     old_probs=tf.gather_nd(agent.probs_softmax, agent.action_inds),
+#                     states=agent.states,
+#                     advantages=agent.advantages,
+#                     discounted_rewards=agent.discounted_rewards,
+#                     ent_discount_val=ent_discount_val,
+#                     clip_value=clip_value,
+#                     critic_loss_weight=critic_loss_weight,
+#                 )
+#                 predator_total_loss[epoch] += loss_tuple[0]
+#                 predator_actor_loss[epoch] += loss_tuple[1]
+#                 predator_critic_loss[epoch] += loss_tuple[2]
+#                 predator_entropy_loss[epoch] += loss_tuple[3]
+
+#             if agent_id in all_preys_id:
+#                 loss_tuple = got_ppo.train_model(
+#                     model=ppo_predator.model,
+#                     optimizer=ppo_predator.optimizer,
+#                     action_inds=agent.action_inds,
+#                     old_probs=tf.gather_nd(agent.probs_softmax, agent.action_inds),
+#                     states=agent.states,
+#                     advantages=agent.advantages,
+#                     discounted_rewards=agent.discounted_rewards,
+#                     ent_discount_val=ent_discount_val,
+#                     clip_value=clip_value,
+#                     critic_loss_weight=critic_loss_weight,
+#                 )
+#                 prey_total_loss[epoch] += loss_tuple[0]
+#                 prey_actor_loss[epoch] += loss_tuple[1]
+#                 prey_critic_loss[epoch] += loss_tuple[2]
+#                 prey_entropy_loss[epoch] += loss_tuple[3]
 
 
 if __name__ == "__main__":

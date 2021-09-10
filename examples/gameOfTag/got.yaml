@@ -34,13 +34,15 @@ model_para:
 
   batch_size: 64
   max_batch: 100000000
-  num_train_epochs: 10
+  num_train_epochs: 1
 
   save_interval: 1
   eval_interval: 50
   
   model_initial: False
   model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
+  model_predator: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator_2021_09_10_15_01"
+  model_prey: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey_2021_09_10_15_01"
   tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
   # model_path: "/src/examples/gameOfTag/models/"
   # tensorboard: "/src/examples/gameOfTag/logs/"

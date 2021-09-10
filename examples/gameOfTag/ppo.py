@@ -68,18 +68,19 @@ class PPO(object):
         self.config = config
         self.seed = config["env_para"]["seed"]
         self.optimizer = tf.keras.optimizers.Adam(
-            learning_rate=config["model_para"]["initial_lr_" + name]
+            learning_rate=config["model_para"]["initial_lr_" + self.name]
         )
 
         # Model
+        self.model = None
+        if self.config["model_para"]["model_initial"]: # Start from existing model
+            self.model = _load(self.config["model_para"]["model_" + self.name])
+        else: # Start from new model
+            self.model = NeuralNetwork(self.config["model_para"]["action_dim"])
+        # Path for newly trained model
         self.model_path = Path(self.config["model_para"]["model_path"]).joinpath(
             f"{name}_{datetime.now().strftime('%Y_%m_%d_%H_%M')}"
         )
-        self.model = None
-        if self.config["model_para"]["model_initial"]:
-            self.model = _load(self.config["model_para"]["model_path"])
-        else:
-            self.model = NeuralNetwork(self.config["model_para"]["action_dim"])
 
         # Tensorboard
         path = Path(self.config["model_para"]["tensorboard_path"]).joinpath(
@@ -88,7 +89,18 @@ class PPO(object):
         self.tb = tf.summary.create_file_writer(str(path))
 
     def save(self):
-        tf.saved_model.save(self.model, str(self.model_path))
+        # tf.saved_model.save(self.model, str(self.model_path))
+        self.model.save(str(self.model_path))
+
+        # tf.keras.models.save_model(
+        #     model,
+        #     export_path,
+        #     overwrite=True,
+        #     include_optimizer=True,
+        #     save_format=None,
+        #     signatures=None,
+        #     options=None
+        # )
 
     def act(self, obs):
         actions = {}
@@ -115,7 +127,8 @@ class PPO(object):
 
 
 def _load(model_path):
-    return tf.saved_model.load(model_path)
+    # return tf.saved_model.load(model_path)
+    return tf.keras.models.load_model(model_path, custom_objects={"NeuralNetwork": NeuralNetwork})
 
 
 def train_model(
