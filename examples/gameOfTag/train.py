@@ -2,7 +2,7 @@
 import os
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-os.environ["PYTHONHASHSEED"] = "42"
+# os.environ["PYTHONHASHSEED"] = "42"
 
 # Silence deprecation warnings
 import warnings
@@ -13,13 +13,13 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 # in a well-defined initial state.
 import numpy as np
 
-np.random.seed(123)
+# np.random.seed(123)
 
 # The below is necessary for starting core Python generated random numbers
 # in a well-defined state.
 import random as python_random
 
-python_random.seed(123)
+# python_random.seed(123)
 
 # The below set_seed() will make random number generation
 # in the TensorFlow backend have a well-defined initial state.
@@ -27,7 +27,7 @@ python_random.seed(123)
 # https://www.tensorflow.org/api_docs/python/tf/random/set_seed
 import tensorflow as tf
 
-tf.random.set_seed(1234)
+# tf.random.set_seed(1234)
 
 
 # gpus = tf.config.list_physical_devices("GPU")
@@ -91,6 +91,7 @@ def main(config):
     def interrupt(*args):
         ppo_predator.save()
         ppo_prey.save()
+        env.close()
         print("Interrupt key detected.")
         sys.exit(0)
 
@@ -107,7 +108,7 @@ def main(config):
         [agent.reset() for _, agent in all_agents.items()]
         active_agents = {}
 
-        print("[INFO] New batch data collection")
+        print(f"[INFO] New batch data collection {batch_num}/{max_batch}")
         for _ in range(batch_size):
 
             # Update all agents which were active in this batch
@@ -234,7 +235,9 @@ def main(config):
         prey_critic_loss = np.zeros(((num_train_epochs)))
         prey_entropy_loss = np.zeros((num_train_epochs))
 
-        # Train predator
+        print("[INFO] Training")
+        # Train predator and prey
+        # Run multiple gradient ascent on the samples. Helps to reduce sample inefficiency.
         for epoch in range(num_train_epochs):
             for agent_id in active_agents.keys():
                 agent = all_agents[agent_id]
@@ -276,6 +279,8 @@ def main(config):
 
         ent_discount_val *= ent_discount_rate
 
+        print("[INFO] Record metrics")
+
         # Elapsed steps
         step = (batch_num + 1) * batch_size
 
@@ -302,14 +307,10 @@ def main(config):
         #         avg_reward_predator,
         #         avg_reward_prey,
         #     ) = evaluate.evaluate(ppo_predator, ppo_prey, config)
-        #     model_predator.write_to_summary("eval_avg_reward", avg_reward_predator)
-        #     model_predator.write_to_summary("eval_value_error", value_error_predator)
-        #     model_prey.write_to_summary("eval_avg_reward", avg_reward_prey)
-        #     model_prey.write_to_summary("eval_value_error", value_error_prey)
 
         # Save model
         if batch_num % save_interval == 0:
-            print("[INFO] Saving model...")
+            print("[INFO] Saving model")
             ppo_predator.save()
             ppo_prey.save()
 

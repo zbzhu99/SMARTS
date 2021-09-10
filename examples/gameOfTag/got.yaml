@@ -36,12 +36,12 @@ model_para:
   max_batch: 100000000
   num_train_epochs: 10
 
-  save_interval: 50
+  save_interval: 1
   eval_interval: 50
   
   model_initial: False
   model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
-  tensorboard: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
+  tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
   # model_path: "/src/examples/gameOfTag/models/"
   # tensorboard: "/src/examples/gameOfTag/logs/"
 
@@ -61,12 +61,5 @@ model_para:
   #   - [16, [6, 6], [4, 4]]
   #   - [32, [3, 3], [2, 2]] 
   # hidden_sizes: [256] # MLP layers 
-
-# benchmark:
-#   tensorboard: "/home/kyber/workspaces/" # For use in local computer
-  # base_path: "/" # For use in server
-  # checkpoint_predator: /got/models/predator/
-  # checkpoint_prey: /got/models/prey/
-
 
 # minibatch K = 3-15, batch size M = 64-4096, trajectory size T (horizon) = 128-2048

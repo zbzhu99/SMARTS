@@ -4,6 +4,7 @@ import tensorflow_probability as tfp
 
 from datetime import datetime
 from pathlib import Path
+from typing import Tuple
 
 
 class NeuralNetwork(tf.keras.Model):
@@ -81,13 +82,13 @@ class PPO(object):
             self.model = NeuralNetwork(self.config["model_para"]["action_dim"])
 
         # Tensorboard
-        path = Path(self.config["model_para"]["tensorboard"]).joinpath(
+        path = Path(self.config["model_para"]["tensorboard_path"]).joinpath(
             f"{name}_{datetime.now().strftime('%Y_%m_%d_%H_%M')}"
         )
         self.tb = tf.summary.create_file_writer(str(path))
 
     def save(self):
-        tf.saved_model.save(self.model, self.model_path)
+        tf.saved_model.save(self.model, str(self.model_path))
 
     def act(self, obs):
         actions = {}
@@ -128,6 +129,11 @@ def train_model(
     ent_discount_val,
     clip_value,
     critic_loss_weight,
+) -> Tuple(
+    tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
+    tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
+    tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
+    tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
 ):
     with tf.GradientTape() as tape:
         policy_logits, values = model.call(tf.stack(states))
@@ -138,26 +144,20 @@ def train_model(
         cri_loss = critic_loss(discounted_rewards, values, critic_loss_weight)
         tot_loss = act_loss + ent_loss + cri_loss
 
-    watched = [var.name for var in tape.watched_variables()]
-    print(watched)
-    raise Exception("TEST -------------------")
-
     grads = tape.gradient(tot_loss, model.trainable_variables)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
+
     return tot_loss, cri_loss, act_loss, ent_loss
 
 
 # Clipped objective term, to be maximized
 # @tf.function
-def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
+def actor_loss(
+    advantages, old_probs, action_inds, policy_logits, clip_value
+) -> tf.TensorSpec(shape=(), dtype=tf.dtypes.float32):
     probs = tf.nn.softmax(policy_logits)
     new_probs = tf.gather_nd(probs, action_inds)
     ratio = new_probs / old_probs  # Ratio is always positive
-
-    print("ACTOR LOSS --------- ")
-    print(ratio)
-    print(advantages)
-    print(tf.clip_by_value(ratio, 1.0 - clip_value, 1.0 + clip_value) * advantages)
 
     policy_loss = -tf.reduce_mean(  # -Expectation
         tf.math.minimum(
@@ -165,13 +165,14 @@ def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
             tf.clip_by_value(ratio, 1.0 - clip_value, 1.0 + clip_value) * advantages,
         )
     )
-    print("POLICY LOSS ------ ", policy_loss)
     return policy_loss
 
 
 # Entropy term to encourage exploration, to be maximized
 # @tf.function
-def entropy_loss(policy_logits, ent_discount_val) -> tf.float32:
+def entropy_loss(
+    policy_logits, ent_discount_val
+) -> tf.TensorSpec(shape=(), dtype=tf.dtypes.float32):
     probs = tf.nn.softmax(policy_logits)
     entropy_loss = -tf.reduce_mean(
         tf.keras.losses.categorical_crossentropy(probs, probs)
@@ -181,7 +182,9 @@ def entropy_loss(policy_logits, ent_discount_val) -> tf.float32:
 
 # Error term on value estimation, to be minimized
 # @tf.function
-def critic_loss(discounted_rewards, value_est, critic_loss_weight) -> tf.float32:
+def critic_loss(
+    discounted_rewards, value_est, critic_loss_weight
+) -> tf.TensorSpec(shape=(), dtype=tf.dtypes.float32):
     return (
         tf.reduce_mean(
             tf.keras.losses.mean_squared_error(discounted_rewards, value_est)

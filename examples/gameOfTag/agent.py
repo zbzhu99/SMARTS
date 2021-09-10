@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 
 
 class TagAgent:
@@ -55,7 +56,7 @@ class TagAgent:
         self._probs_softmax = x
 
     @property
-    def action_inds(self):
+    def action_inds(self) -> tf.TensorSpec(shape=(None, 2), dtype=tf.dtypes.int32):
         return self._action_inds
 
     @action_inds.setter
