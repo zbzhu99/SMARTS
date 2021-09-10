@@ -255,8 +255,8 @@ def main(config):
                         critic_loss_weight=critic_loss_weight,
                     )
                     predator_total_loss[epoch] += loss_tuple[0]
-                    predator_critic_loss[epoch] += loss_tuple[1]
-                    predator_actor_loss[epoch] += loss_tuple[2]
+                    predator_actor_loss[epoch] += loss_tuple[1]
+                    predator_critic_loss[epoch] += loss_tuple[2]
                     predator_entropy_loss[epoch] += loss_tuple[3]
 
                 if agent_id in all_preys_id:
@@ -273,8 +273,8 @@ def main(config):
                         critic_loss_weight=critic_loss_weight,
                     )
                     prey_total_loss[epoch] += loss_tuple[0]
-                    prey_critic_loss[epoch] += loss_tuple[1]
-                    prey_actor_loss[epoch] += loss_tuple[2]
+                    prey_actor_loss[epoch] += loss_tuple[1]
+                    prey_critic_loss[epoch] += loss_tuple[2]
                     prey_entropy_loss[epoch] += loss_tuple[3]
 
         ent_discount_val *= ent_discount_rate

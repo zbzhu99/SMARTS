@@ -140,14 +140,14 @@ def train_model(
         act_loss = actor_loss(
             advantages, old_probs, action_inds, policy_logits, clip_value
         )
-        ent_loss = entropy_loss(policy_logits, ent_discount_val)
         cri_loss = critic_loss(discounted_rewards, values, critic_loss_weight)
-        tot_loss = act_loss + ent_loss + cri_loss
+        ent_loss = entropy_loss(policy_logits, ent_discount_val)
+        tot_loss = act_loss + cri_loss + ent_loss 
 
     grads = tape.gradient(tot_loss, model.trainable_variables)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
-    return tot_loss, cri_loss, act_loss, ent_loss
+    return tot_loss, act_loss, cri_loss, ent_loss
 
 
 # Clipped objective term, to be maximized
