@@ -39,6 +39,8 @@ model_para:
   save_interval: 1
   eval_interval: 50
   
+  mode: train
+  
   model_initial: False
   model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
   model_predator: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator_2021_09_10_15_01"

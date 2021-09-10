@@ -73,9 +73,9 @@ class PPO(object):
 
         # Model
         self.model = None
-        if self.config["model_para"]["model_initial"]: # Start from existing model
+        if self.config["model_para"]["model_initial"]:  # Start from existing model
             self.model = _load(self.config["model_para"]["model_" + self.name])
-        else: # Start from new model
+        else:  # Start from new model
             self.model = NeuralNetwork(self.config["model_para"]["action_dim"])
         # Path for newly trained model
         self.model_path = Path(self.config["model_para"]["model_path"]).joinpath(
@@ -128,7 +128,9 @@ class PPO(object):
 
 def _load(model_path):
     # return tf.saved_model.load(model_path)
-    return tf.keras.models.load_model(model_path, custom_objects={"NeuralNetwork": NeuralNetwork})
+    return tf.keras.models.load_model(
+        model_path, custom_objects={"NeuralNetwork": NeuralNetwork}
+    )
 
 
 def train_model(

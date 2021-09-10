@@ -47,10 +47,16 @@ import signal
 import sys
 import yaml
 
+from enum import Enum
 from examples.gameOfTag import env as got_env
 from examples.gameOfTag import agent as got_agent
 from examples.gameOfTag import ppo as got_ppo
 from pathlib import Path
+
+
+class Mode(Enum):
+    EVALUATE = "evaluate"
+    TRAIN = "train"
 
 
 def main(config):
@@ -59,6 +65,9 @@ def main(config):
     # Save and eval interval
     save_interval = config["model_para"].get("save_interval", 50)
     eval_interval = config["model_para"].get("eval_interval", 50)
+
+    # Mode: Evaluation or Testing
+    mode = Mode(config["model_para"]["mode"])
 
     # Traning parameters
     num_train_epochs = config["model_para"]["num_train_epochs"]
@@ -236,70 +245,79 @@ def main(config):
         prey_critic_loss = np.zeros(((num_train_epochs)))
         prey_entropy_loss = np.zeros((num_train_epochs))
 
-        print("[INFO] Training")
-        # Train predator and prey
-        # Run multiple gradient ascent on the samples. Helps to reduce sample inefficiency.
-        for epoch in range(num_train_epochs):
-            for agent_id in active_agents.keys():
-                agent = all_agents[agent_id]
-                if agent_id in all_predators_id:
-                    loss_tuple = got_ppo.train_model(
-                        model=ppo_predator.model,
-                        optimizer=ppo_predator.optimizer,
-                        action_inds=agent.action_inds,
-                        old_probs=tf.gather_nd(agent.probs_softmax, agent.action_inds),
-                        states=agent.states,
-                        advantages=agent.advantages,
-                        discounted_rewards=agent.discounted_rewards,
-                        ent_discount_val=ent_discount_val,
-                        clip_value=clip_value,
-                        critic_loss_weight=critic_loss_weight,
-                    )
-                    predator_total_loss[epoch] += loss_tuple[0]
-                    predator_actor_loss[epoch] += loss_tuple[1]
-                    predator_critic_loss[epoch] += loss_tuple[2]
-                    predator_entropy_loss[epoch] += loss_tuple[3]
+        if mode == Mode.TRAIN:
+            print("[INFO] Training")
+            # Train predator and prey
+            # Run multiple gradient ascent on the samples. Helps to reduce sample inefficiency.
+            for epoch in range(num_train_epochs):
+                for agent_id in active_agents.keys():
+                    agent = all_agents[agent_id]
+                    if agent_id in all_predators_id:
+                        loss_tuple = got_ppo.train_model(
+                            model=ppo_predator.model,
+                            optimizer=ppo_predator.optimizer,
+                            action_inds=agent.action_inds,
+                            old_probs=tf.gather_nd(
+                                agent.probs_softmax, agent.action_inds
+                            ),
+                            states=agent.states,
+                            advantages=agent.advantages,
+                            discounted_rewards=agent.discounted_rewards,
+                            ent_discount_val=ent_discount_val,
+                            clip_value=clip_value,
+                            critic_loss_weight=critic_loss_weight,
+                        )
+                        predator_total_loss[epoch] += loss_tuple[0]
+                        predator_actor_loss[epoch] += loss_tuple[1]
+                        predator_critic_loss[epoch] += loss_tuple[2]
+                        predator_entropy_loss[epoch] += loss_tuple[3]
 
-                if agent_id in all_preys_id:
-                    loss_tuple = got_ppo.train_model(
-                        model=ppo_predator.model,
-                        optimizer=ppo_predator.optimizer,
-                        action_inds=agent.action_inds,
-                        old_probs=tf.gather_nd(agent.probs_softmax, agent.action_inds),
-                        states=agent.states,
-                        advantages=agent.advantages,
-                        discounted_rewards=agent.discounted_rewards,
-                        ent_discount_val=ent_discount_val,
-                        clip_value=clip_value,
-                        critic_loss_weight=critic_loss_weight,
-                    )
-                    prey_total_loss[epoch] += loss_tuple[0]
-                    prey_actor_loss[epoch] += loss_tuple[1]
-                    prey_critic_loss[epoch] += loss_tuple[2]
-                    prey_entropy_loss[epoch] += loss_tuple[3]
+                    if agent_id in all_preys_id:
+                        loss_tuple = got_ppo.train_model(
+                            model=ppo_predator.model,
+                            optimizer=ppo_predator.optimizer,
+                            action_inds=agent.action_inds,
+                            old_probs=tf.gather_nd(
+                                agent.probs_softmax, agent.action_inds
+                            ),
+                            states=agent.states,
+                            advantages=agent.advantages,
+                            discounted_rewards=agent.discounted_rewards,
+                            ent_discount_val=ent_discount_val,
+                            clip_value=clip_value,
+                            critic_loss_weight=critic_loss_weight,
+                        )
+                        prey_total_loss[epoch] += loss_tuple[0]
+                        prey_actor_loss[epoch] += loss_tuple[1]
+                        prey_critic_loss[epoch] += loss_tuple[2]
+                        prey_entropy_loss[epoch] += loss_tuple[3]
 
-        ent_discount_val *= ent_discount_rate
+            ent_discount_val *= ent_discount_rate
 
-        print("[INFO] Record metrics")
+            print("[INFO] Record metrics")
 
-        # Elapsed steps
-        step = (batch_num + 1) * batch_size
+            # Elapsed steps
+            step = (batch_num + 1) * batch_size
 
-        # Record predator performance
-        records = []
-        records.append(("predator_tot_loss", np.mean(predator_total_loss), step))
-        records.append(("predator_critic_loss", np.mean(predator_critic_loss), step))
-        records.append(("predator_actor_loss", np.mean(predator_actor_loss), step))
-        records.append(("predator_entropy_loss", np.mean(predator_entropy_loss), step))
-        ppo_predator.write_to_tb(records)
+            # Record predator performance
+            records = []
+            records.append(("predator_tot_loss", np.mean(predator_total_loss), step))
+            records.append(
+                ("predator_critic_loss", np.mean(predator_critic_loss), step)
+            )
+            records.append(("predator_actor_loss", np.mean(predator_actor_loss), step))
+            records.append(
+                ("predator_entropy_loss", np.mean(predator_entropy_loss), step)
+            )
+            ppo_predator.write_to_tb(records)
 
-        # Record prey perfromance
-        records = []
-        records.append(("prey_tot_loss", np.mean(prey_total_loss), step))
-        records.append(("prey_critic_loss", np.mean(prey_critic_loss), step))
-        records.append(("prey_actor_loss", np.mean(prey_actor_loss), step))
-        records.append(("prey_entropy_loss", np.mean(prey_entropy_loss), step))
-        ppo_prey.write_to_tb(records)
+            # Record prey perfromance
+            records = []
+            records.append(("prey_tot_loss", np.mean(prey_total_loss), step))
+            records.append(("prey_critic_loss", np.mean(prey_critic_loss), step))
+            records.append(("prey_actor_loss", np.mean(prey_actor_loss), step))
+            records.append(("prey_entropy_loss", np.mean(prey_entropy_loss), step))
+            ppo_prey.write_to_tb(records)
 
         # # Evaluate model
         # if batch_num % eval_interval == 0:
