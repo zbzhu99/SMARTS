@@ -166,7 +166,7 @@ def train_model(
 
 
 # Clipped objective term, to be maximized
-# @tf.function
+@tf.function
 def actor_loss(
     advantages, old_probs, action_inds, policy_logits, clip_value
 ) -> tf.TensorSpec(shape=(), dtype=tf.dtypes.float32):
@@ -184,7 +184,7 @@ def actor_loss(
 
 
 # Entropy term to encourage exploration, to be maximized
-# @tf.function
+@tf.function
 def entropy_loss(
     policy_logits, ent_discount_val
 ) -> tf.TensorSpec(shape=(), dtype=tf.dtypes.float32):
@@ -196,7 +196,7 @@ def entropy_loss(
 
 
 # Error term on value estimation, to be minimized
-# @tf.function
+@tf.function
 def critic_loss(
     discounted_rewards, value_est, critic_loss_weight
 ) -> tf.TensorSpec(shape=(), dtype=tf.dtypes.float32):

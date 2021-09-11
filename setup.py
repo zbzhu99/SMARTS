@@ -94,7 +94,7 @@ setup(
         "waymo": [
             "waymo-open-dataset-tf-2-2-0",
         ],
-        "got":[
+        "got": [
             "tensorflow-probability==0.12.0",
         ],
     },

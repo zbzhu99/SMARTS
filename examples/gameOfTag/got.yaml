@@ -6,7 +6,6 @@ env_para:
   neighborhood_radius: 80 # Radius (meter) for neighborhood vehicles
   rgb_wh: 110 # Height and width (meter) of RGB image in SMARTS observation
   max_episode_steps: 1800 # 3 minutes. Maximum steps per episode.
-  agent_num: 5
   agent_ids: 
     - predator1
     - predator2
@@ -15,56 +14,62 @@ env_para:
     - prey2
   controller: Categorical
   scenarios: 
-    - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
-    # - /home/kyber/workspaces/SMARTS/scenarios/figure_eight
-    # - /src/scenarios/cloverleaf
+    # - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
+    - /src/scenarios/cloverleaf
 
 model_para:
+  # Observation and action space
   state_dim: [256, 256, 3]
   action_dim: 5
   
+  # Optimizer
   initial_lr_predator: 0.001
   initial_lr_prey: 0.0005
 
+  # PPO
   critic_loss_weight: 0.5
   entropy_loss_weight: 0.01
   entropy_loss_discount_rate: 0.995
   gamma: 0.99 # Reward discount
   clip_value: 0.2
 
+  # Iteration size
   batch_size: 64
   max_batch: 100000000
-  num_train_epochs: 1
+  num_train_epochs: 10
 
-  save_interval: 1
+  # Models and logs
+  mode: train # train or evaluate
+  save_interval: 50
   eval_interval: 50
-  
-  mode: train
-  
   model_initial: false
-  model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
-  model_predator: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator_2021_09_10_23_17/128"
-  model_prey: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey_2021_09_10_23_17/128"
-  tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
-  # model_path: "/src/examples/gameOfTag/models/"
-  # tensorboard: "/src/examples/gameOfTag/logs/"
+  # Local
+  # model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
+  # model_predator: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator_2021_09_10_23_17/128"
+  # model_prey: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey_2021_09_10_23_17/128"
+  # tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
+  # Docker
+  model_path: "/src/examples/gameOfTag/models/"
+  tensorboard_path: "/src/examples/gameOfTag/logs/"
 
-  # filter_arches: # A=421,108 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
-  #   - [16, [32, 32], [4, 4]]
-  #   - [32, [17, 17], [4, 4]]
-  #   - [64, [3, 3], [2, 2]] 
-  # hidden_sizes: [128] # MLP layers 
-  # filter_arches: # B=502,836 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
-  #   - [16, [32, 32], [4, 4]]
-  #   - [32, [17, 17], [2, 2]]
-  #   - [64, [7, 7], [2, 2]] 
-  #   - [128, [4,4], [2, 2]]
-  # hidden_sizes: [64] # MLP layers 
-  # filter_arches: # C=211,049 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
-  #   - [5, [12, 12], [4, 4]]
-  #   - [16, [6, 6], [4, 4]]
-  #   - [32, [3, 3], [2, 2]] 
-  # hidden_sizes: [256] # MLP layers 
+
+# filter_arches: # A=421,108 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
+#   - [16, [32, 32], [4, 4]]
+#   - [32, [17, 17], [4, 4]]
+#   - [64, [3, 3], [2, 2]] 
+# hidden_sizes: [128] # MLP layers 
+# filter_arches: # B=502,836 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
+#   - [16, [32, 32], [4, 4]]
+#   - [32, [17, 17], [2, 2]]
+#   - [64, [7, 7], [2, 2]] 
+#   - [128, [4,4], [2, 2]]
+# hidden_sizes: [64] # MLP layers 
+# filter_arches: # C=211,049 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
+#   - [5, [12, 12], [4, 4]]
+#   - [16, [6, 6], [4, 4]]
+#   - [32, [3, 3], [2, 2]] 
+# hidden_sizes: [256] # MLP layers 
+
 
 # minibatch K = 3-15, 
 # batch size M = 64-4096, 

@@ -24,19 +24,6 @@ import tensorflow as tf
 
 # tf.random.set_seed(1234)
 
-
-# gpus = tf.config.list_physical_devices("GPU")
-# if gpus:
-#     try:
-#         # Currently, memory growth needs to be the same across GPUs
-#         for gpu in gpus:
-#             tf.config.experimental.set_memory_growth(gpu, True)
-#         logical_gpus = tf.config.list_logical_devices("GPU")
-#         print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
-#     except RuntimeError as e:
-#         # Memory growth must be set before GPUs have been initialized
-#         print(e)
-
 import multiprocessing as mp
 import signal
 import sys
@@ -247,8 +234,8 @@ def main(config):
             continue
 
         print("[INFO] Training")
-        # Train predator and prey
-        # Run multiple gradient ascent on the samples. Helps to reduce sample inefficiency.
+        # Train predator and prey.
+        # Run multiple gradient ascent on the samples.
         for epoch in range(num_train_epochs):
             for agent_id in active_agents.keys():
                 agent = all_agents[agent_id]
@@ -373,11 +360,21 @@ if __name__ == "__main__":
     with open(config_yaml, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
-    # Check for GPU device
-    # device_name = tf.test.gpu_device_name()
-    # if device_name != "/device:GPU:0":
-    #     print("Not configured to use GPU or GPU not available.")
-    #     raise SystemError('GPU device not found')
+    # Setup GPU
+    gpus = tf.config.list_physical_devices("GPU")
+    if gpus:
+        try:
+            # Currently, memory growth needs to be the same across GPUs
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+            logical_gpus = tf.config.list_logical_devices("GPU")
+            print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+        except RuntimeError as e:
+            # Memory growth must be set before GPUs have been initialized
+            print(e)
+    else:
+        print("Not configured to use GPU or GPU not available.")
+        # raise SystemError("GPU device not found")
 
     # strategy = tf.distribute.MirroredStrategy()
     # print("Number of devices: {}".format(strategy.num_replicas_in_sync))
