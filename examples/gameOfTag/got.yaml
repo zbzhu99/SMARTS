@@ -36,7 +36,7 @@ model_para:
   # Iteration size
   batch_size: 64
   max_batch: 100000000
-  num_train_epochs: 10
+  num_train_epochs: 5
 
   # Models and logs
   mode: train # train or evaluate
