@@ -99,8 +99,8 @@ def main(config):
     ppo_prey = got_ppo.PPO("prey", config)
 
     def interrupt(*args):
-        ppo_predator.save()
-        ppo_prey.save()
+        ppo_predator.save(-1)
+        ppo_prey.save(-1)
         env.close()
         print("Interrupt key detected.")
         sys.exit(0)
@@ -245,6 +245,9 @@ def main(config):
         prey_critic_loss = np.zeros(((num_train_epochs)))
         prey_entropy_loss = np.zeros((num_train_epochs))
 
+        # Elapsed steps
+        step = (batch_num + 1) * batch_size
+
         if mode == Mode.TRAIN:
             print("[INFO] Training")
             # Train predator and prey
@@ -295,10 +298,6 @@ def main(config):
             ent_discount_val *= ent_discount_rate
 
             print("[INFO] Record metrics")
-
-            # Elapsed steps
-            step = (batch_num + 1) * batch_size
-
             # Record predator performance
             records = []
             records.append(("predator_tot_loss", np.mean(predator_total_loss), step))
@@ -330,8 +329,8 @@ def main(config):
         # Save model
         if batch_num % save_interval == 0:
             print("[INFO] Saving model")
-            ppo_predator.save()
-            ppo_prey.save()
+            ppo_predator.save(step)
+            ppo_prey.save(step)
 
     # Close env
     env.close()

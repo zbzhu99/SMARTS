@@ -1,10 +1,14 @@
+import absl.logging
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
 from datetime import datetime
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
+
+# Suppress warning
+absl.logging.set_verbosity(absl.logging.ERROR)
 
 
 class NeuralNetwork(tf.keras.Model):
@@ -88,19 +92,12 @@ class PPO(object):
         )
         self.tb = tf.summary.create_file_writer(str(path))
 
-    def save(self):
-        # tf.saved_model.save(self.model, str(self.model_path))
-        self.model.save(str(self.model_path))
-
-        # tf.keras.models.save_model(
-        #     model,
-        #     export_path,
-        #     overwrite=True,
-        #     include_optimizer=True,
-        #     save_format=None,
-        #     signatures=None,
-        #     options=None
-        # )
+    def save(self, version: int):
+        save_path = self.model_path / str(version)
+        tf.keras.models.save_model(
+            model=self.model,
+            filepath=save_path,
+        )
 
     def act(self, obs):
         actions = {}
@@ -127,9 +124,10 @@ class PPO(object):
 
 
 def _load(model_path):
-    # return tf.saved_model.load(model_path)
     return tf.keras.models.load_model(
-        model_path, custom_objects={"NeuralNetwork": NeuralNetwork}
+        model_path,
+        custom_objects={"NeuralNetwork": NeuralNetwork},
+        compile=False,
     )
 
 
