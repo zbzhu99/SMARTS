@@ -16,8 +16,6 @@
 **/.eggs/
 **/*.egg
 **/*.egg-info
-**/gameOfTag/logs/*
-**/gameOfTag/models/*
 **/*flamegraph-perf.log
 **/*flamegraph.svg
 **/*flamegraph.html
