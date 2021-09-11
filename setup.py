@@ -50,7 +50,7 @@ setup(
         "matplotlib",
         "scikit-image",
         # The following are for /smarts/zoo and remote agents
-        "grpcio==1.37.0",
+        "grpcio==1.32.0",
         "protobuf",
         "PyYAML",
         "twisted",
@@ -93,6 +93,9 @@ setup(
         ],
         "waymo": [
             "waymo-open-dataset-tf-2-2-0",
+        ],
+        "got":[
+            "tensorflow-probability==0.12.0",
         ],
     },
     entry_points={"console_scripts": ["scl=cli.cli:scl"]},

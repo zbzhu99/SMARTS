@@ -1,1 +1,0 @@
-tensorflow-probability==0.12.0
