@@ -44,13 +44,13 @@ model_para:
   eval_interval: 50
   model_initial: false
   # Local
+  # tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
   # model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
   # model_predator: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator_2021_09_10_23_17/128"
   # model_prey: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey_2021_09_10_23_17/128"
-  # tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
   # Docker
-  model_path: "/src/examples/gameOfTag/models/"
   tensorboard_path: "/src/examples/gameOfTag/logs/"
+  model_path: "/src/examples/gameOfTag/models/"
 
 
 # filter_arches: # A=421,108 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]

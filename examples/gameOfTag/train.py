@@ -202,7 +202,7 @@ def main(config):
                 )
             else:  # Agent done
                 # Store last values
-                all_agents[agent_id].add_last_transition(value=0)
+                all_agents[agent_id].add_last_transition(value=np.float32(0))
 
         # Compute generalised advantages
         for agent_id in active_agents.keys():

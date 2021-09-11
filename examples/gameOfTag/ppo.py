@@ -166,10 +166,8 @@ def train_model(
 
 
 # Clipped objective term, to be maximized
-@tf.function
-def actor_loss(
-    advantages, old_probs, action_inds, policy_logits, clip_value
-) -> tf.TensorSpec(shape=(), dtype=tf.dtypes.float32):
+# @tf.function(experimental_relax_shapes=True)
+def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
     probs = tf.nn.softmax(policy_logits)
     new_probs = tf.gather_nd(probs, action_inds)
     ratio = new_probs / old_probs  # Ratio is always positive
@@ -184,10 +182,8 @@ def actor_loss(
 
 
 # Entropy term to encourage exploration, to be maximized
-@tf.function
-def entropy_loss(
-    policy_logits, ent_discount_val
-) -> tf.TensorSpec(shape=(), dtype=tf.dtypes.float32):
+# @tf.function(experimental_relax_shapes=True)
+def entropy_loss(policy_logits, ent_discount_val):
     probs = tf.nn.softmax(policy_logits)
     entropy_loss = -tf.reduce_mean(
         tf.keras.losses.categorical_crossentropy(probs, probs)
@@ -196,10 +192,8 @@ def entropy_loss(
 
 
 # Error term on value estimation, to be minimized
-@tf.function
-def critic_loss(
-    discounted_rewards, value_est, critic_loss_weight
-) -> tf.TensorSpec(shape=(), dtype=tf.dtypes.float32):
+# @tf.function(experimental_relax_shapes=True)
+def critic_loss(discounted_rewards, value_est, critic_loss_weight):
     return (
         tf.reduce_mean(
             tf.keras.losses.mean_squared_error(discounted_rewards, value_est)
