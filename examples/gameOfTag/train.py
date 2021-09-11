@@ -4,11 +4,6 @@ import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 # os.environ["PYTHONHASHSEED"] = "42"
 
-# Silence deprecation warnings
-import warnings
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 # The below is necessary for starting Numpy generated random numbers
 # in a well-defined initial state.
 import numpy as np
