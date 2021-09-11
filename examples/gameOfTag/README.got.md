@@ -49,7 +49,7 @@ $ python3.7 ./examples/gameOfTag/train.py
 ```bash
 # In host terminal
 $ cd /path/to/SMARTS
-$ export VERSION=v0.4.18
+$ export VERSION=v0.4.19
 $ docker build --network=host -f ./utils/docker/Dockerfile.tensorflow -t adaickalavan/smarts:$VERSION-tensorflow .
 $ docker run --rm -it --gpus=all --network=host --volume=/home/kyber/workspaces/SMARTS/:/src/ adaickalavan/smarts:$VERSION-tensorflow
 
