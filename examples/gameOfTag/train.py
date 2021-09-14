@@ -185,7 +185,6 @@ def main(config):
         # Compute and store last state value
         for agent_id in active_agents.keys():
             if dones_t.get(agent_id, None) == 0:  # Agent not done yet
-                # Calculate last values (bootstrap values)
                 if "predator" in agent_id:
                     _, _, next_values_t = ppo_predator.act(
                         {agent_id: next_states_t[agent_id]}
@@ -196,12 +195,10 @@ def main(config):
                     )
                 else:
                     raise Exception(f"Unknown {agent_id}.")
-                # Store last values
                 all_agents[agent_id].add_last_transition(
                     value=next_values_t[agent_id].numpy()[0]
                 )
             else:  # Agent done
-                # Store last values
                 all_agents[agent_id].add_last_transition(value=np.float32(0))
 
         # Compute generalised advantages
