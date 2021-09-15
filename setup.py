@@ -64,16 +64,16 @@ setup(
             "pytest-cov",
             "pytest-notebook",
             "pytest-xdist",
-            "ray[rllib]==1.0.1.post1",  # We use Ray for our multiprocessing needs
+            # "ray[rllib]==1.0.1.post1",  # We use Ray for our multiprocessing needs
             "tensorflow==2.4.0",  # For rllib tests
         ],
         "train": [
+            "scipy",
             "tensorflow==2.4.0",
             # XXX: TF requires specific version of scipy
-            "scipy==1.4.1",
-            "torch==1.4.0",
-            "torchvision==0.5.0",
-            "ray[rllib]==1.0.1.post1",  # We use Ray for our multiprocessing needs
+            # "torch==1.4.0",
+            # "torchvision==0.5.0",
+            # "ray[rllib]==1.0.1.post1",  # We use Ray for our multiprocessing needs
         ],
         "dev": [
             "black==20.8b1",
@@ -95,7 +95,7 @@ setup(
             "waymo-open-dataset-tf-2-2-0",
         ],
         "got": [
-            "tensorflow-probability==0.12.0",
+            "tensorflow-probability",
         ],
     },
     entry_points={"console_scripts": ["scl=cli.cli:scl"]},
