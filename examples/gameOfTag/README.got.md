@@ -65,3 +65,7 @@ $ python3.7 ./examples/gameOfTag/evaluate.py
 ```
 $ tensorboard --logdir=/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs
 ```
+
+
+docker build --network=host --build-arg http_proxy=http://localhost:3128 --build-arg https_proxy=http://localhost:3128 --build-arg HTTP_PROXY=http://localhost:3128  --build-arg HTTPS_PROXY=http://localhost:3128 -f ./utils/docker/Dockerfile.tensorflow -t adaickalavan/smarts:$VERSION-tensorflow .
+
