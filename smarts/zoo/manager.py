@@ -43,7 +43,16 @@ def serve(port):
     server.start()
     log.debug(f"Manager - ip({ip}), port({port}), pid({os.getpid()}): Started serving.")
 
-    def stop_server(unused_signum, unused_frame):
+    def stop_server_term(unused_signum, unused_frame):
+        print("CAUGHT SIGNAL TERMINATE IN MANAGER")
+        manager_servicer_object.destroy()
+        server.stop(0)
+        log.debug(
+            f"Manager - ip({ip}), port({port}), pid({os.getpid()}): Received interrupt signal."
+        )
+
+    def stop_server_int(unused_signum, unused_frame):
+        print("CAUGHT SIGNAL INTERRUPT IN MANAGER")
         manager_servicer_object.destroy()
         server.stop(0)
         log.debug(
@@ -51,8 +60,8 @@ def serve(port):
         )
 
     # Catch keyboard interrupt and terminate signal
-    signal.signal(signal.SIGINT, stop_server)
-    signal.signal(signal.SIGTERM, stop_server)
+    signal.signal(signal.SIGINT, stop_server_int)
+    signal.signal(signal.SIGTERM, stop_server_term)
 
     # Wait to receive server termination signal
     server.wait_for_termination()

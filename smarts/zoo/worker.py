@@ -93,15 +93,23 @@ def serve(port):
     server.start()
     log.debug(f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Started serving.")
 
-    def stop_server(unused_signum, unused_frame):
+    def stop_server_term(unused_signum, unused_frame):
+        print("CAUGHT SINGAL TERMINATE IN WORKER")
+        server.stop(0)
+        log.debug(
+            f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Received interrupt signal."
+        )
+
+    def stop_server_int(unused_signum, unused_frame):
+        print("CAUGHT SIGNAL INTERRUPT IN WORKER")
         server.stop(0)
         log.debug(
             f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Received interrupt signal."
         )
 
     # Catch keyboard interrupt and terminate signal
-    signal.signal(signal.SIGINT, stop_server)
-    signal.signal(signal.SIGTERM, stop_server)
+    signal.signal(signal.SIGINT, stop_server_int)
+    signal.signal(signal.SIGTERM, stop_server_term)
 
     # Wait to receive server termination signal
     server.wait_for_termination()

@@ -20,6 +20,7 @@
 
 import grpc
 import logging
+import multiprocessing as mp
 import os
 import pathlib
 import subprocess
@@ -52,6 +53,18 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
             "--port",
             str(port),
         ]
+
+        # import zoo
+        # mp.Process(
+        #     target=zoo.worker.worker,
+        #     args=(
+        #         port=port
+        #     )
+        # )
+
+        # import os
+        # def preexec(): # Don't forward signals.
+        #     os.setpgrp()
 
         worker = subprocess.Popen(cmd)
         if worker.poll() == None:
