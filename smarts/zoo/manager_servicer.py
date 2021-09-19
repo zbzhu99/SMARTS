@@ -80,7 +80,7 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
             return self._stop_worker(request, context)
 
     def _stop_worker(self, request, context):
-        log.debug(
+        print(
             f"Manager - pid({os.getpid()}), received stop signal for worker at port {request.num}."
         )
 
@@ -107,7 +107,7 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
             self._destroy()
 
     def _destroy(self):
-        log.debug(
+        print(
             f"Manager - pid({os.getpid()}), shutting down remaining agent worker processes."
         )
         workers_to_kill = list(self._workers.values())

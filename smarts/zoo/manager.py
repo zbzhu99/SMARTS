@@ -17,17 +17,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+
 import argparse
+import grpc
 import logging
 import os
-import pathlib
 import signal
-import subprocess
-import sys
 from concurrent import futures
-
-import grpc
-
 from smarts.zoo import manager_pb2_grpc, manager_servicer
 
 logging.basicConfig(level=logging.INFO)
@@ -41,21 +37,21 @@ def serve(port):
     manager_pb2_grpc.add_ManagerServicer_to_server(manager_servicer_object, server)
     server.add_insecure_port(f"{ip}:{port}")
     server.start()
-    log.debug(f"Manager - ip({ip}), port({port}), pid({os.getpid()}): Started serving.")
+    print(f"Manager - ip({ip}), port({port}), pid({os.getpid()}): Started serving.")
 
     def stop_server_term(unused_signum, unused_frame):
         print("CAUGHT SIGNAL TERMINATE IN MANAGER")
         manager_servicer_object.destroy()
         server.stop(0)
-        log.debug(
-            f"Manager - ip({ip}), port({port}), pid({os.getpid()}): Received interrupt signal."
+        print(
+            f"Manager - ip({ip}), port({port}), pid({os.getpid()}): Received TERMINATE signal."
         )
 
     def stop_server_int(unused_signum, unused_frame):
         print("CAUGHT SIGNAL INTERRUPT IN MANAGER")
         manager_servicer_object.destroy()
         server.stop(0)
-        log.debug(
+        print(
             f"Manager - ip({ip}), port({port}), pid({os.getpid()}): Received interrupt signal."
         )
 
@@ -65,7 +61,7 @@ def serve(port):
 
     # Wait to receive server termination signal
     server.wait_for_termination()
-    log.debug(f"Manager - ip({ip}), port({port}), pid({os.getpid()}): Server exited")
+    print(f"Manager - ip({ip}), port({port}), pid({os.getpid()}): Server exited")
 
 
 if __name__ == "__main__":

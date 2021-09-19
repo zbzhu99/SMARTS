@@ -91,19 +91,19 @@ def serve(port):
     )
     server.add_insecure_port(f"{ip}:{port}")
     server.start()
-    log.debug(f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Started serving.")
+    print(f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Started serving.")
 
     def stop_server_term(unused_signum, unused_frame):
         print("CAUGHT SINGAL TERMINATE IN WORKER")
         server.stop(0)
-        log.debug(
-            f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Received interrupt signal."
+        print(
+            f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Received TERMINATE signal."
         )
 
     def stop_server_int(unused_signum, unused_frame):
         print("CAUGHT SIGNAL INTERRUPT IN WORKER")
         server.stop(0)
-        log.debug(
+        print(
             f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Received interrupt signal."
         )
 
@@ -113,7 +113,7 @@ def serve(port):
 
     # Wait to receive server termination signal
     server.wait_for_termination()
-    log.debug(f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Server exited")
+    print(f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Server exited")
 
 
 if __name__ == "__main__":
