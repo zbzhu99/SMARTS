@@ -265,8 +265,8 @@ if __name__ == "__main__":
         num_stack=args.num_stack,
         num_env=args.num_env,
         auto_reset=True,
-        max_episode_steps=args.max_episode_steps,
-        num_steps=args.num_steps,
+        max_episode_steps=128,  # args.max_episode_steps,
+        num_steps=384,  # args.num_steps,
     )
 
     print("\nParallel environments with synchronous episodes.\n")
@@ -279,6 +279,6 @@ if __name__ == "__main__":
         num_stack=args.num_stack,
         num_env=args.num_env,
         auto_reset=False,
-        max_episode_steps=args.max_episode_steps,
-        num_episodes=args.episodes,
+        max_episode_steps=128,  # args.max_episode_steps,
+        num_episodes=3,  # args.episodes,
     )

@@ -29,6 +29,8 @@ from smarts.zoo import manager_pb2_grpc, manager_servicer
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(f"manager.py - pid({os.getpid()}), pgid({os.getpgrp()})")
 
+from threading import Lock
+
 
 def serve(port):
     ip = "[::]"
@@ -37,14 +39,27 @@ def serve(port):
     manager_pb2_grpc.add_ManagerServicer_to_server(manager_servicer_object, server)
     server.add_insecure_port(f"{ip}:{port}")
     server.start()
-    log.debug(f"Manager - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Started serving.")
+    log.debug(
+        f"Manager - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Started serving."
+    )
+
+    destroy = Lock()
+    destroyed = False
 
     def stop_server(*args):
-        manager_servicer_object.destroy()
-        server.stop(0)
-        log.debug(
-            f"Manager - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Received signal {args[0]}."
+        nonlocal destroyed
+        print(
+            f"Manager - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Received signal {args[0]} OUTSIDE FUNCTION !!!!!."
         )
+
+        with destroy:
+            if not destroyed:
+                destroyed = True
+                manager_servicer_object.destroy()
+                server.stop(0)
+                print(
+                    f"Manager - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Received signal {args[0]}."
+                )
 
     # Catch keyboard interrupt and terminate signal
     signal.signal(signal.SIGINT, stop_server)
@@ -52,7 +67,9 @@ def serve(port):
 
     # Wait to receive server termination signal
     server.wait_for_termination()
-    log.debug(f"Manager - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Server exited")
+    log.debug(
+        f"Manager - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Server exited"
+    )
 
 
 if __name__ == "__main__":

@@ -88,7 +88,9 @@ def serve(port):
     )
     server.add_insecure_port(f"{ip}:{port}")
     server.start()
-    log.debug(f"Worker - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Started serving.")
+    log.debug(
+        f"Worker - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Started serving."
+    )
 
     def stop_server(*args):
         server.stop(0)
@@ -101,7 +103,9 @@ def serve(port):
 
     # Wait to receive server termination signal
     server.wait_for_termination()
-    log.debug(f"Worker - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Server exited")
+    log.debug(
+        f"Worker - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Server exited"
+    )
 
 
 if __name__ == "__main__":

@@ -31,7 +31,9 @@ from smarts.zoo import manager_pb2, manager_pb2_grpc
 from threading import Lock
 
 logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(f"manager_servicer.py - pid({os.getpid()}), pgid({os.getpgrp()})")
+log = logging.getLogger(
+    f"manager_servicer.py - pid({os.getpid()}), pgid({os.getpgrp()})"
+)
 
 
 class ManagerServicer(manager_pb2_grpc.ManagerServicer):
@@ -40,6 +42,9 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
     def __init__(self):
         self._workers = {}
         self._destroy_lock = Lock()
+
+    def __del__(self):
+        self._destroy()
 
     def spawn_worker(self, request, context):
         port = find_free_port()
@@ -51,7 +56,7 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
             str(port),
         ]
 
-        def preexec(): # Don't forward interrupt signals.
+        def preexec():  # Don't forward interrupt signals.
             signal.signal(signal.SIGINT, signal.SIG_IGN)
 
         worker = subprocess.Popen(cmd, preexec_fn=preexec)

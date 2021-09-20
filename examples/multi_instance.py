@@ -170,18 +170,21 @@ def main(
     seed,
 ):
     ray.init()
-    ray.wait(
-        [
-            train.remote(
-                training_scenarios,
-                evaluation_scenarios,
-                sim_name,
-                headless,
-                num_episodes,
-                seed,
-            )
-        ]
-    )
+    try:
+        ray.wait(
+            [
+                train.remote(
+                    training_scenarios,
+                    evaluation_scenarios,
+                    sim_name,
+                    headless,
+                    num_episodes,
+                    seed,
+                )
+            ]
+        )
+    finally:
+        ray.shutdown()
 
 
 if __name__ == "__main__":

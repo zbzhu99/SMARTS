@@ -351,8 +351,8 @@ def _worker(
     except (KeyboardInterrupt, SystemExit):
         if sys.exc_info()[0] == SystemExit:
             evalue = sys.exc_info()[1]
-        else: #KeyboardInterrupt
-            evalue = "Traceback is hidden"    
+        else:  # KeyboardInterrupt
+            evalue = "Traceback is hidden"
         error_queue.put((index, sys.exc_info()[0], evalue))
         pipe.send((None, False))
     except Exception:

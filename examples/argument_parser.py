@@ -39,6 +39,6 @@ def default_argument_parser(program: str = None):
         "--episodes",
         help="The number of episodes to run the simulation for.",
         type=int,
-        default=10,
+        default=2,
     )
     return parser

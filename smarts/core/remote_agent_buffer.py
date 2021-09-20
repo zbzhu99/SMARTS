@@ -200,9 +200,10 @@ def spawn_local_zoo_manager(port):
         str(port),
     ]
 
-    def preexec(): # Don't forward interrupt signals.
+    def preexec():  # Don't forward interrupt signals.
         import os
-        os.setpgrp() # Creates separate proces groups.
+
+        os.setpgrp()  # Creates separate proces groups.
 
     manager = subprocess.Popen(cmd, preexec_fn=preexec)
     if manager.poll() == None:

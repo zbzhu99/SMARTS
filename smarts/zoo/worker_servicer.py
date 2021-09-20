@@ -26,7 +26,9 @@ import time
 from smarts.zoo import worker_pb2, worker_pb2_grpc
 
 logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(f"worker_servicer.py - pid({os.getpid()}), pgid({os.getpgrp()})")
+log = logging.getLogger(
+    f"worker_servicer.py - pid({os.getpid()}), pgid({os.getpgrp()})"
+)
 
 
 class WorkerServicer(worker_pb2_grpc.WorkerServicer):

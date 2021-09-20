@@ -17,18 +17,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+
 import importlib.resources as pkg_resources
 import logging
-import math
+import numpy as np
 import os
+import signal
+import sys
 import warnings
 from collections import defaultdict
-from typing import List, Sequence
-
-import numpy as np
-
 from envision import types as envision_types
 from envision.client import Client as EnvisionClient
+from typing import List, Sequence
 
 with warnings.catch_warnings():
     # XXX: Benign warning, seems no other way to "properly" fix
@@ -36,7 +36,7 @@ with warnings.catch_warnings():
     from sklearn.metrics.pairwise import euclidean_distances
 
 from smarts import VERSION
-from smarts.core.chassis import AckermannChassis, BoxChassis
+from smarts.core.chassis import BoxChassis
 
 from . import models
 from .agent_interface import AgentInterface
@@ -152,6 +152,13 @@ class SMARTS:
         self._ground_bullet_id = None
         self._map_bb = None
 
+        # Catch abrupt terminate and interrupt signals
+        signal.signal(signal.SIGTERM, self._signal_handler)
+        signal.signal(signal.SIGINT, self._signal_handler)
+        # catchable_sigs = set(signal.Signals) - {signal.SIGKILL, signal.SIGSTOP}
+        # for sig in catchable_sigs:
+        #     signal.signal(sig, self._signal_handler)
+
     def step(self, agent_actions, time_delta_since_last_step: float = None):
         """Note the time_delta_since_last_step param is in (nominal) seconds."""
         if not self._is_setup:
@@ -162,11 +169,6 @@ class SMARTS:
 
         try:
             return self._step(agent_actions, time_delta_since_last_step)
-        except (KeyboardInterrupt, SystemExit):
-            # ensure we clean-up if the user exits the simulation
-            self._log.info("Simulation was interrupted by the user.")
-            self.destroy()
-            raise  # re-raise the KeyboardInterrupt
         except Exception as e:
             self._log.error(
                 "Simulation crashed with exception. Attempting to cleanly shutdown."
@@ -474,6 +476,10 @@ class SMARTS:
 
         self._ground_bullet_id = None
         self._is_setup = False
+
+    def _signal_handler(self, *args):
+        self.destroy()
+        sys.exit(f"Received signal {signal.Signals(args[0]).name}.")
 
     def destroy(self):
         self.teardown()
