@@ -20,10 +20,10 @@
 
 import grpc
 import logging
-import multiprocessing as mp
 import os
 import pathlib
 import subprocess
+import signal
 import sys
 
 from smarts.core.utils.networking import find_free_port
@@ -31,7 +31,7 @@ from smarts.zoo import manager_pb2, manager_pb2_grpc
 from threading import Lock
 
 logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(f"manager_servicer.py - pid({os.getpid()})")
+log = logging.getLogger(f"manager_servicer.py - pid({os.getpid()}), pgid({os.getpgrp()})")
 
 
 class ManagerServicer(manager_pb2_grpc.ManagerServicer):
@@ -40,9 +40,6 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
     def __init__(self):
         self._workers = {}
         self._destroy_lock = Lock()
-
-    def __del__(self):
-        self._destroy()
 
     def spawn_worker(self, request, context):
         port = find_free_port()
@@ -54,19 +51,10 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
             str(port),
         ]
 
-        # import zoo
-        # mp.Process(
-        #     target=zoo.worker.worker,
-        #     args=(
-        #         port=port
-        #     )
-        # )
+        def preexec(): # Don't forward interrupt signals.
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-        # import os
-        # def preexec(): # Don't forward signals.
-        #     os.setpgrp()
-
-        worker = subprocess.Popen(cmd)
+        worker = subprocess.Popen(cmd, preexec_fn=preexec)
         if worker.poll() == None:
             self._workers[port] = worker
             return manager_pb2.Port(num=port)
@@ -80,8 +68,8 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
             return self._stop_worker(request, context)
 
     def _stop_worker(self, request, context):
-        print(
-            f"Manager - pid({os.getpid()}), received stop signal for worker at port {request.num}."
+        log.debug(
+            f"Manager - pid({os.getpid()}), pgid({os.getpgrp()}), received stop signal for worker at port {request.num}."
         )
 
         # Get worker_process corresponding to the received port number.
@@ -107,8 +95,8 @@ class ManagerServicer(manager_pb2_grpc.ManagerServicer):
             self._destroy()
 
     def _destroy(self):
-        print(
-            f"Manager - pid({os.getpid()}), shutting down remaining agent worker processes."
+        log.debug(
+            f"Manager - pid({os.getpid()}), pgid({os.getpgrp()}), shutting down remaining agent worker processes."
         )
         workers_to_kill = list(self._workers.values())
         for worker in workers_to_kill:

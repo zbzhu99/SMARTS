@@ -27,41 +27,32 @@ from concurrent import futures
 from smarts.zoo import manager_pb2_grpc, manager_servicer
 
 logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(f"manager.py - pid({os.getpid()})")
+log = logging.getLogger(f"manager.py - pid({os.getpid()}), pgid({os.getpgrp()})")
 
 
 def serve(port):
     ip = "[::]"
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
+    server = grpc.server(futures.ThreadPoolExecutor())
     manager_servicer_object = manager_servicer.ManagerServicer()
     manager_pb2_grpc.add_ManagerServicer_to_server(manager_servicer_object, server)
     server.add_insecure_port(f"{ip}:{port}")
     server.start()
-    print(f"Manager - ip({ip}), port({port}), pid({os.getpid()}): Started serving.")
+    log.debug(f"Manager - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Started serving.")
 
-    def stop_server_term(unused_signum, unused_frame):
-        print("CAUGHT SIGNAL TERMINATE IN MANAGER")
+    def stop_server(*args):
         manager_servicer_object.destroy()
         server.stop(0)
-        print(
-            f"Manager - ip({ip}), port({port}), pid({os.getpid()}): Received TERMINATE signal."
-        )
-
-    def stop_server_int(unused_signum, unused_frame):
-        print("CAUGHT SIGNAL INTERRUPT IN MANAGER")
-        manager_servicer_object.destroy()
-        server.stop(0)
-        print(
-            f"Manager - ip({ip}), port({port}), pid({os.getpid()}): Received interrupt signal."
+        log.debug(
+            f"Manager - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Received signal {args[0]}."
         )
 
     # Catch keyboard interrupt and terminate signal
-    signal.signal(signal.SIGINT, stop_server_int)
-    signal.signal(signal.SIGTERM, stop_server_term)
+    signal.signal(signal.SIGINT, stop_server)
+    signal.signal(signal.SIGTERM, stop_server)
 
     # Wait to receive server termination signal
     server.wait_for_termination()
-    print(f"Manager - ip({ip}), port({port}), pid({os.getpid()}): Server exited")
+    log.debug(f"Manager - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Server exited")
 
 
 if __name__ == "__main__":

@@ -18,20 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import grpc
 import logging
 import pathlib
 import random
+import signal
 import subprocess
 import sys
 import time
-import subprocess
-import pathlib
-import sys
 from concurrent import futures
-import signal
-
-import grpc
-
 from smarts.core.remote_agent import RemoteAgent, RemoteAgentException
 from smarts.core.utils.networking import find_free_port
 from smarts.zoo import manager_pb2, manager_pb2_grpc
@@ -120,6 +115,7 @@ class RemoteAgentBuffer:
             self._zoo_manager_conns[0]["channel"].close()
             self._zoo_manager_conns[0]["process"].terminate()
             self._zoo_manager_conns[0]["process"].wait()
+            self._local_zoo_manager = False
 
     def _build_remote_agent(self, zoo_manager_conns):
         # Get a random zoo manager connection.
@@ -204,7 +200,11 @@ def spawn_local_zoo_manager(port):
         str(port),
     ]
 
-    manager = subprocess.Popen(cmd)
+    def preexec(): # Don't forward interrupt signals.
+        import os
+        os.setpgrp() # Creates separate proces groups.
+
+    manager = subprocess.Popen(cmd, preexec_fn=preexec)
     if manager.poll() == None:
         return manager
 

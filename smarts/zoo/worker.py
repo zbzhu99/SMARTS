@@ -36,15 +36,12 @@ The protocal is as follows:
 """
 
 import argparse
+import grpc
 import importlib
 import logging
 import os
 import signal
-import sys
 from concurrent import futures
-
-import grpc
-
 from smarts.zoo import worker_pb2_grpc, worker_servicer
 
 # Front-load some expensive imports as to not block the simulation
@@ -80,40 +77,31 @@ for mod in modules:
 # End front-loaded imports
 
 logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(f"worker.py - pid({os.getpid()})")
+log = logging.getLogger(f"worker.py - pid({os.getpid()}), pgid({os.getpgrp()})")
 
 
 def serve(port):
     ip = "[::]"
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
+    server = grpc.server(futures.ThreadPoolExecutor())
     worker_pb2_grpc.add_WorkerServicer_to_server(
         worker_servicer.WorkerServicer(), server
     )
     server.add_insecure_port(f"{ip}:{port}")
     server.start()
-    print(f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Started serving.")
+    log.debug(f"Worker - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Started serving.")
 
-    def stop_server_term(unused_signum, unused_frame):
-        print("CAUGHT SINGAL TERMINATE IN WORKER")
+    def stop_server(*args):
         server.stop(0)
-        print(
-            f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Received TERMINATE signal."
+        log.debug(
+            f"Worker - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Received terminate signal."
         )
 
-    def stop_server_int(unused_signum, unused_frame):
-        print("CAUGHT SIGNAL INTERRUPT IN WORKER")
-        server.stop(0)
-        print(
-            f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Received interrupt signal."
-        )
-
-    # Catch keyboard interrupt and terminate signal
-    signal.signal(signal.SIGINT, stop_server_int)
-    signal.signal(signal.SIGTERM, stop_server_term)
+    # Catch terminate signal
+    signal.signal(signal.SIGTERM, stop_server)
 
     # Wait to receive server termination signal
     server.wait_for_termination()
-    print(f"Worker - ip({ip}), port({port}), pid({os.getpid()}): Server exited")
+    log.debug(f"Worker - ip({ip}), port({port}), pid({os.getpid()}), pgid({os.getpgrp()}): Server exited")
 
 
 if __name__ == "__main__":
