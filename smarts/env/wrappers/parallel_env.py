@@ -23,6 +23,7 @@
 import gym
 import multiprocessing as mp
 import numpy as np
+import signal
 import sys
 import warnings
 
@@ -148,6 +149,13 @@ class ParallelEnv(AsyncVectorEnv):
 
         # Seed all the environment
         self.seed(seed)
+
+        # Handle keyboard interrupt signal
+        signal.signal(signal.SIGINT, self._signal_handler)
+
+    def _signal_handler(self, *args):
+        self._state = AsyncState.DEFAULT
+        sys.exit(f"Received signal {signal.Signals(args[0]).name}.")
 
     def seed(self, seed: int) -> Tuple[int]:
         """Sets unique seed for each environment.
@@ -340,8 +348,12 @@ def _worker(
                 pipe.send(((env.observation_space, env.action_space), True))
             else:
                 raise KeyError(f"Received unknown command `{command}`.")
-    except KeyboardInterrupt:
-        error_queue.put((index, sys.exc_info()[0], "Traceback is hidden."))
+    except (KeyboardInterrupt, SystemExit):
+        if sys.exc_info()[0] == SystemExit:
+            evalue = sys.exc_info()[1]
+        else: #KeyboardInterrupt
+            evalue = "Traceback is hidden"    
+        error_queue.put((index, sys.exc_info()[0], evalue))
         pipe.send((None, False))
     except Exception:
         error_queue.put((index,) + sys.exc_info()[:2])
