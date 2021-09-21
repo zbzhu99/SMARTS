@@ -40,7 +40,7 @@ class TagEnv(gym.Env):
             rgb=smarts_agent_interface.RGB(
                 width=256, height=256, resolution=self.rgb_wh / 256
             ),
-            vehicle_color="blue",
+            vehicle_color="Blue",
             action=getattr(smarts_controllers.ActionSpaceType, "Continuous"),
             done_criteria=smarts_agent_interface.DoneCriteria(
                 collision=False,
@@ -67,7 +67,7 @@ class TagEnv(gym.Env):
             rgb=smarts_agent_interface.RGB(
                 width=256, height=256, resolution=self.rgb_wh / 256
             ),
-            vehicle_color="white",
+            vehicle_color="White",
             action=getattr(smarts_controllers.ActionSpaceType, "Continuous"),
             done_criteria=smarts_agent_interface.DoneCriteria(
                 collision=True,

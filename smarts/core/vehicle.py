@@ -353,15 +353,13 @@ class Vehicle:
             start_pose = Pose.from_center(start.position, start.heading)
 
         if trainable:
-            if agent_interface.vehicle_color == "blue":
-                vehicle_color = Colors.Blue.value
-            elif agent_interface.vehicle_color == "white":
-                vehicle_color = Colors.White.value
-            elif agent_interface.vehicle_color == "red":
-                vehicle_color = Colors.Red.value
+            color = agent_interface.vehicle_color.capitalize()
+            if color in Colors._member_names_:
+                vehicle_color = Colors[color].value
             else:
-                raise Exception(
-                    f"Expected agent vehicle color to be red/blue/white but got {agent_interface.vehicle_color}."
+                colors = [elem.name for elem in Colors]
+                raise KeyError(
+                    f"Expected agent vehicle color to be from {colors}, but got {agent_interface.vehicle_color}."
                 )
         else:
             vehicle_color = SceneColors.SocialAgent.value
