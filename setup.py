@@ -66,13 +66,13 @@ setup(
             "pytest-notebook",
             "pytest-xdist",
             "ray[rllib]==1.0.1.post1",  # We use Ray for our multiprocessing needs
-            "tensorflow==2.4.0",  # For rllib tests
+            "tensorflow==2.2.1",  # For rllib tests
         ],
         "train": [
             "ray[rllib]==1.0.1.post1",  # We use Ray for our multiprocessing needs
             # XXX: TF requires specific version of scipy
             "scipy==1.4.1",
-            "tensorflow==2.4.0",
+            "tensorflow==2.2.1",
             "torch==1.4.0",
             "torchvision==0.5.0",
         ],

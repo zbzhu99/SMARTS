@@ -41,7 +41,7 @@ $ python3.7 ./examples/gameOfTag/train.py
 1. set `headless: False` in `./examples/gameOfTag/got.yaml` file
 2. Run `scl` in a separate terminal
     ```bash
-    $ scl envision start -s ./scenarios -p 8081
+    $ scl envision start -s ./scenarios
     ```
 3. Navigate to localhost:8081
 
