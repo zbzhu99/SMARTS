@@ -65,29 +65,3 @@ $ python3.7 ./examples/gameOfTag/evaluate.py
 ```
 $ tensorboard --logdir=/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs
 ```
-
-
-
-Messages such as the follwoing are thrown:
-
-W: Failed to fetch http://security.ubuntu.com/ubuntu/dists/bionic-security/InRelease  Connection failed [IP: 127.0.0.1 3128]
-W: Some index files failed to download. They have been ignored, or old ones used instead.
-
-Err:22 http://archive.ubuntu.com/ubuntu bionic-updates/main amd64 libkmod2 amd64 24-1ubuntu3.5
-  Connection failed [IP: 127.0.0.1 3128]
-
-
-
-Dockerfile: /home/kyber/workspaces/SMARTS/utils/docker/Dockerfile.tensorflow
-
-Docker proxies were set in:
-1) /etc/systemd/system/docker.service.d/http-proxy.conf  , and
-2) /home/kyber/.docker/config.json
-
-Feel free to modify the dockerfile if needed, as i have experimented with several different docker build/proxy/cert methods.
-
-Instructions to build:
-$ cd /home/kyber/workspaces/SMARTS/
-$ docker build --network=host --build-arg http_proxy=http://127.0.0.1:3128 --build-arg https_proxy=http://127.0.0.1:3128 --build-arg HTTP_PROXY=http://127.0.0.1:3128 --build-arg HTTPS_PROXY=http://127.0.0.1:3128 -f ./utils/docker/Dockerfile.tensorflow -t got .
-
-You may try with or without build_arg in the docker build command.

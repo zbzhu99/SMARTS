@@ -95,9 +95,6 @@ setup(
         "waymo": [
             "waymo-open-dataset-tf-2-2-0",
         ],
-        "got": [
-            "tensorflow-probability",
-        ],
     },
     entry_points={"console_scripts": ["scl=cli.cli:scl"]},
 )

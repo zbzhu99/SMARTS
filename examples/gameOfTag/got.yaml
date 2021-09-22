@@ -15,6 +15,7 @@ env_para:
   controller: Categorical
   scenarios: 
     # - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
+    # - /home/a84166141/workspaces/SMARTS/scenarios/cloverleaf
     - /src/scenarios/cloverleaf
 
 model_para:
@@ -48,6 +49,10 @@ model_para:
   # model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
   # model_predator: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator_2021_09_10_23_17/128"
   # model_prey: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey_2021_09_10_23_17/128"
+  # tensorboard_path: "/home/a84166141/workspaces/SMARTS/examples/gameOfTag/logs/"
+  # model_path: "/home/a84166141/workspaces/SMARTS/examples/gameOfTag/models/"
+  # model_predator: "/home/a84166141/workspaces/SMARTS/examples/gameOfTag/models/predator_2021_09_22_16_13/64"
+  # model_prey: "/home/a84166141/workspaces/SMARTS/examples/gameOfTag/models/prey_2021_09_22_16_13/64"
   # Docker
   tensorboard_path: "/src/examples/gameOfTag/logs/"
   model_path: "/src/examples/gameOfTag/models/"
