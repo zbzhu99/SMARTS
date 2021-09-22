@@ -359,7 +359,7 @@ class Vehicle:
             else:
                 colors = [elem.name for elem in Colors]
                 raise KeyError(
-                    f"Expected agent vehicle color to be from {colors}, but got {agent_interface.vehicle_color}."
+                    f"Expected agent vehicle color to be from {colors}, but got {color}."
                 )
         else:
             vehicle_color = SceneColors.SocialAgent.value
