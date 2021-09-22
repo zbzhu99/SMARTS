@@ -50,10 +50,10 @@ class FrameStack(gym.Wrapper):
             num_stack > num_skip
         ), f"Expected num_stack > num_skip, but got num_stack={num_stack} and num_skip={num_skip}."
         super(FrameStack, self).__init__(env)
-        self.num_stack = num_stack
+        self._num_stack = num_stack
         self.num_skip = num_skip
-        self.frames = {
-            key: deque(maxlen=self.num_stack) for key in self.env.agent_specs.keys()
+        self._frames = {
+            key: deque(maxlen=self._num_stack) for key in self.env.agent_specs.keys()
         }
 
     def _get_observations(
@@ -64,8 +64,8 @@ class FrameStack(gym.Wrapper):
         new_frames = dict.fromkeys(frame)
 
         for agent_id, observation in frame.items():
-            self.frames[agent_id].appendleft(observation)
-            frames_list = list(self.frames[agent_id])
+            self._frames[agent_id].appendleft(observation)
+            frames_list = list(self._frames[agent_id])
             new_frames[agent_id] = copy.deepcopy(frames_list[:: self.num_skip])
 
         return new_frames
@@ -100,8 +100,7 @@ class FrameStack(gym.Wrapper):
         """
         env_observations = super(FrameStack, self).reset()
         for agent_id, observation in env_observations.items():
-            [
-                self.frames[agent_id].appendleft(observation)
-                for _ in range(self.num_stack - 1)
-            ]
+            for _ in range(self._num_stack - 1):
+                self._frames[agent_id].appendleft(observation)
+
         return self._get_observations(env_observations)

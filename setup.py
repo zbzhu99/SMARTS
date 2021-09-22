@@ -65,7 +65,7 @@ setup(
             "pytest-cov",
             "pytest-notebook",
             "pytest-xdist",
-            # "ray[rllib]==1.0.1.post1",  # We use Ray for our multiprocessing needs
+            "ray[rllib]==1.0.1.post1",  # We use Ray for our multiprocessing needs
             "tensorflow==2.4.0",  # For rllib tests
         ],
         "train": [

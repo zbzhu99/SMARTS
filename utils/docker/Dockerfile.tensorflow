@@ -7,13 +7,6 @@ RUN touch /etc/apt/apt.conf.d/99verify-peer.conf && \
     echo >>/etc/apt/apt.conf.d/99verify-peer.conf 'Acquire::https::Verify-Peer "false";' && \
     echo >>/etc/apt/apt.conf.d/99verify-peer.conf 'Acquire::https::Verify-Host "false";'
 
-# Copy certificates
-#  COPY ./cert/ /usr/local/share/ca-certificates/extra/
-#  RUN apt-get update --fix-missing
-#  RUN apt-get install ca-certificates
-#  RUN update-ca-certificates
-#  RUN apt-get install apt-transport-https
-
 # Install libraries
 RUN apt-get update --fix-missing && \
     apt-get install -y \
@@ -41,16 +34,16 @@ ENV SUMO_HOME /usr/share/sumo
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
 
 # Setup virtual environment and install pip
-# ENV VIRTUAL_ENV=/opt/.venv
-# RUN python3.7 -m venv $VIRTUAL_ENV
-# ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV VIRTUAL_ENV=/opt/.venv
+RUN python3.7 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py -O get-pip.py && \
     python get-pip.py && \
     pip install --upgrade pip
 
 # Install requirements.txt
-# COPY ./requirements.txt /tmp/requirements.txt
-# RUN pip install --no-cache-dir -r /tmp/requirements.txt
+COPY ./requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Copy source files and install SMARTS
 COPY . /src

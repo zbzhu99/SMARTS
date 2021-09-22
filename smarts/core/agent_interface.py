@@ -248,7 +248,7 @@ class AgentInterface:
     The choice of vehicle type.
     """
 
-    vehicle_color: str = "red"
+    vehicle_color: str = "Red"
     """
     The choice of vehicle color.
     """

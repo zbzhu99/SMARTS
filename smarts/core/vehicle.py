@@ -353,7 +353,7 @@ class Vehicle:
             start_pose = Pose.from_center(start.position, start.heading)
 
         if trainable:
-            color = agent_interface.vehicle_color.capitalize()
+            color = agent_interface.vehicle_color
             if color in Colors._member_names_:
                 vehicle_color = Colors[color].value
             else:
