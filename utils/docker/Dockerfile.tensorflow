@@ -34,9 +34,9 @@ ENV SUMO_HOME /usr/share/sumo
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
 
 # Setup virtual environment and install pip
-# ENV VIRTUAL_ENV=/opt/.venv
-# RUN python3.7 -m venv $VIRTUAL_ENV
-# ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV VIRTUAL_ENV=/opt/.venv
+RUN python3.7 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py -O get-pip.py && \
     python get-pip.py && \
     pip install --upgrade pip
