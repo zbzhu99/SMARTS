@@ -179,10 +179,12 @@ export default function Vehicles({
         let instancedSubMesh = child.createInstance(`${child.name}-${meshId}`);
         if (
           state.actor_type == ActorTypes.SOCIAL_VEHICLE ||
+          state.actor_type == ActorTypes.AGENT ||
           instancedSubMesh.material.id == "body" || // Change the car body color based on actor type
           childMeshes.length == 1
         ) {
-          instancedSubMesh.material.diffuseColor = new Color3(...color);
+            instancedSubMesh.material.diffuseColor = new Color3(0.6,0.8,0.9);
+        //   instancedSubMesh.material.diffuseColor = new Color3(...color);
         }
         rootMesh.addChild(instancedSubMesh);
       }
