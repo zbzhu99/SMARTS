@@ -49,10 +49,15 @@ $ python3.7 ./examples/gameOfTag/train.py
 ```bash
 # In host terminal
 $ cd /path/to/SMARTS
+
 $ export GOTVERSION=v0.4.19
+
 $ docker build --network=host -f ./utils/docker/Dockerfile.tensorflow -t adaickalavan/smarts:$GOTVERSION-tensorflow .
+
 $ docker run --rm -it --gpus=all --network=host --volume=/home/kyber/workspaces/SMARTS/:/src/ adaickalavan/smarts:$GOTVERSION-tensorflow
-$ docker run --rm -it --gpus=all --network=host --volume=/home/a84166141/workspaces/SMARTS/:/src/ adaickalavan/smarts:$GOTVERSION-tensorflow
+
+$ docker run --rm -it --gpus=all --network=host --volume=/home/adai/workspaces/SMARTS/:/src/ adaickalavan/smarts:$GOTVERSION-tensorflow
+
 
 # In interactive docker container bash 
 $ cd /src

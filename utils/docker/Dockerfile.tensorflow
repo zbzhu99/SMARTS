@@ -48,8 +48,11 @@ RUN pip install --no-cache-dir -r /tmp/gameOfTag/requirements.txt
 # Copy source files and install SMARTS
 COPY . /src
 WORKDIR /src
-RUN pip install --no-cache-dir -e .[camera-obs] && \
+RUN pip install --no-cache-dir -e . && \
     cp -r /src/smarts.egg-info /media/smarts.egg-info
+
+# Build scenarios and maps
+RUN scl scenario build-all ./scenarios/cloverleaf ./scenarios/figure_eight
 
 # For Envision
 EXPOSE 8081
