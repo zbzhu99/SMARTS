@@ -40,6 +40,7 @@ class VehicleType(str, Enum):
 class TrafficActorState(NamedTuple):
     actor_type: TrafficActorType
     vehicle_type: VehicleType
+    vehicle_color: Tuple[float, float, float, float]
     position: Tuple[float, float, float]
     heading: float
     speed: float

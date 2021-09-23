@@ -5,9 +5,6 @@ from smarts.core.agent import Agent, AgentSpec
 from smarts.core.agent_interface import AgentInterface, AgentType
 from smarts.core.utils.episodes import episodes
 
-N_AGENTS = 4
-AGENT_IDS = ["Agent %i" % i for i in range(N_AGENTS)]
-
 
 class KeepLaneAgent(Agent):
     def act(self, obs):
@@ -16,13 +13,24 @@ class KeepLaneAgent(Agent):
 
 def main(scenarios, sim_name, headless, num_episodes, seed, max_episode_steps=None):
     agent_specs = {
-        agent_id: AgentSpec(
+        "agent_001": AgentSpec(
             interface=AgentInterface.from_type(
-                AgentType.Laner, max_episode_steps=max_episode_steps
+                AgentType.Laner, 
+                max_episode_steps=max_episode_steps,
+                vehicle_color="Orange",
+                rgb=True,
+            ),
+            agent_builder=KeepLaneAgent,
+        ),
+        "agent_002": AgentSpec(
+            interface=AgentInterface.from_type(
+                AgentType.Laner, 
+                max_episode_steps=max_episode_steps,
+                vehicle_color="Red",
+                rgb=True,
             ),
             agent_builder=KeepLaneAgent,
         )
-        for agent_id in AGENT_IDS
     }
 
     env = gym.make(

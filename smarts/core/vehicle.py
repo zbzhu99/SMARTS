@@ -28,7 +28,7 @@ import yaml
 
 from . import models
 from .chassis import AckermannChassis, BoxChassis, Chassis
-from .colors import SceneColors
+from .colors import Colors, SceneColors
 from .coordinates import Dimensions, Heading, Pose
 from .sensors import (
     AccelerometerSensor,
@@ -352,9 +352,17 @@ class Vehicle:
         else:
             start_pose = Pose.from_center(start.position, start.heading)
 
-        vehicle_color = (
-            SceneColors.Agent.value if trainable else SceneColors.SocialAgent.value
-        )
+        if trainable:
+            color = agent_interface.vehicle_color
+            if color in Colors._member_names_:
+                vehicle_color = Colors[color].value
+            else:
+                colors = [elem.name for elem in Colors]
+                raise KeyError(
+                    f"Expected agent vehicle color to be from {colors}, but got {color}."
+                )
+        else:
+            vehicle_color = SceneColors.SocialAgent.value
 
         if agent_interface.vehicle_type == "sedan":
             urdf_name = "vehicle"
