@@ -81,8 +81,10 @@ def main(config):
     ppo_prey = got_ppo.PPO("prey", config)
 
     def interrupt(*args):
-        ppo_predator.save(-1)
-        ppo_prey.save(-1)
+        nonlocal mode
+        if mode=="train":
+            ppo_predator.save(-1)
+            ppo_prey.save(-1)    
         env.close()
         print("Interrupt key detected.")
         sys.exit(0)
