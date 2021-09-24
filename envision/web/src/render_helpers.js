@@ -63,11 +63,11 @@ export function vehicleMeshFilename(actorType, vehicleType) {
   return "simple_car.glb";
 }
 
-export function vehicleMeshColor(actorType, scene_colors) {
+export function vehicleMeshColor(actorType, scene_colors, vehicle_color) {
   if (actorType == ActorTypes.SOCIAL_AGENT) {
     return scene_colors["social_agent"];
   } else if (actorType == ActorTypes.AGENT) {
-    return scene_colors["agent"];
+    return vehicle_color;
   } else {
     return scene_colors["social_vehicle"];
   }

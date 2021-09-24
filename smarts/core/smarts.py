@@ -36,13 +36,13 @@ with warnings.catch_warnings():
     from sklearn.metrics.pairwise import euclidean_distances
 
 from smarts import VERSION
-from smarts.core.chassis import AckermannChassis, BoxChassis
+from smarts.core.chassis import BoxChassis
 
 from . import models
 from .agent_interface import AgentInterface
 from .agent_manager import AgentManager
 from .bubble_manager import BubbleManager
-from .colors import SceneColors
+from .colors import Colors, SceneColors
 from .controllers import ActionSpaceType, Controllers
 from .coordinates import BoundingBox, Point
 from .external_provider import ExternalProvider
@@ -1051,6 +1051,7 @@ class SMARTS:
 
                 if self._agent_manager.is_ego(agent_id):
                     actor_type = envision_types.TrafficActorType.Agent
+                    vehicle_color = Colors[self._agent_manager.agent_interfaces[agent_id].vehicle_color].value
                     mission_route_geometry = (
                         self._vehicle_index.sensor_state_for_vehicle_id(
                             v.vehicle_id
@@ -1058,6 +1059,7 @@ class SMARTS:
                     )
                 else:
                     actor_type = envision_types.TrafficActorType.SocialAgent
+                    vehicle_color = SceneColors.SocialAgent.value
                     mission_route_geometry = None
 
                 point_cloud = vehicle_obs.lidar_point_cloud or ([], [], [])
@@ -1079,6 +1081,7 @@ class SMARTS:
                     name=self._agent_manager.agent_name(agent_id),
                     actor_type=actor_type,
                     vehicle_type=envision_types.VehicleType.Car,
+                    vehicle_color=vehicle_color,                    
                     position=v.pose.position,
                     heading=v.pose.heading,
                     speed=v.speed,
@@ -1109,6 +1112,7 @@ class SMARTS:
                 traffic[v.vehicle_id] = envision_types.TrafficActorState(
                     actor_type=envision_types.TrafficActorType.SocialVehicle,
                     vehicle_type=veh_type,
+                    vehicle_color = SceneColors.SocialVehicle.value,
                     position=list(v.pose.position),
                     heading=v.pose.heading,
                     speed=v.speed,
@@ -1124,6 +1128,11 @@ class SMARTS:
         assert (
             scenario_name != ""
         ), f"Scenario name was not properly extracted from the scenario folder path: {scenario_folder_path}"
+
+        # print("------------------------")
+        # d={key:val.vehicle_color for key, val in traffic.items()}
+        # print(d)
+        # print("^^^^^^^^^^^^^^^^^^^^^^^^")
 
         state = envision_types.State(
             traffic=traffic,

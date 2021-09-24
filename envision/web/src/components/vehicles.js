@@ -172,7 +172,7 @@ export default function Vehicles({
         continue;
       }
 
-      let color = vehicleMeshColor(state.actor_type, worldState.scene_colors);
+      let color = vehicleMeshColor(state.actor_type, worldState.scene_colors, state.vehicle_color);
       let rootMesh = new Mesh(`root-mesh-${meshId}`, scene);
       let childMeshes = vehicleMeshTemplates[filename].getChildMeshes();
       for (const child of childMeshes) {
@@ -183,8 +183,7 @@ export default function Vehicles({
           instancedSubMesh.material.id == "body" || // Change the car body color based on actor type
           childMeshes.length == 1
         ) {
-            instancedSubMesh.material.diffuseColor = new Color3(0.6,0.8,0.9);
-        //   instancedSubMesh.material.diffuseColor = new Color3(...color);
+            instancedSubMesh.material.diffuseColor = new Color3(...color);
         }
         rootMesh.addChild(instancedSubMesh);
       }
