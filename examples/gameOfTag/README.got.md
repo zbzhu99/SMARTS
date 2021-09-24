@@ -61,8 +61,12 @@ $ tensorboard --logdir=/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs
 
 ## TODO
 - simplify reward function
-
+- launch shell script
 
 - randomness in keras
 - multiprocessing training in gpu
 - list out of index
+
+
+## Training
+1. 
