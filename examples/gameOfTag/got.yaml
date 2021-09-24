@@ -1,9 +1,9 @@
 env_para:
   env_name: SMARTS
   seed: 42
-  headless: False
+  headless: True
   visdom: False
-  neighborhood_radius: 80 # Radius (meter) for neighborhood vehicles
+  neighborhood_radius: 55 # Radius (meter) for neighborhood vehicles
   rgb_wh: 110 # Height and width (meter) of RGB image in SMARTS observation
   max_episode_steps: 1800 # 3 minutes. Maximum steps per episode.
   agent_ids: 
@@ -16,8 +16,8 @@ env_para:
   scenarios: 
     # - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
     # - /home/a84166141/workspaces/SMARTS/scenarios/cloverleaf
-    - /home/adai/workspaces/SMARTS/scenarios/cloverleaf    
-    # - /src/scenarios/cloverleaf
+    # - /home/adai/workspaces/SMARTS/scenarios/cloverleaf    
+    - /src/scenarios/cloverleaf
 
 model_para:
   # Observation and action space
@@ -43,20 +43,22 @@ model_para:
   # Models and logs
   save_interval: 50
   eval_interval: 50
-  mode: evaluate # train or evaluate
-  model_initial: true
+  mode: train # train or evaluate
+  model_initial: false
   # Local
   # tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
   # model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
   # model_predator: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator_2021_09_10_23_17/128"
   # model_prey: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey_2021_09_10_23_17/128"
-  tensorboard_path: "/home/adai/workspaces/SMARTS/examples/gameOfTag/logs/"
-  model_path: "/home/adai/workspaces/SMARTS/examples/gameOfTag/models/"
-  model_predator: "/home/adai/workspaces/SMARTS/examples/gameOfTag/models1/predator_2021_09_23_21_59/6464"
-  model_prey: "/home/adai/workspaces/SMARTS/examples/gameOfTag/models1/prey_2021_09_23_21_59/6464"
+  
+  # tensorboard_path: "/home/adai/workspaces/SMARTS/examples/gameOfTag/logs/"
+  # model_path: "/home/adai/workspaces/SMARTS/examples/gameOfTag/models/"
+  # model_predator: "/home/adai/workspaces/SMARTS/examples/gameOfTag/models1/predator_2021_09_23_21_59/6464"
+  # model_prey: "/home/adai/workspaces/SMARTS/examples/gameOfTag/models1/prey_2021_09_23_21_59/6464"
+  
   # Docker
-  # tensorboard_path: "/src/examples/gameOfTag/logs/"
-  # model_path: "/src/examples/gameOfTag/models/"
+  tensorboard_path: "/src/examples/gameOfTag/logs/"
+  model_path: "/src/examples/gameOfTag/models/"
 
 
 # filter_arches: # A=421,108 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
