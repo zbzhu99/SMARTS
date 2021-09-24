@@ -24,19 +24,6 @@ $ scl scenario build-all ./scenarios
 $ python3.7 ./examples/gameOfTag/train.py
 ```
 
-## Change the following
-1. Change the following in `./examples/gameOfTag/smarts.yaml` file
-
-    ```yaml
-    env_para:
-        headless: True # False : to view output in Envision
-        scenarios: # Set full path to scenario
-            - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
-
-    benchmark:
-        base_path: "/home/kyber/workspaces/" # Set to a directory where you have read/write permission, for storage of trained models.
-    ```
-
 ## To visualise in Envision
 1. set `headless: False` in `./examples/gameOfTag/got.yaml` file
 2. Run `scl` in a separate terminal
@@ -52,11 +39,11 @@ $ cd /path/to/SMARTS
 
 $ export GOTVERSION=v0.4.19
 
-$ docker build --network=host -f ./utils/docker/Dockerfile.tensorflow -t adaickalavan/smarts:$GOTVERSION-tensorflow .
+$ docker build --network=host -f ./utils/docker/Dockerfile.tensorflow -t adaickalavan/smarts:v0.4.19-tensorflow .
 
-$ docker run --rm -it --gpus=all --network=host --volume=/home/kyber/workspaces/SMARTS/:/src/ adaickalavan/smarts:$GOTVERSION-tensorflow
+$ docker run --rm -it --gpus=all --network=host --volume=/home/kyber/workspaces/SMARTS/:/src/ adaickalavan/smarts:v0.4.19-tensorflow
 
-$ docker run --rm -it --gpus=all --network=host --volume=/home/adai/workspaces/SMARTS/:/src/ adaickalavan/smarts:$GOTVERSION-tensorflow
+$ docker run --rm -it --gpus=all --network=host --volume=/home/adai/workspaces/SMARTS/:/src/ adaickalavan/smarts:v0.4.19-tensorflow
 
 
 # In interactive docker container bash 
@@ -71,3 +58,11 @@ $ python3.7 ./examples/gameOfTag/evaluate.py
 ```
 $ tensorboard --logdir=/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs
 ```
+
+## TODO
+- simplify reward function
+
+
+- randomness in keras
+- multiprocessing training in gpu
+- list out of index

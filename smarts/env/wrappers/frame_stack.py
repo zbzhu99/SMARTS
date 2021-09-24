@@ -51,7 +51,7 @@ class FrameStack(gym.Wrapper):
         ), f"Expected num_stack > num_skip, but got num_stack={num_stack} and num_skip={num_skip}."
         super(FrameStack, self).__init__(env)
         self._num_stack = num_stack
-        self.num_skip = num_skip
+        self._num_skip = num_skip
         self._frames = {
             key: deque(maxlen=self._num_stack) for key in self.env.agent_specs.keys()
         }
@@ -66,7 +66,7 @@ class FrameStack(gym.Wrapper):
         for agent_id, observation in frame.items():
             self._frames[agent_id].appendleft(observation)
             frames_list = list(self._frames[agent_id])
-            new_frames[agent_id] = copy.deepcopy(frames_list[:: self.num_skip])
+            new_frames[agent_id] = copy.deepcopy(frames_list[:: self._num_skip])
 
         return new_frames
 
