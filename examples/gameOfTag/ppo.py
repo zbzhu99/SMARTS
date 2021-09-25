@@ -25,7 +25,7 @@ import tensorflow as tf
 
 tf.random.set_seed(1234)
 
-#--------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 
 import absl.logging
 import tensorflow_probability as tfp

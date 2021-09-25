@@ -25,11 +25,12 @@ import tensorflow as tf
 
 tf.random.set_seed(1234)
 
-#--------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 
 import multiprocessing as mp
 import signal
 import sys
+import warnings
 import yaml
 
 from enum import Enum
@@ -43,6 +44,7 @@ from typing import Dict, List
 class AgentType(Enum):
     PREDATOR = "predator"
     PREY = "prey"
+
 
 class Mode(Enum):
     EVALUATE = "evaluate"
@@ -90,7 +92,7 @@ def main(config):
 
     def interrupt(*args):
         nonlocal mode
-        if mode=="train":
+        if mode == Mode.TRAIN.value:
             ppo_predator.save(-1)
             ppo_prey.save(-1)    
         env.close()
@@ -337,7 +339,10 @@ if __name__ == "__main__":
             # Memory growth must be set before GPUs have been initialized
             print(e)
     else:
-        print("Not configured to use GPU or GPU not available.")
+        warnings.warn(
+            f"Not configured to use GPU or GPU not available.",
+            ResourceWarning,
+        )
         # raise SystemError("GPU device not found")
 
     # strategy = tf.distribute.MirroredStrategy()

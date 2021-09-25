@@ -49,14 +49,14 @@ $ docker run --rm -it --gpus=all --network=host --volume=/home/adai/workspaces/S
 # In interactive docker container bash 
 $ cd /src
 # To train
-$ python3.7 ./examples/gameOfTag/train.py
+$ PYTHONHASHSEED=0 python3.7 ./examples/gameOfTag/train.py
 # To evaluate
-$ python3.7 ./examples/gameOfTag/evaluate.py
+$ PYTHONHASHSEED=0 python3.7 ./examples/gameOfTag/evaluate.py
 ```
 
 ## Tensorboard
 ```
-$ tensorboard --logdir=/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs
+$ tensorboard --logdir=/home/adai/workspaces/SMARTS/examples/gameOfTag/logs
 ```
 
 ## TODO
