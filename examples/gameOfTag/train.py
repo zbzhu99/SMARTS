@@ -1,20 +1,21 @@
-# Silence the logs of TF
 import os
 
+# Set pythonhashseed
+os.environ["PYTHONHASHSEED"] = "0"
+# Silence the logs of TF
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-# os.environ["PYTHONHASHSEED"] = "42"
 
 # The below is necessary for starting Numpy generated random numbers
 # in a well-defined initial state.
 import numpy as np
 
-# np.random.seed(123)
+np.random.seed(123)
 
 # The below is necessary for starting core Python generated random numbers
 # in a well-defined state.
 import random as python_random
 
-# python_random.seed(123)
+python_random.seed(123)
 
 # The below set_seed() will make random number generation
 # in the TensorFlow backend have a well-defined initial state.
@@ -22,7 +23,9 @@ import random as python_random
 # https://www.tensorflow.org/api_docs/python/tf/random/set_seed
 import tensorflow as tf
 
-# tf.random.set_seed(1234)
+tf.random.set_seed(1234)
+
+#--------------------------------------------------------------------------
 
 import multiprocessing as mp
 import signal
@@ -34,7 +37,12 @@ from examples.gameOfTag import env as got_env
 from examples.gameOfTag import agent as got_agent
 from examples.gameOfTag import ppo as got_ppo
 from pathlib import Path
+from typing import Dict, List
 
+
+class AgentType(Enum):
+    PREDATOR = "predator"
+    PREY = "prey"
 
 class Mode(Enum):
     EVALUATE = "evaluate"
@@ -77,8 +85,8 @@ def main(config):
 
     # Create model
     print("[INFO] Creating model")
-    ppo_predator = got_ppo.PPO("predator", config)
-    ppo_prey = got_ppo.PPO("prey", config)
+    ppo_predator = got_ppo.PPO(AgentType.PREDATOR.value, config)
+    ppo_prey = got_ppo.PPO(AgentType.PREY.value, config)
 
     def interrupt(*args):
         nonlocal mode
@@ -187,11 +195,11 @@ def main(config):
         # Compute and store last state value
         for agent_id in active_agents.keys():
             if dones_t.get(agent_id, None) == 0:  # Agent not done yet
-                if "predator" in agent_id:
+                if AgentType.PREDATOR.value in agent_id:
                     _, _, next_values_t = ppo_predator.act(
                         {agent_id: next_states_t[agent_id]}
                     )
-                elif "prey" in agent_id:
+                elif AgentType.PREY.value in agent_id:
                     _, _, next_values_t = ppo_prey.act(
                         {agent_id: next_states_t[agent_id]}
                     )
