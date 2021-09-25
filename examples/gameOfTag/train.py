@@ -258,8 +258,8 @@ def main(config):
 
                 if agent_id in all_preys_id:
                     loss_tuple = got_ppo.train_model(
-                        model=ppo_predator.model,
-                        optimizer=ppo_predator.optimizer,
+                        model=ppo_prey.model,
+                        optimizer=ppo_prey.optimizer,
                         action_inds=agent.action_inds,
                         old_probs=tf.gather_nd(agent.probs_softmax, agent.action_inds),
                         states=agent.states,
