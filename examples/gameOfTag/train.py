@@ -113,7 +113,7 @@ def main(config):
         active_agents = {}
 
         print(f"[INFO] New batch data collection {batch_num}/{max_batch}")
-        for _ in range(batch_size):
+        for cur_step in range(batch_size):
 
             # Update all agents which were active in this batch
             active_agents.update({agent_id: True for agent_id, _ in states_t.items()})
@@ -163,7 +163,9 @@ def main(config):
                     # Remove done agents
                     del next_states_t[agent_id]
                     # Print done agents
-                    print(f"Done: {agent_id}. Step: {steps_t}.")
+                    print(
+                        f"   Done: {agent_id}. Cur_Step: {cur_step}. Step: {steps_t}."
+                    )
 
             # Reset when episode completes
             if dones_t["__all__"]:
@@ -173,9 +175,9 @@ def main(config):
 
                 # Log rewards
                 print(
-                    f"Episode: {episode},"
-                    f"episode reward predator: {episode_reward_predator}, "
-                    f"episode reward prey: {episode_reward_prey}, "
+                    f"   Episode: {episode}. Cur_Step: {cur_step}. "
+                    f"Episode reward predator: {episode_reward_predator}, "
+                    f"Episode reward prey: {episode_reward_prey}."
                 )
                 with ppo_predator.tb.as_default():
                     tf.summary.scalar(
@@ -216,11 +218,9 @@ def main(config):
         # Compute generalised advantages
         for agent_id in active_agents.keys():
             all_agents[agent_id].compute_advantages()
-            probs_softmax = tf.nn.softmax(
-                tf.squeeze(tf.stack(all_agents[agent_id].probs))
-            )
+            probs_softmax = tf.nn.softmax(all_agents[agent_id].probs)
             all_agents[agent_id].probs_softmax = probs_softmax
-            actions = tf.squeeze(tf.stack(all_agents[agent_id].actions))
+            actions = tf.squeeze(all_agents[agent_id].actions, axis=1)
             action_inds = tf.stack(
                 [tf.range(0, actions.shape[0]), tf.cast(actions, tf.int32)], axis=1
             )
