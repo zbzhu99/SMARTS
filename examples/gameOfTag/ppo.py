@@ -23,7 +23,7 @@ python_random.seed(123)
 # https://www.tensorflow.org/api_docs/python/tf/random/set_seed
 import tensorflow as tf
 
-tf.random.set_seed(1234)
+tf.random.set_seed(123)
 
 # --------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@ import tensorflow_probability as tfp
 
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List, Tuple
 
 # Suppress warning
 absl.logging.set_verbosity(absl.logging.ERROR)
@@ -76,11 +76,11 @@ class NeuralNetwork(tf.keras.Model):
     def call(self, inputs):
         """
         Args:
-            inputs ([batch_size, width, height, depth]): Input images to predict actions for
+            inputs ([batch_size, width, height, depth]): Input images to predict actions for.
 
         Returns:
-            [type]: action
-            [type]: value
+            [type]: 2-D Tensor with shape [batch_size, num_classes]. Each slice [i, :] represents the unnormalized "log-probabilities" for all classes.
+            [type]: Value of state
         """
         conv1_out = self.conv1(inputs)
         conv2_out = self.conv2(conv1_out)
@@ -130,7 +130,12 @@ class PPO(object):
         actions = {}
         action_samples = {}
         values = {}
-        for vehicle, state in obs.items():
+
+        ordered_obs = _dict_to_ordered_list(obs)
+
+        # Note: Order of items drawn from dict may affect reproducibility of this
+        # function due to order of sampling by `actions_dist_t.sample()`.
+        for vehicle, state in ordered_obs:
             if self.name in vehicle:
                 actions_t, values_t = self.model.predict_on_batch(
                     np.expand_dims(state, axis=0)
@@ -148,6 +153,14 @@ class PPO(object):
         with self.tb.as_default():
             for name, value, step in records:
                 tf.summary.scalar(name, value, step)
+
+
+def _dict_to_ordered_list(dic: Dict[str, Any]) -> List[Tuple[str, Any]]:
+
+    li = [tuple(x) for x in dic.items()]
+    li.sort(key=lambda tup: tup[0])  # Sort in-place
+
+    return li
 
 
 def _load(model_path):

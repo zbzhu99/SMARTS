@@ -23,7 +23,7 @@ python_random.seed(123)
 # https://www.tensorflow.org/api_docs/python/tf/random/set_seed
 import tensorflow as tf
 
-tf.random.set_seed(1234)
+tf.random.set_seed(123)
 
 # --------------------------------------------------------------------------
 
