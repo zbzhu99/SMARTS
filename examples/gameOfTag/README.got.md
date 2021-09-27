@@ -69,4 +69,7 @@ $ tensorboard --logdir=/home/adai/workspaces/SMARTS/examples/gameOfTag/logs
 
 
 ## Training
-1. 
+1. /home/adai/workspaces/training/got_2021_09_24_01_07/
+    - rgb=110/256, radius=55,
+    - neuralnetwork = 
+1.
