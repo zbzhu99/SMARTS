@@ -133,7 +133,7 @@ class PPO(object):
 
         ordered_obs = _dict_to_ordered_list(obs)
 
-        # Note: Order of items drawn from dict may affect reproducibility of this
+        # NOTE: Order of items drawn from dict may affect reproducibility of this
         # function due to order of sampling by `actions_dist_t.sample()`.
         for vehicle, state in ordered_obs:
             if self.name in vehicle:
