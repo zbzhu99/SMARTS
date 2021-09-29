@@ -92,9 +92,9 @@ def main(config):
 
     def interrupt(*args):
         nonlocal mode
-        if mode == Mode.TRAIN.value:
+        if mode == Mode.TRAIN:
             ppo_predator.save(-1)
-            ppo_prey.save(-1)    
+            ppo_prey.save(-1)
         env.close()
         print("Interrupt key detected.")
         sys.exit(0)
