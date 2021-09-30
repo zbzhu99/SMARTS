@@ -8,10 +8,10 @@ env_para:
   max_episode_steps: 1800 # 3 minutes. Maximum steps per episode.
   agent_ids: 
     - predator1
-    - predator2
-    - predator3
+    # - predator2
+    # - predator3
     - prey1
-    - prey2
+    # - prey2
   controller: Categorical
   scenarios: 
     # - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
@@ -25,20 +25,20 @@ model_para:
   action_dim: 5
   
   # Optimizer
-  initial_lr_predator: 0.001
-  initial_lr_prey: 0.0005
+  initial_lr_predator: 0.01 # 0.001
+  initial_lr_prey: 0.01 # 0.0005
 
   # PPO
   critic_loss_weight: 0.5
-  entropy_loss_weight: 0.01
-  entropy_loss_discount_rate: 0.995
+  entropy_loss_weight: 0.1 # 0.01
+  entropy_loss_discount_rate: 1 # 0.995
   gamma: 0.99 # Reward discount
   clip_value: 0.2
 
   # Iteration size
   batch_size: 64
   max_batch: 100000000
-  num_train_epochs: 5
+  num_train_epochs: 10 # 5
 
   # Models and logs
   save_interval: 50
@@ -50,7 +50,7 @@ model_para:
   # model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
   # model_predator: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator_2021_09_10_23_17/128"
   # model_prey: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey_2021_09_10_23_17/128"
-    
+
   # Docker
   tensorboard_path: "/src/examples/gameOfTag/logs/"
   model_path: "/src/examples/gameOfTag/models/"

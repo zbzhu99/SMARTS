@@ -7,8 +7,8 @@ RUN touch /etc/apt/apt.conf.d/99verify-peer.conf && \
     echo >>/etc/apt/apt.conf.d/99verify-peer.conf 'Acquire::https::Verify-Peer "false";' && \
     echo >>/etc/apt/apt.conf.d/99verify-peer.conf 'Acquire::https::Verify-Host "false";'
 
-# (Optional) Disable -security repositories
-RUN find /etc/apt -type f -name '*.list' -exec sed -i 's/\(^deb.*-security.*\)/#\1/' {} +
+# (Optional) Disable Ubuntu -security repositories
+# RUN find /etc/apt -type f -name '*.list' -exec sed -i 's/\(^deb.*-backports.*\)/#\1/; s/\(^deb.*-updates.*\)/#\1/; s/\(^deb.*-proposed.*\)/#\1/; s/\(^deb.*-security.*\)/#\1/' {} +
 
 # Install libraries
 RUN apt-get update --fix-missing && \
