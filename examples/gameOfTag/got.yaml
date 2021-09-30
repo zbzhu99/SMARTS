@@ -50,12 +50,7 @@ model_para:
   # model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
   # model_predator: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator_2021_09_10_23_17/128"
   # model_prey: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey_2021_09_10_23_17/128"
-  
-  # tensorboard_path: "/home/adai/workspaces/SMARTS/examples/gameOfTag/logs/"
-  # model_path: "/home/adai/workspaces/SMARTS/examples/gameOfTag/models/"
-  # model_predator: "/home/adai/workspaces/SMARTS/examples/gameOfTag/models1/predator_2021_09_23_21_59/6464"
-  # model_prey: "/home/adai/workspaces/SMARTS/examples/gameOfTag/models1/prey_2021_09_23_21_59/6464"
-  
+    
   # Docker
   tensorboard_path: "/src/examples/gameOfTag/logs/"
   model_path: "/src/examples/gameOfTag/models/"
