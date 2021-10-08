@@ -33,22 +33,13 @@ import sys
 import warnings
 import yaml
 
-from enum import Enum
+
 from examples.gameOfTag import env as got_env
 from examples.gameOfTag import agent as got_agent
 from examples.gameOfTag import ppo as got_ppo
+from examples.gameOfTag.types import AgentType, Mode
 from pathlib import Path
 from typing import Dict, List
-
-
-class AgentType(Enum):
-    PREDATOR = "predator"
-    PREY = "prey"
-
-
-class Mode(Enum):
-    EVALUATE = "evaluate"
-    TRAIN = "train"
 
 
 def main(config):

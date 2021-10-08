@@ -1,16 +1,16 @@
 import gym
 import matplotlib.pyplot as plt
 import numpy as np
-import time
 
 from examples.gameOfTag import agent as got_agent
 from skimage.color import rgb2gray
 from smarts.core import agent as smarts_agent
 from smarts.core import agent_interface as smarts_agent_interface
 from smarts.core import controllers as smarts_controllers
+from smarts.core.sensors import Observation
 from smarts.env import hiway_env as smarts_hiway_env
 from smarts.env.wrappers import frame_stack as smarts_frame_stack
-from typing import Dict, List
+from typing import Dict, Tuple
 
 
 class TagEnv(gym.Env):

@@ -21,7 +21,7 @@ env_para:
 
 model_para:
   # Observation and action space
-  state_dim: [256, 256, 3]
+  state_dim: [256, 256, 1]
   action_dim: 5
   
   # Optimizer
@@ -42,7 +42,6 @@ model_para:
 
   # Models and logs
   save_interval: 50
-  eval_interval: 50
   mode: train # train or evaluate
   model_initial: false
   # Local
