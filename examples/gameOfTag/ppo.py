@@ -207,8 +207,10 @@ def train_model(
     # ]:
 
     images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
+    stacked_images = tf.stack(images) 
+    stacked_scalars = tf.stack(scalars)
     with tf.GradientTape() as tape:
-        policy_logits, values = model.call([tf.stack(images), tf.stack(scalars)])
+        policy_logits, values = model.call([stacked_images, stacked_scalars])
         act_loss = actor_loss(
             advantages, old_probs, action_inds, policy_logits, clip_value
         )
