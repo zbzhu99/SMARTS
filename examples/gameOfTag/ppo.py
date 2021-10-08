@@ -48,32 +48,33 @@ class NeuralNetwork(tf.keras.Model):
         self.num_actions = num_actions
         self.conv1 = tf.keras.layers.Conv2D(
             filters=16,
-            kernel_size=32,
-            strides=(4, 4),
+            kernel_size=33,
+            strides=(1, 1),
             padding="valid",
             activation=tf.keras.activations.relu,
         )
+        self.maxpool1 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))
         self.conv2 = tf.keras.layers.Conv2D(
             filters=32,
             kernel_size=17,
-            strides=(2, 2),
+            strides=(1, 1),
             padding="valid",
             activation=tf.keras.activations.relu,
         )
+        self.maxpool2 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))
         self.flatten = tf.keras.layers.Flatten()
+
         self.dense1 = tf.keras.layers.Dense(
             units=128, activation=tf.keras.activations.relu
         )
-        self.dense_value = tf.keras.layers.Dense(
-            units=64, activation=tf.keras.activations.relu
+        self.dense2 = tf.keras.layers.Dense(
+            units=128, activation=tf.keras.activations.relu
         )
-        self.dense_policy = tf.keras.layers.Dense(
-            units=64, activation=tf.keras.activations.relu
-        )
+
         self.policy = tf.keras.layers.Dense(units=self.num_actions)
         self.value = tf.keras.layers.Dense(units=1)
 
-    def call(self, inputs):
+    def call(self, input):
         """
         Args:
             inputs ([batch_size, width, height, depth]): Input images to predict actions for.
@@ -82,22 +83,33 @@ class NeuralNetwork(tf.keras.Model):
             [type]: 2-D Tensor with shape [batch_size, num_classes]. Each slice [i, :] represents the unnormalized "log-probabilities" for all classes.
             [type]: Value of state
         """
-        conv1_out = self.conv1(inputs)
-        conv2_out = self.conv2(conv1_out)
-        flatten_out = self.flatten(conv2_out)
-        dense1_out = self.dense1(flatten_out)
-        dense_policy_out = self.dense_policy(dense1_out)
-        dense_value_out = self.dense_value(dense1_out)
-        policy = self.policy(dense_policy_out)
-        value = self.value(dense_value_out)
+        conv1_out = self.conv1(input[0])
+        maxpool1_out = self.maxpool1(conv1_out)
+        conv2_out = self.conv2(maxpool1_out)
+        maxpool2_out = self.maxpool2(conv2_out)
+        flatten_out = self.flatten(maxpool2_out)
+
+        merged_out = tf.keras.layers.concatenate([flatten_out, input[1]], axis=1)
+
+        dense1_out = self.dense1(merged_out)
+        dense2_out = self.dense2(dense1_out)
+
+        policy = self.policy(dense2_out)
+        value = self.value(dense2_out)
+
         return policy, value
 
+    def summary(self):
+        input1 = tf.keras.layers.Input(shape=(256,256,1))
+        input2 = tf.keras.layers.Input(shape=(3,))
+        model = tf.keras.Model(inputs=[input1, input2], outputs=self.call([input1, input2]))
+        model.summary()
 
 class PPO(object):
-    def __init__(self, name, config):
+    def __init__(self, name, config, seed):
         self.name = name
         self.config = config
-        self.seed = config["env_para"]["seed"]
+        self.seed = seed
         self.optimizer = tf.keras.optimizers.Adam(
             learning_rate=config["model_para"]["initial_lr_" + self.name]
         )
@@ -112,6 +124,8 @@ class PPO(object):
         self.model_path = Path(self.config["model_para"]["model_path"]).joinpath(
             f"{name}_{datetime.now().strftime('%Y_%m_%d_%H_%M')}"
         )
+        # Model summary
+        self.model.summary()
 
         # Tensorboard
         path = Path(self.config["model_para"]["tensorboard_path"]).joinpath(
@@ -138,7 +152,10 @@ class PPO(object):
         for vehicle, state in ordered_obs:
             if self.name in vehicle:
                 actions_t, values_t = self.model.predict_on_batch(
-                    np.expand_dims(state, axis=0)
+                    [
+                        np.expand_dims(state["image"], axis=0),
+                        np.expand_dims(state["scalar"], axis=0),
+                    ]
                 )
                 actions_dist_t = tfp.distributions.Categorical(logits=actions_t)
 
@@ -156,7 +173,6 @@ class PPO(object):
 
 
 def _dict_to_ordered_list(dic: Dict[str, Any]) -> List[Tuple[str, Any]]:
-
     li = [tuple(x) for x in dic.items()]
     li.sort(key=lambda tup: tup[0])  # Sort in-place
 
@@ -190,8 +206,9 @@ def train_model(
     #     tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
     # ]:
 
+    images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
     with tf.GradientTape() as tape:
-        policy_logits, values = model.call(tf.stack(states))
+        policy_logits, values = model.call([tf.stack(images), tf.stack(scalars)])
         act_loss = actor_loss(
             advantages, old_probs, action_inds, policy_logits, clip_value
         )

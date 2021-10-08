@@ -116,15 +116,33 @@ class TagEnv(gym.Env):
             seed=seed,
         )
         # Wrap env with FrameStack to stack multiple observations
-        self.env = smarts_frame_stack.FrameStack(env=env, num_stack=9, num_skip=4)
+        # env = smarts_frame_stack.FrameStack(env=env, num_stack=9, num_skip=4)
 
-        # Set action space and observation space
-        self.action_space = gym.spaces.Box(
-            np.array([0, 0, -1]), np.array([+1, +1, +1]), dtype=np.float32
-        )  # throttle, break, steering
-        self.observation_space = gym.spaces.Box(
-            low=-1, high=1, shape=(256, 256, 3), dtype=np.float32
+        self.env = env
+
+        # Continuous action space
+        # self.action_space = gym.spaces.Box(
+        #     low=-1.0, high=1.0, shape=(3,), dtype=np.float32
+        # )  # throttle, break, steering
+        # Categorical action space
+        self.action_space = gym.spaces.Discrete(config["model_para"]["action_dim"])
+        # Observation space
+        self.observation_space = gym.spaces.Dict(
+            {
+                "image": gym.spaces.Box(
+                    low=-1, high=1, shape=(256, 256, 1), dtype=np.float32
+                ),
+                "scalar": gym.spaces.Box(
+                    low=np.array([-np.pi, 0, -1]),
+                    high=np.array([np.pi, 1e3, 1]),
+                    dtype=np.float32,
+                ),
+            }
         )
+        # scalar consists of
+        # obs.ego_vehicle_state.heading = [-pi, pi]
+        # obs.ego_vehicle_state.speed = [0, 1e3]
+        # obs.ego_vehicle_state.steering = [-1, 1]
 
     def reset(self) -> Dict[str, np.ndarray]:
         """
@@ -136,10 +154,11 @@ class TagEnv(gym.Env):
         raw_states = self.env.reset()
 
         # Stack observation into 3D numpy matrix
-        states = {
-            agent_id: stack_matrix(raw_state)
-            for agent_id, raw_state in raw_states.items()
-        }
+        # states = {
+        #     agent_id: stack_matrix(raw_state)
+        #     for agent_id, raw_state in raw_states.items()
+        # }
+        states = raw_states
 
         self.init_state = states
         return states
@@ -158,10 +177,11 @@ class TagEnv(gym.Env):
         raw_states, rewards, dones, infos = self.env.step(action)
 
         # Stack observation into 3D numpy matrix
-        states = {
-            agent_id: stack_matrix(raw_state)
-            for agent_id, raw_state in raw_states.items()
-        }
+        # states = {
+        #     agent_id: stack_matrix(raw_state)
+        #     for agent_id, raw_state in raw_states.items()
+        # }
+        states = raw_states
 
         # Plot for debugging purposes
         # import matplotlib.pyplot as plt
@@ -183,14 +203,14 @@ class TagEnv(gym.Env):
         return None
 
 
-def stack_matrix(states: List[np.ndarray]) -> np.ndarray:
-    # Stack 2D images along the depth dimension
-    if states[0].ndim == 2 or states[0].ndim == 3:
-        return np.dstack(states)
-    else:
-        raise Exception(
-            f"Expected input numpy array with 2 or 3 dimensions, but received input with {states[0].ndim} dimensions."
-        )
+# def stack_matrix(states: List[np.ndarray]) -> np.ndarray:
+#     # Stack 2D images along the depth dimension
+#     if states[0].ndim == 2 or states[0].ndim == 3:
+#         return np.dstack(states)
+#     else:
+#         raise Exception(
+#             f"Expected input numpy array with 2 or 3 dimensions, but received input with {states[0].ndim} dimensions."
+#         )
 
 
 def info_adapter(obs, reward, info):
@@ -210,7 +230,6 @@ def action_adapter(controller):
             # Modify action space limits
             throttle = (throttle + 1) / 2
             brake = (brake + 1) / 2
-            # steering = steering
             return np.array([throttle, brake, steering], dtype=np.float32)
 
         return action_adapter_continuous
@@ -254,7 +273,7 @@ def action_adapter(controller):
         raise Exception(f"Unknown controller type.")
 
 
-def observation_adapter(obs) -> np.ndarray:
+def observation_adapter(obs: Observation) -> Dict[str, np.ndarray]:
     # RGB grid map
     rgb = obs.top_down_rgb.data
 
@@ -270,6 +289,7 @@ def observation_adapter(obs) -> np.ndarray:
     # Center frames
     frame = grayscale * 2 - 1
     frame = frame.astype(np.float32)
+    frame = np.expand_dims(frame, axis=-1)
 
     # Plot graph
     # fig, axes = plt.subplots(1, 4, figsize=(10, 10))
@@ -286,7 +306,16 @@ def observation_adapter(obs) -> np.ndarray:
     # plt.show()
     # sys.exit(2)
 
-    return frame
+    scalar = np.array(
+        (
+            obs.ego_vehicle_state.heading,
+            obs.ego_vehicle_state.speed,
+            obs.ego_vehicle_state.steering,
+        ),
+        dtype=np.float32,
+    )
+
+    return {"image": frame, "scalar": scalar}
 
 
 def get_targets(vehicles, target: str):
@@ -324,6 +353,7 @@ def predator_reward_adapter(obs, env_reward):
     # Penalty for driving off road
     if obs.events.off_road:
         reward -= 5
+        print(f"Predator {ego.id} went off road.")
         return np.float32(reward)
 
     # Distance based reward
@@ -362,6 +392,7 @@ def prey_reward_adapter(obs, env_reward):
     # Penalty for driving off road
     if obs.events.off_road:
         reward -= 5
+        print(f"Prey {ego.id} went off road.")
         return np.float32(reward)
 
     # Distance based reward

@@ -27,7 +27,6 @@ tf.random.set_seed(123)
 
 # --------------------------------------------------------------------------
 
-import multiprocessing as mp
 import signal
 import sys
 import warnings
@@ -39,7 +38,6 @@ from examples.gameOfTag import agent as got_agent
 from examples.gameOfTag import ppo as got_ppo
 from examples.gameOfTag.types import AgentType, Mode
 from pathlib import Path
-from typing import Dict, List
 
 
 def main(config):
@@ -77,8 +75,10 @@ def main(config):
 
     # Create model
     print("[INFO] Creating model")
-    ppo_predator = got_ppo.PPO(AgentType.PREDATOR.value, config)
-    ppo_prey = got_ppo.PPO(AgentType.PREY.value, config)
+    ppo_predator = got_ppo.PPO(
+        AgentType.PREDATOR.value, config, config["env_para"]["seed"] + 1
+    )
+    ppo_prey = got_ppo.PPO(AgentType.PREY.value, config, config["env_para"]["seed"] + 2)
 
     def interrupt(*args):
         nonlocal mode
@@ -202,7 +202,7 @@ def main(config):
                 all_agents[agent_id].add_last_transition(
                     value=next_values_t[agent_id].numpy()[0]
                 )
-            else:  # Agent done
+            else:  # Agent is done
                 all_agents[agent_id].add_last_transition(value=np.float32(0))
 
         # Compute generalised advantages
