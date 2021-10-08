@@ -38,7 +38,7 @@ model_para:
   # Iteration size
   batch_size: 200 # Horizon, a.k.a, trajectory length
   max_batch: 100000000
-  num_train_epochs: 10 # 5
+  num_train_epochs: 3
 
   # Models and logs
   save_interval: 25
