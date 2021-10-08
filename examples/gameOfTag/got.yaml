@@ -36,7 +36,7 @@ model_para:
   clip_value: 0.2
 
   # Iteration size
-  batch_size: 256
+  batch_size: 200
   max_batch: 100000000
   num_train_epochs: 10 # 5
 
