@@ -32,6 +32,10 @@ class TagAgent:
         return self._states
 
     @property
+    def rewards(self):
+        return self._rewards
+
+    @property
     def advantages(self):
         return self._advantages
 
