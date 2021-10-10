@@ -90,7 +90,9 @@ class PPO(object):
         if self.config["model_para"]["model_initial"]:  # Start from existing model
             self.model = _load(self.config["model_para"]["model_" + self.name])
         else:  # Start from new model
-            self.model = NeuralNetwork(self.name, self.config["model_para"]["action_dim"])
+            self.model = NeuralNetwork(
+                self.name, self.config["model_para"]["action_dim"]
+            )
         # Path for newly trained model
         self.model_path = Path(self.config["model_para"]["model_path"]).joinpath(
             f"{name}_{datetime.now().strftime('%Y_%m_%d_%H_%M')}"

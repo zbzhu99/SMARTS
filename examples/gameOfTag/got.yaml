@@ -36,43 +36,25 @@ model_para:
   clip_value: 0.2
 
   # Iteration size
-  batch_size: 100 # Horizon, a.k.a, trajectory length
+  batch_size: 128 # Horizon, a.k.a, trajectory length
   max_batch: 100000000
   num_train_epochs: 3
 
   # Models and logs
   save_interval: 25
   mode: train # train or evaluate
-  model_initial: false
+  model_initial: False
+
   # Local
-  # tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
-  # model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
-  # model_predator: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator_2021_09_10_23_17/128"
-  # model_prey: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey_2021_09_10_23_17/128"
+  # tensorboard_path: "/home/adai/workspaces/SMARTS/examples/gameOfTag/logs/"
+  # model_path: "/home/adai/workspaces/SMARTS/examples/gameOfTag/models/"
+  # model_predator: "/home/adai/workspaces/SMARTS/examples/gameOfTag/models/predator_2021_10_10_04_27/100"
+  # model_prey: "/home/adai/workspaces/SMARTS/examples/gameOfTag/models/prey_2021_10_10_04_27/100"
 
   # Docker
   tensorboard_path: "/src/examples/gameOfTag/logs/"
   model_path: "/src/examples/gameOfTag/models/"
 
-
-# filter_arches: # A=421,108 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
-#   - [16, [32, 32], [4, 4]]
-#   - [32, [17, 17], [4, 4]]
-#   - [64, [3, 3], [2, 2]] 
-# hidden_sizes: [128] # MLP layers 
-# filter_arches: # B=502,836 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
-#   - [16, [32, 32], [4, 4]]
-#   - [32, [17, 17], [2, 2]]
-#   - [64, [7, 7], [2, 2]] 
-#   - [128, [4,4], [2, 2]]
-# hidden_sizes: [64] # MLP layers 
-# filter_arches: # C=211,049 # CNN layers [#filters, [filter_w, filter_h], [stride_w, stride_h]]
-#   - [5, [12, 12], [4, 4]]
-#   - [16, [6, 6], [4, 4]]
-#   - [32, [3, 3], [2, 2]] 
-# hidden_sizes: [256] # MLP layers 
-
-
-# minibatch K = 3-15, 
-# batch size M = 64-4096, 
-# trajectory size T (horizon) = 128-2048
+# minibatch / epoch = 3-15
+# batch size M = 64-4096 
+# trajectory length / horizon = 128-2048
