@@ -293,14 +293,6 @@ def main(config):
         records.append(("prey_entropy_loss", np.mean(prey_entropy_loss), step))
         ppo_prey.write_to_tb(records)
 
-        # # Evaluate model
-        # if batch_num % eval_interval == 0:
-        #     print("[INFO] Running evaluation...")
-        #     (
-        #         avg_reward_predator,
-        #         avg_reward_prey,
-        #     ) = evaluate.evaluate(ppo_predator, ppo_prey, config)
-
         # Save model
         if batch_num % save_interval == 0:
             print("[INFO] Saving model")

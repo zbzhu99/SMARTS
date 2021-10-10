@@ -38,72 +38,43 @@ from typing import Any, Dict, List, Tuple
 absl.logging.set_verbosity(absl.logging.ERROR)
 
 
-class NeuralNetwork(tf.keras.Model):
-    def __init__(self, num_actions):
-        """
-        Args:
-            num_actions (int): Number of continuous actions to output
-        """
-        super(NeuralNetwork, self).__init__()
-        self.num_actions = num_actions
-        self.conv1 = tf.keras.layers.Conv2D(
-            filters=16,
-            kernel_size=33,
+def NeuralNetwork(name, num_actions):
+    filter_num = [16, 32, 64]
+    kernel_size = [33, 17, 9]
+    pool_size = [4, 4, 2]
+
+    input1 = tf.keras.layers.Input(shape=(256, 256, 1))
+    input2 = tf.keras.layers.Input(shape=(3,))
+    x_conv = input1
+    for ii in range(len(filter_num)):
+        x_conv = tf.keras.layers.Conv2D(
+            filters=filter_num[ii],
+            kernel_size=kernel_size[ii],
             strides=(1, 1),
             padding="valid",
             activation=tf.keras.activations.relu,
-        )
-        self.maxpool1 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))
-        self.conv2 = tf.keras.layers.Conv2D(
-            filters=32,
-            kernel_size=17,
-            strides=(1, 1),
-            padding="valid",
-            activation=tf.keras.activations.relu,
-        )
-        self.maxpool2 = tf.keras.layers.MaxPool2D(pool_size=(2, 2))
-        self.flatten = tf.keras.layers.Flatten()
+        )(x_conv)
+        x_conv = tf.keras.layers.MaxPool2D(pool_size=pool_size[ii])(x_conv)
 
-        self.dense1 = tf.keras.layers.Dense(
-            units=128, activation=tf.keras.activations.relu
-        )
-        self.dense2 = tf.keras.layers.Dense(
-            units=128, activation=tf.keras.activations.relu
-        )
+    flatten_out = tf.keras.layers.Flatten()(x_conv)
+    merged_out = tf.keras.layers.concatenate([flatten_out, input2], axis=1)
 
-        self.policy = tf.keras.layers.Dense(units=self.num_actions)
-        self.value = tf.keras.layers.Dense(units=1)
+    dense1_out = tf.keras.layers.Dense(units=128, activation=tf.keras.activations.relu)(
+        merged_out
+    )
+    dense2_out = tf.keras.layers.Dense(units=128, activation=tf.keras.activations.relu)(
+        dense1_out
+    )
 
-    def call(self, input):
-        """
-        Args:
-            inputs ([batch_size, width, height, depth]): Input images to predict actions for.
+    policy = tf.keras.layers.Dense(units=num_actions)(dense2_out)
+    value = tf.keras.layers.Dense(units=1)(dense2_out)
 
-        Returns:
-            [type]: 2-D Tensor with shape [batch_size, num_classes]. Each slice [i, :] represents the unnormalized "log-probabilities" for all classes.
-            [type]: Value of state
-        """
-        conv1_out = self.conv1(input[0])
-        maxpool1_out = self.maxpool1(conv1_out)
-        conv2_out = self.conv2(maxpool1_out)
-        maxpool2_out = self.maxpool2(conv2_out)
-        flatten_out = self.flatten(maxpool2_out)
+    model = tf.keras.Model(
+        inputs=[input1, input2], outputs=[policy, value], name=f"AutoDrive_{name}"
+    )
 
-        merged_out = tf.keras.layers.concatenate([flatten_out, input[1]], axis=1)
+    return model
 
-        dense1_out = self.dense1(merged_out)
-        dense2_out = self.dense2(dense1_out)
-
-        policy = self.policy(dense2_out)
-        value = self.value(dense2_out)
-
-        return policy, value
-
-    def summary(self):
-        input1 = tf.keras.layers.Input(shape=(256,256,1))
-        input2 = tf.keras.layers.Input(shape=(3,))
-        model = tf.keras.Model(inputs=[input1, input2], outputs=self.call([input1, input2]))
-        model.summary()
 
 class PPO(object):
     def __init__(self, name, config, seed):
@@ -119,7 +90,7 @@ class PPO(object):
         if self.config["model_para"]["model_initial"]:  # Start from existing model
             self.model = _load(self.config["model_para"]["model_" + self.name])
         else:  # Start from new model
-            self.model = NeuralNetwork(self.config["model_para"]["action_dim"])
+            self.model = NeuralNetwork(self.name, self.config["model_para"]["action_dim"])
         # Path for newly trained model
         self.model_path = Path(self.config["model_para"]["model_path"]).joinpath(
             f"{name}_{datetime.now().strftime('%Y_%m_%d_%H_%M')}"
@@ -182,7 +153,6 @@ def _dict_to_ordered_list(dic: Dict[str, Any]) -> List[Tuple[str, Any]]:
 def _load(model_path):
     return tf.keras.models.load_model(
         model_path,
-        custom_objects={"NeuralNetwork": NeuralNetwork},
         compile=False,
     )
 
@@ -207,7 +177,7 @@ def train_model(
     # ]:
 
     images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
-    stacked_images = tf.stack(images) 
+    stacked_images = tf.stack(images)
     stacked_scalars = tf.stack(scalars)
     with tf.GradientTape() as tape:
         policy_logits, values = model.call([stacked_images, stacked_scalars])

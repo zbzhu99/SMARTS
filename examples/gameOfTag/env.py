@@ -13,6 +13,9 @@ from smarts.env.wrappers import frame_stack as smarts_frame_stack
 from typing import Dict, Tuple
 
 
+NEIGHBOURHOOD_RADIUS = 55
+
+
 class TagEnv(gym.Env):
     def __init__(self, config, seed=42):
         # Update the agents number and env api type.
@@ -252,12 +255,12 @@ def action_adapter(controller):
                 # Turn left
                 throttle = 0.3
                 brake = 0
-                steering = -0.8
+                steering = -0.5
             elif model_action == 3:
                 # Turn right
                 throttle = 0.3
                 brake = 0
-                steering = 0.8
+                steering = 0.5
             elif model_action == 4:
                 # Brake
                 throttle = 0
@@ -330,20 +333,8 @@ def distance_to_targets(ego, targets):
     return distances
 
 
-# def linear(x: float) -> float:
-#     return x
-
-
-# def inverse(x: float) -> float:
-#     return -x + 80
-
-
-# def exponential_negative(x: float) -> float:
-#     return 90 * np.exp(-0.028 * x)
-
-
-# def exponential_positive(x: float) -> float:
-#     return np.exp(0.056 * x)
+def inverse(x: float) -> float:
+    return -x + NEIGHBOURHOOD_RADIUS
 
 
 def predator_reward_adapter(obs, env_reward):
@@ -356,19 +347,6 @@ def predator_reward_adapter(obs, env_reward):
         print(f"Predator {ego.id} went off road.")
         return np.float32(reward)
 
-    # Distance based reward
-    targets = get_targets(obs.neighborhood_vehicle_states, "prey")
-    if targets:
-        # distances = distance_to_targets(ego, targets)
-        # min_distance = np.amin(distances)
-        # dist_reward = exponential_negative(min_distance)
-        # dist_reward = inverse(min_distance)
-        # reward += np.clip(dist_reward, 0, 55) / 20  # Reward [0:275]
-        reward += 1
-    else:  # No neighborhood preys
-        #     reward -= 1
-        pass
-
     # Reward for colliding
     for c in obs.events.collisions:
         if "prey" in c.collidee_id:
@@ -378,9 +356,17 @@ def predator_reward_adapter(obs, env_reward):
             reward -= 5
             print(f"Predator {ego.id} collided with predator vehicle {c.collidee_id}.")
 
-    # Penalty for not moving
-    # if obs.events.not_moving:
-    # reward -= 2
+    # Distance based reward
+    targets = get_targets(obs.neighborhood_vehicle_states, "prey")
+    if targets:
+        distances = distance_to_targets(ego, targets)
+        min_distance = np.amin(distances)
+        dist_reward = inverse(min_distance)
+        reward += (
+            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS
+        )  # Reward [0:1]
+    else:  # No neighborhood preys
+        reward -= 1
 
     return np.float32(reward)
 
@@ -395,19 +381,6 @@ def prey_reward_adapter(obs, env_reward):
         print(f"Prey {ego.id} went off road.")
         return np.float32(reward)
 
-    # Distance based reward
-    targets = get_targets(obs.neighborhood_vehicle_states, "predator")
-    if targets:
-        # distances = distance_to_targets(ego, targets)
-        # ave_distance = np.average(distances)
-        # dist_reward = exponential_positive(ave_distance)
-        # dist_reward = linear(ave_distance)
-        # reward += np.clip(dist_reward, 0, 55) / 20  # Reward [0:275]
-        reward -= 1
-    else:  # No neighborhood predators
-        # reward += 1
-        pass
-
     # Penalty for colliding
     for c in obs.events.collisions:
         if "predator" in c.collidee_id:
@@ -417,8 +390,16 @@ def prey_reward_adapter(obs, env_reward):
             reward -= 5
             print(f"Prey {ego.id} collided with prey vehicle {c.collidee_id}.")
 
-    # Penalty for not moving
-    # if obs.events.not_moving:
-    #     reward -= 2
+    # Distance based reward
+    targets = get_targets(obs.neighborhood_vehicle_states, "predator")
+    if targets:
+        distances = distance_to_targets(ego, targets)
+        ave_distance = np.average(distances)
+        dist_reward = inverse(ave_distance)
+        reward -= (
+            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS
+        )  # Reward [-1:0]
+    else:  # No neighborhood predators
+        reward += 1
 
     return np.float32(reward)

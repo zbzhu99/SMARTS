@@ -25,18 +25,18 @@ model_para:
   action_dim: 5
   
   # Optimizer
-  initial_lr_predator: 0.01 # 0.001
-  initial_lr_prey: 0.01 # 0.0005
+  initial_lr_predator: 0.001
+  initial_lr_prey: 0.0005
 
   # PPO
   critic_loss_weight: 0.5
-  entropy_loss_weight: 0.1 # 0.01
+  entropy_loss_weight: 0.01
   entropy_loss_discount_rate: 1 # 0.995
   gamma: 0.99 # Reward discount
   clip_value: 0.2
 
   # Iteration size
-  batch_size: 200 # Horizon, a.k.a, trajectory length
+  batch_size: 100 # Horizon, a.k.a, trajectory length
   max_batch: 100000000
   num_train_epochs: 3
 
