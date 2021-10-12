@@ -343,7 +343,7 @@ def predator_reward_adapter(obs, env_reward):
 
     # Penalty for driving off road
     if obs.events.off_road:
-        reward -= 5
+        reward -= 10
         print(f"Predator {ego.id} went off road.")
         return np.float32(reward)
 
@@ -363,10 +363,11 @@ def predator_reward_adapter(obs, env_reward):
         min_distance = np.amin(distances)
         dist_reward = inverse(min_distance)
         reward += (
-            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS
+            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 2
         )  # Reward [0:1]
     else:  # No neighborhood preys
-        reward -= 1
+        # reward -= 1
+        pass
 
     return np.float32(reward)
 
@@ -377,17 +378,17 @@ def prey_reward_adapter(obs, env_reward):
 
     # Penalty for driving off road
     if obs.events.off_road:
-        reward -= 5
+        reward -= 10
         print(f"Prey {ego.id} went off road.")
         return np.float32(reward)
 
     # Penalty for colliding
     for c in obs.events.collisions:
         if "predator" in c.collidee_id:
-            reward -= 5
+            reward -= 10
             print(f"Prey {ego.id} collided with predator vehicle {c.collidee_id}.")
         else:
-            reward -= 5
+            reward -= 10
             print(f"Prey {ego.id} collided with prey vehicle {c.collidee_id}.")
 
     # Distance based reward
@@ -397,7 +398,7 @@ def prey_reward_adapter(obs, env_reward):
         ave_distance = np.average(distances)
         dist_reward = inverse(ave_distance)
         reward -= (
-            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS
+            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 2
         )  # Reward [-1:0]
     else:  # No neighborhood predators
         reward += 1

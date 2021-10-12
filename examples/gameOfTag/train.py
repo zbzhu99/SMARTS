@@ -152,11 +152,11 @@ def main(config):
                 if dones_t[agent_id] == 1:
                     if not dones_t["__all__"]:
                         # Downgrade #n last rewards for agents which become done early.
-                        downgrade_len = 5
+                        downgrade_len = 2
                         rewards_len = len(all_agents[agent_id].rewards)
                         min_len = np.minimum(downgrade_len, rewards_len)
                         all_agents[agent_id].rewards[-min_len:] = [
-                            np.float32(-5)
+                            np.float32(-10)
                         ] * min_len
                     # Remove done agents
                     del next_states_t[agent_id]
