@@ -38,13 +38,16 @@ from typing import Any, Dict, List, Tuple
 absl.logging.set_verbosity(absl.logging.ERROR)
 
 
-def NeuralNetwork(name, num_actions):
-    filter_num = [16, 32, 64]
-    kernel_size = [33, 17, 9]
-    pool_size = [4, 4, 2]
+def NeuralNetwork(name, num_actions, input_shape):
+    filter_num = [32, 32, 64, 64]
+    kernel_size = [65, 13, 5, 2]
+    pool_size = [4, 2, 2, 2]
 
-    input1 = tf.keras.layers.Input(shape=(256, 256, 1))
-    input2 = tf.keras.layers.Input(shape=(3,))
+    # filter_num = [16, 32, 64]
+    # kernel_size = [33, 17, 9]
+    # pool_size = [4, 4, 2]
+
+    input1 = tf.keras.layers.Input(shape=input_shape, dtype=tf.float32)
     x_conv = input1
     for ii in range(len(filter_num)):
         x_conv = tf.keras.layers.Conv2D(
@@ -57,20 +60,16 @@ def NeuralNetwork(name, num_actions):
         x_conv = tf.keras.layers.MaxPool2D(pool_size=pool_size[ii])(x_conv)
 
     flatten_out = tf.keras.layers.Flatten()(x_conv)
-    merged_out = tf.keras.layers.concatenate([flatten_out, input2], axis=1)
 
-    dense1_out = tf.keras.layers.Dense(units=128, activation=tf.keras.activations.relu)(
-        merged_out
-    )
-    dense2_out = tf.keras.layers.Dense(units=128, activation=tf.keras.activations.relu)(
-        dense1_out
+    dense1_out = tf.keras.layers.Dense(units=512, activation=tf.keras.activations.relu)(
+        flatten_out
     )
 
-    policy = tf.keras.layers.Dense(units=num_actions)(dense2_out)
-    value = tf.keras.layers.Dense(units=1)(dense2_out)
+    policy = tf.keras.layers.Dense(units=num_actions)(dense1_out)
+    value = tf.keras.layers.Dense(units=1)(dense1_out)
 
     model = tf.keras.Model(
-        inputs=[input1, input2], outputs=[policy, value], name=f"AutoDrive_{name}"
+        inputs=input1, outputs=[policy, value], name=f"AutoDrive_{name}"
     )
 
     return model
@@ -91,7 +90,9 @@ class PPO(object):
             self.model = _load(self.config["model_para"]["model_" + self.name])
         else:  # Start from new model
             self.model = NeuralNetwork(
-                self.name, self.config["model_para"]["action_dim"]
+                self.name,
+                self.config["model_para"]["action_dim"],
+                self.config["model_para"]["observation_dim"],
             )
         # Path for newly trained model
         self.model_path = Path(self.config["model_para"]["model_path"]).joinpath(
@@ -124,12 +125,8 @@ class PPO(object):
         # function due to order of sampling by `actions_dist_t.sample()`.
         for vehicle, state in ordered_obs:
             if self.name in vehicle:
-                actions_t, values_t = self.model.predict_on_batch(
-                    [
-                        np.expand_dims(state["image"], axis=0),
-                        np.expand_dims(state["scalar"], axis=0),
-                    ]
-                )
+                norm_states = tf.cast(tf.stack([state], axis=0), tf.float32) / 255.0
+                actions_t, values_t = self.model.predict_on_batch(norm_states)
                 actions_dist_t = tfp.distributions.Categorical(logits=actions_t)
 
                 actions[vehicle] = tf.squeeze(actions_t, axis=0)
@@ -162,7 +159,7 @@ def _load(model_path):
 def train_model(
     model: tf.keras.Model,
     optimizer: tf.keras.optimizers,
-    action_inds: tf.TensorSpec(shape=(None, 2), dtype=tf.dtypes.int32),
+    action_inds,
     old_probs,
     states: List[np.ndarray],
     advantages: np.ndarray,
@@ -171,18 +168,9 @@ def train_model(
     clip_value: float,
     critic_loss_weight: float,
 ):
-    # -> Tuple[
-    #     tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
-    #     tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
-    #     tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
-    #     tf.TensorSpec(shape=(), dtype=tf.dtypes.float32),
-    # ]:
-
-    images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
-    stacked_images = tf.stack(images)
-    stacked_scalars = tf.stack(scalars)
+    norm_states = tf.cast(tf.stack(states, axis=0), tf.float32) / 255.0
     with tf.GradientTape() as tape:
-        policy_logits, values = model.call([stacked_images, stacked_scalars])
+        policy_logits, values = model.call(norm_states)
         act_loss = actor_loss(
             advantages, old_probs, action_inds, policy_logits, clip_value
         )

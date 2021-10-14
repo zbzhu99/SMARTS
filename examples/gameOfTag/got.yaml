@@ -21,7 +21,7 @@ env_para:
 
 model_para:
   # Observation and action space
-  state_dim: [256, 256, 1]
+  observation_dim: [256, 256, 9]
   action_dim: 5
   
   # Optimizer
@@ -30,14 +30,14 @@ model_para:
 
   # PPO
   critic_loss_weight: 0.5
-  entropy_loss_weight: 0.01
+  entropy_loss_weight: 0.09 # 0.01
   entropy_loss_discount_rate: 1 # 0.995
   gamma: 0.99 # Reward discount
   clip_value: 0.2
 
   # Iteration size
   batch_size: 128 # Horizon, a.k.a, trajectory length
-  max_batch: 100000000
+  max_batch: 10000000
   num_train_epochs: 3
 
   # Models and logs
