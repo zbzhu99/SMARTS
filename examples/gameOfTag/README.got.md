@@ -59,19 +59,3 @@ $ PYTHONHASHSEED=0 python3.7 ./examples/gameOfTag/evaluate.py
 $ tensorboard --logdir=/home/adai/workspaces/SMARTS/examples/gameOfTag/logs
 $ tensorboard --logdir=/home/adai/workspaces/training
 ```
-
-## TODO
-- simplify reward function
-- launch shell script
-
-- randomness in keras
-- multiprocessing training in gpu
-- list out of index
-
-
-## Training
-1. got_2021_09_27_01_58 got:2021_09_27_01_58
-    - rgb=110/256, radius=55,
-    - neuralnetwork = 
-    - 
-1.
