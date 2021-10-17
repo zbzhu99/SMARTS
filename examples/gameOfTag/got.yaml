@@ -21,24 +21,24 @@ env_para:
 
 model_para:
   # Observation and action space
-  observation_dim: [256, 256, 9]
+  observation_dim: [256, 256, 12]
   action_dim: 5
   
   # Optimizer
-  initial_lr_predator: 0.001
-  initial_lr_prey: 0.0005
+  initial_lr_predator: 0.0003
+  initial_lr_prey: 0.0003
 
   # PPO
   critic_loss_weight: 0.5
-  entropy_loss_weight: 0.09 # 0.01
+  entropy_loss_weight: 0
   entropy_loss_discount_rate: 1 # 0.995
   gamma: 0.99 # Reward discount
   clip_value: 0.2
 
   # Iteration size
-  batch_size: 128 # Horizon, a.k.a, trajectory length
+  n_steps: 256 # Horizon, a.k.a, trajectory length
   max_batch: 100000
-  num_train_epochs: 3
+  num_train_epochs: 5
 
   # Models and logs
   save_interval: 25

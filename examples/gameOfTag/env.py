@@ -119,7 +119,7 @@ class TagEnv(gym.Env):
             seed=seed,
         )
         # Wrap env with FrameStack to stack multiple observations
-        env = smarts_frame_stack.FrameStack(env=env, num_stack=3, num_skip=1)
+        env = smarts_frame_stack.FrameStack(env=env, num_stack=4, num_skip=1)
 
         self.env = env
 
@@ -252,17 +252,17 @@ def action_adapter(controller):
                 steering = 0
             elif model_action == 1:
                 # Accelerate
-                throttle = 0.5
+                throttle = 0.6
                 brake = 0
                 steering = 0
             elif model_action == 2:
                 # Turn left
-                throttle = 0.3
+                throttle = 0.5
                 brake = 0
                 steering = -0.8
             elif model_action == 3:
                 # Turn right
-                throttle = 0.3
+                throttle = 0.5
                 brake = 0
                 steering = 0.8
             elif model_action == 4:
@@ -339,28 +339,32 @@ def predator_reward_adapter(obs, env_reward):
     if obs.events.off_road:
         reward -= 50
         print(f"Predator {ego.id} went off road.")
+        return np.float32(reward)
 
     # Reward for colliding
     for c in obs.events.collisions:
         if "prey" in c.collidee_id:
-            reward += 20
+            reward += 30
             print(f"Predator {ego.id} collided with prey vehicle {c.collidee_id}.")
         else:
             reward -= 20
             print(f"Predator {ego.id} collided with predator vehicle {c.collidee_id}.")
 
     # Distance based reward
-    targets = get_targets(obs.neighborhood_vehicle_states, "prey")
-    if targets:
-        distances = distance_to_targets(ego, targets)
-        min_distance = np.amin(distances)
-        dist_reward = inverse(min_distance)
-        reward += (
-            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 5
-        )  # Reward [0:1]
-    else:  # No neighborhood preys
-        # reward -= 1
-        pass
+    # targets = get_targets(obs.neighborhood_vehicle_states, "prey")
+    # if targets:
+    #     distances = distance_to_targets(ego, targets)
+    #     min_distance = np.amin(distances)
+    #     dist_reward = inverse(min_distance)
+    #     reward += (
+    #         np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS
+    #     )  # Reward [0:1]
+    # else:  # No neighborhood preys
+    #     reward -= 1
+
+    # Penalty for not moving
+    if obs.events.not_moving:
+        reward -= 1
 
     # Reward for staying on road
     reward += 1
@@ -376,27 +380,33 @@ def prey_reward_adapter(obs, env_reward):
     if obs.events.off_road:
         reward -= 50
         print(f"Prey {ego.id} went off road.")
+        return np.float32(reward)
 
     # Penalty for colliding
     for c in obs.events.collisions:
         if "predator" in c.collidee_id:
-            reward -= 20
+            reward -= 30
             print(f"Prey {ego.id} collided with predator vehicle {c.collidee_id}.")
         else:
-            reward -= 20
+            reward -= 30
             print(f"Prey {ego.id} collided with prey vehicle {c.collidee_id}.")
 
     # Distance based reward
     targets = get_targets(obs.neighborhood_vehicle_states, "predator")
     if targets:
-        distances = distance_to_targets(ego, targets)
-        min_distance = np.amin(distances)
-        dist_reward = inverse(min_distance)
-        reward -= (
-            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS
-        )  # Reward [-1:0]
+    #     distances = distance_to_targets(ego, targets)
+    #     min_distance = np.amin(distances)
+    #     dist_reward = inverse(min_distance)
+    #     reward -= (
+    #         np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS
+    #     )  # Reward [-1:0]
+        pass
     else:  # No neighborhood predators
         reward += 1
+
+    # Penalty for not moving
+    if obs.events.not_moving:
+        reward -= 1
 
     # Reward for staying on road
     reward += 1

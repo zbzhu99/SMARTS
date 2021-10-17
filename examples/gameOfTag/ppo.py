@@ -87,8 +87,10 @@ class PPO(object):
         # Model
         self.model = None
         if self.config["model_para"]["model_initial"]:  # Start from existing model
+            print("[INFO] PPO existing model.")
             self.model = _load(self.config["model_para"]["model_" + self.name])
         else:  # Start from new model
+            print("[INFO] PPO new model.")
             self.model = NeuralNetwork(
                 self.name,
                 self.config["model_para"]["action_dim"],
@@ -114,7 +116,7 @@ class PPO(object):
             filepath=save_path,
         )
 
-    def act(self, obs):
+    def act(self, obs, train: bool):
         actions = {}
         action_samples = {}
         values = {}
@@ -127,13 +129,17 @@ class PPO(object):
             if self.name in vehicle:
                 norm_states = tf.cast(tf.stack([state], axis=0), tf.float32) / 255.0
                 actions_t, values_t = self.model.predict_on_batch(norm_states)
-                actions_dist_t = tfp.distributions.Categorical(logits=actions_t)
-
                 actions[vehicle] = tf.squeeze(actions_t, axis=0)
-                action_samples[vehicle] = tf.squeeze(
-                    actions_dist_t.sample(1, seed=self.seed), axis=0
-                )
                 values[vehicle] = tf.squeeze(values_t, axis=0)
+
+                if train:
+                    actions_dist_t = tfp.distributions.Categorical(logits=actions_t)
+                    action_samples[vehicle] = tf.squeeze(
+                        actions_dist_t.sample(1, seed=self.seed), axis=0
+                    )
+                else:
+                    action_samples[vehicle] = tf.math.argmax(actions_t, axis=1)
+
         return actions, action_samples, values
 
     def write_to_tb(self, records):

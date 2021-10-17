@@ -51,7 +51,7 @@ def main(config):
 
     # Traning parameters
     num_train_epochs = config["model_para"]["num_train_epochs"]
-    batch_size = config["model_para"]["batch_size"]
+    n_steps = config["model_para"]["n_steps"]
     max_batch = config["model_para"]["max_batch"]
     clip_value = config["model_para"]["clip_value"]
     critic_loss_weight = config["model_para"]["critic_loss_weight"]
@@ -98,12 +98,13 @@ def main(config):
     steps_t = 0
     episode_reward_predator = 0
     episode_reward_prey = 0
+    train = True if mode == Mode.TRAIN else False
     for batch_num in range(max_batch):
         [agent.reset() for _, agent in all_agents.items()]
         active_agents = {}
 
         print(f"[INFO] New batch data collection {batch_num}/{max_batch}")
-        for cur_step in range(batch_size):
+        for cur_step in range(n_steps):
 
             # Update all agents which were active in this batch
             active_agents.update({agent_id: True for agent_id, _ in states_t.items()})
@@ -116,9 +117,9 @@ def main(config):
                 actions_t_predator,
                 action_samples_t_predator,
                 values_t_predator,
-            ) = ppo_predator.act(states_t)
+            ) = ppo_predator.act(obs=states_t, train=train)
             actions_t_prey, action_samples_t_prey, values_t_prey = ppo_prey.act(
-                states_t
+                obs=states_t, train=train
             )
             actions_t.update(actions_t_predator)
             actions_t.update(actions_t_prey)
@@ -150,14 +151,14 @@ def main(config):
                 else:
                     episode_reward_prey += rewards_t[agent_id]
                 if dones_t[agent_id] == 1:
-                    if not dones_t["__all__"]:
-                        # Downgrade #n last rewards for agents which become done early.
-                        downgrade_len = 3
-                        rewards_len = len(all_agents[agent_id].rewards)
-                        min_len = np.minimum(downgrade_len, rewards_len)
-                        all_agents[agent_id].rewards[-min_len:] = [
-                            all_agents[agent_id].rewards[-1]
-                        ] * min_len
+                    # if not dones_t["__all__"]:
+                    #     # Downgrade #n last rewards for agents which become done early.
+                    #     downgrade_len = 2
+                    #     rewards_len = len(all_agents[agent_id].rewards)
+                    #     min_len = np.minimum(downgrade_len, rewards_len)
+                    #     all_agents[agent_id].rewards[-min_len:] = [
+                    #         all_agents[agent_id].rewards[-1]
+                    #     ] * min_len
                     # Remove done agents
                     del next_states_t[agent_id]
                     # Print done agents
@@ -199,11 +200,11 @@ def main(config):
             if dones_t.get(agent_id, None) == 0:  # Agent not done yet
                 if AgentType.PREDATOR.value in agent_id:
                     _, _, next_values_t = ppo_predator.act(
-                        {agent_id: next_states_t[agent_id]}
+                        {agent_id: next_states_t[agent_id]}, train=train
                     )
                 elif AgentType.PREY.value in agent_id:
                     _, _, next_values_t = ppo_prey.act(
-                        {agent_id: next_states_t[agent_id]}
+                        {agent_id: next_states_t[agent_id]}, train=train
                     )
                 else:
                     raise Exception(f"Unknown {agent_id}.")
@@ -235,7 +236,7 @@ def main(config):
         prey_entropy_loss = np.zeros((num_train_epochs))
 
         # Elapsed steps
-        step = (batch_num + 1) * batch_size
+        step = (batch_num + 1) * n_steps
 
         if mode == Mode.EVALUATE:
             continue
