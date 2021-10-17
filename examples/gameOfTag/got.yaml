@@ -1,5 +1,5 @@
 env_para:
-  env_name: SMARTS
+  env_name: smarts
   seed: 42
   headless: True
   visdom: False
