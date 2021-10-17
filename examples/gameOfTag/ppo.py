@@ -39,13 +39,13 @@ absl.logging.set_verbosity(absl.logging.ERROR)
 
 
 def NeuralNetwork(name, num_actions, input_shape):
-    filter_num = [32, 32, 64, 64]
-    kernel_size = [65, 13, 5, 2]
-    pool_size = [4, 2, 2, 2]
+    # filter_num = [32, 32, 64, 64]
+    # kernel_size = [65, 13, 5, 2]
+    # pool_size = [4, 2, 2, 2]
 
-    # filter_num = [16, 32, 64]
-    # kernel_size = [33, 17, 9]
-    # pool_size = [4, 4, 2]
+    filter_num = [16, 32, 64]
+    kernel_size = [33, 17, 9]
+    pool_size = [4, 4, 2]
 
     input1 = tf.keras.layers.Input(shape=input_shape, dtype=tf.float32)
     x_conv = input1
