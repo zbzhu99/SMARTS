@@ -138,7 +138,9 @@ class PPO(object):
         # NOTE: Order of items drawn from dict may affect reproducibility of this
         # function due to order of sampling by `actions_dist_t.sample()`.
         for vehicle, state in ordered_obs:
-            if self.name in vehicle:
+            if (
+                self.name in vehicle
+            ):  # <---- VERY IMPORTANT DO NOT REMOVE @@ !! @@ !! @@ !!
                 images, scalars = zip(
                     *(map(lambda x: (x["image"], x["scalar"]), [state]))
                 )

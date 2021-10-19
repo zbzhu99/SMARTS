@@ -38,7 +38,7 @@ model_para:
   clip_value: 0.2
 
   # Iteration size
-  n_steps: 256 # Horizon, a.k.a, trajectory length
+  n_steps: 512 # Horizon, a.k.a, trajectory length
   max_batch: 100000
   num_train_epochs: 5
 

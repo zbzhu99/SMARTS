@@ -188,11 +188,9 @@ def _stack_obs(state: Dict):
         images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), agent_state)))
         stacked_image = np.dstack(images)
         stacked_scalar = np.concatenate(scalars, axis=0)
-        stacked_state.update(
-            {agent_id: {"image": stacked_image, "scalar": stacked_scalar}}
-        )
+        stacked_state[agent_id] = {"image": stacked_image, "scalar": stacked_scalar}
 
-        return stacked_state
+    return stacked_state
 
 
 def info_adapter(obs, reward, info):
