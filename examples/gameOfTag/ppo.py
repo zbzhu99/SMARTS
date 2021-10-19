@@ -38,17 +38,19 @@ from typing import Any, Dict, List, Tuple
 absl.logging.set_verbosity(absl.logging.ERROR)
 
 
-def NeuralNetwork(name, num_actions, input_shape):
-    # filter_num = [32, 32, 64, 64]
-    # kernel_size = [65, 13, 5, 2]
-    # pool_size = [4, 2, 2, 2]
+def NeuralNetwork(name, num_actions, input1_shape, input2_shape):
+    filter_num = [32, 32, 64, 64, 128]
+    kernel_size = [65, 13, 5, 2, 3]
+    pool_size = [4, 2, 2, 2, 1]
 
-    filter_num = [16, 32, 64]
-    kernel_size = [33, 17, 9]
-    pool_size = [4, 4, 2]
+    # filter_num = [16, 32, 64]
+    # kernel_size = [33, 17, 9]
+    # pool_size = [4, 4, 2]
 
-    input1 = tf.keras.layers.Input(shape=input_shape, dtype=tf.float32)
-    x_conv = input1
+    input1 = tf.keras.layers.Input(shape=input1_shape, dtype=tf.uint8)
+    input2 = tf.keras.layers.Input(shape=input2_shape, dtype=tf.float32)
+    input1_norm = tf.cast(input1, tf.float32) / 255.0
+    x_conv = input1_norm
     for ii in range(len(filter_num)):
         x_conv = tf.keras.layers.Conv2D(
             filters=filter_num[ii],
@@ -56,20 +58,29 @@ def NeuralNetwork(name, num_actions, input_shape):
             strides=(1, 1),
             padding="valid",
             activation=tf.keras.activations.relu,
+            name=f"conv2d_{ii}",
         )(x_conv)
-        x_conv = tf.keras.layers.MaxPool2D(pool_size=pool_size[ii])(x_conv)
+        x_conv = tf.keras.layers.MaxPool2D(
+            pool_size=pool_size[ii], name=f"maxpool_{ii}"
+        )(x_conv)
 
     flatten_out = tf.keras.layers.Flatten()(x_conv)
 
-    dense1_out = tf.keras.layers.Dense(units=512, activation=tf.keras.activations.relu)(
-        flatten_out
-    )
+    dense1_out = tf.keras.layers.Dense(
+        units=16, activation=tf.keras.activations.relu, name="dense_1"
+    )(input2)
 
-    policy = tf.keras.layers.Dense(units=num_actions)(dense1_out)
-    value = tf.keras.layers.Dense(units=1)(dense1_out)
+    merged_out = tf.keras.layers.concatenate([flatten_out, dense1_out], axis=1)
+
+    dense2_out = tf.keras.layers.Dense(
+        units=512, activation=tf.keras.activations.relu, name="dense_2"
+    )(merged_out)
+
+    policy = tf.keras.layers.Dense(units=num_actions, name="dense_policy")(dense2_out)
+    value = tf.keras.layers.Dense(units=1, name="dense_value")(dense2_out)
 
     model = tf.keras.Model(
-        inputs=input1, outputs=[policy, value], name=f"AutoDrive_{name}"
+        inputs=[input1, input2], outputs=[policy, value], name=f"AutoDrive_{name}"
     )
 
     return model
@@ -94,7 +105,8 @@ class PPO(object):
             self.model = NeuralNetwork(
                 self.name,
                 self.config["model_para"]["action_dim"],
-                self.config["model_para"]["observation_dim"],
+                self.config["model_para"]["observation1_dim"],
+                self.config["model_para"]["observation2_dim"],
             )
         # Path for newly trained model
         self.model_path = Path(self.config["model_para"]["model_path"]).joinpath(
@@ -127,8 +139,14 @@ class PPO(object):
         # function due to order of sampling by `actions_dist_t.sample()`.
         for vehicle, state in ordered_obs:
             if self.name in vehicle:
-                norm_states = tf.cast(tf.stack([state], axis=0), tf.float32) / 255.0
-                actions_t, values_t = self.model.predict_on_batch(norm_states)
+                images, scalars = zip(
+                    *(map(lambda x: (x["image"], x["scalar"]), [state]))
+                )
+                stacked_images = tf.stack(images, axis=0)
+                stacked_scalars = tf.stack(scalars, axis=0)
+                actions_t, values_t = self.model.predict_on_batch(
+                    [stacked_images, stacked_scalars]
+                )
                 actions[vehicle] = tf.squeeze(actions_t, axis=0)
                 values[vehicle] = tf.squeeze(values_t, axis=0)
 
@@ -167,16 +185,18 @@ def train_model(
     optimizer: tf.keras.optimizers,
     action_inds,
     old_probs,
-    states: List[np.ndarray],
+    states: List[Dict[str, np.ndarray]],
     advantages: np.ndarray,
     discounted_rewards: np.ndarray,
     ent_discount_val: float,
     clip_value: float,
     critic_loss_weight: float,
 ):
-    norm_states = tf.cast(tf.stack(states, axis=0), tf.float32) / 255.0
+    images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
+    stacked_images = tf.stack(images, axis=0)
+    stacked_scalars = tf.stack(scalars, axis=0)
     with tf.GradientTape() as tape:
-        policy_logits, values = model.call(norm_states)
+        policy_logits, values = model.call([stacked_images, stacked_scalars])
         act_loss = actor_loss(
             advantages, old_probs, action_inds, policy_logits, clip_value
         )

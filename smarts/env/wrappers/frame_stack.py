@@ -34,7 +34,7 @@ class FrameStack(gym.Wrapper):
 
     Note:
         Wrapper returns a deepcopy of the stacked frames, which may be expensive for large
-        frames and large num_stack/num_skip values.
+        frames and large num_stack values.
     """
 
     def __init__(self, env: gym.Env, num_stack: int = 3, num_skip: int = 1):

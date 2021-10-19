@@ -61,7 +61,7 @@ def main(config):
     # Create env
     print("[INFO] Creating environments")
     seed = config["env_para"]["seed"]
-    # seed = random.randint(0, 4294967295)  # [0, 2^32 -1)
+    ## seed = random.randint(0, 4294967295)  # [0, 2^32 -1)
     env = got_env.TagEnv(config, seed)
 
     # Create agent

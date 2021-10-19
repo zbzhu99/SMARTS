@@ -6,13 +6,14 @@ env_para:
   neighborhood_radius: 55 # Radius (meter) for neighborhood vehicles
   rgb_wh: 110 # Height and width (meter) of RGB image in SMARTS observation
   max_episode_steps: 1800 # 3 minutes. Maximum steps per episode.
+  num_stack: 4
+  num_skip: 1
   agent_ids: 
     - predator1
     # - predator2
     # - predator3
     - prey1
     # - prey2
-  controller: Categorical
   scenarios: 
     # - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
     # - /home/a84166141/workspaces/SMARTS/scenarios/cloverleaf
@@ -21,7 +22,8 @@ env_para:
 
 model_para:
   # Observation and action space
-  observation_dim: [256, 256, 12]
+  observation1_dim: [256, 256, 12]
+  observation2_dim: [8]
   action_dim: 5
   
   # Optimizer
