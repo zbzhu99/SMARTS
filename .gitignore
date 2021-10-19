@@ -140,3 +140,6 @@ events.out.tfevents.*
 
 # Folder containing observations collected .pkl files for imitation learning
 collected_observations/
+
+# vim swap files
+*.swp
