@@ -38,9 +38,12 @@ model_para:
   clip_value: 0.2
 
   # Iteration size
-  n_steps: 2048 # Horizon, a.k.a, trajectory length
-  max_batch: 100000
-  num_train_epochs: 5
+  n_steps: 1800 # Horizon, a.k.a, trajectory length
+  max_traj: 100000
+  num_train_epochs: 3
+
+  # Gradient batch size
+  grad_batch: 128
 
   # Models and logs
   save_interval: 25
