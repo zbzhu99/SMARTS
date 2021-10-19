@@ -6,8 +6,8 @@ env_para:
   neighborhood_radius: 55 # Radius (meter) for neighborhood vehicles
   rgb_wh: 110 # Height and width (meter) of RGB image in SMARTS observation
   max_episode_steps: 1800 # 3 minutes. Maximum steps per episode.
-  num_stack: 4
-  num_skip: 1
+  num_stack: 2
+  num_skip: 2
   agent_ids: 
     - predator1
     # - predator2
@@ -22,8 +22,8 @@ env_para:
 
 model_para:
   # Observation and action space
-  observation1_dim: [256, 256, 12]
-  observation2_dim: [8]
+  observation1_dim: [256, 256, 6]
+  observation2_dim: [4]
   action_dim: 5
   
   # Optimizer
@@ -32,13 +32,13 @@ model_para:
 
   # PPO
   critic_loss_weight: 0.5
-  entropy_loss_weight: 0
+  entropy_loss_weight: 0 # 0.01
   entropy_loss_discount_rate: 1 # 0.995
   gamma: 0.99 # Reward discount
   clip_value: 0.2
 
   # Iteration size
-  n_steps: 512 # Horizon, a.k.a, trajectory length
+  n_steps: 2048 # Horizon, a.k.a, trajectory length
   max_batch: 100000
   num_train_epochs: 5
 
@@ -50,8 +50,8 @@ model_para:
   # Local
   # tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
   # model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
-  # model_predator: "/home/kyber/workspaces/training/got_2021_10_14_02_54/models/predator_2021_10_14_06_56/179328"
-  # model_prey: "/home/kyber/workspaces/training/got_2021_10_14_02_54/models/prey_2021_10_14_06_56/179328"
+  # model_predator: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/predator_2021_10_17_06_03/13056"
+  # model_prey: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/prey_2021_10_17_06_03/13056"
 
   # Docker
   tensorboard_path: "/src/examples/gameOfTag/logs/"
