@@ -147,7 +147,7 @@ class PPO(object):
                 stacked_images = tf.stack(images, axis=0)
                 stacked_scalars = tf.stack(scalars, axis=0)
                 actions_t, values_t = self.model.predict(
-                    x=[stacked_images, stacked_scalars]
+                    [stacked_images, stacked_scalars]
                 )
                 actions[vehicle] = tf.squeeze(actions_t, axis=0)
                 values[vehicle] = tf.squeeze(values_t, axis=0)
@@ -206,7 +206,7 @@ def train_model(
         scalar_chunk = stacked_scalar[ind : ind + grad_batch]
 
         with tf.GradientTape() as tape:
-            policy_logits, values = model(x=[image_chunk, scalar_chunk])
+            policy_logits, values = model([image_chunk, scalar_chunk])
             act_loss = actor_loss(
                 advantages, old_probs, action_inds, policy_logits, clip_value
             )
