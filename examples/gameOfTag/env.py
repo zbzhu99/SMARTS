@@ -315,7 +315,8 @@ def predator_reward_adapter(obs, env_reward):
     #     reward -= 1
 
     # Penalty for not moving
-    if obs.events.not_moving:
+    # if obs.events.not_moving:
+    if obs.ego_vehicle_state.speed <= 5.0:
         reward -= 1
 
     # Reward for staying on road
@@ -357,7 +358,7 @@ def prey_reward_adapter(obs, env_reward):
         reward += 1
 
     # Penalty for not moving
-    if obs.events.not_moving:
+    if obs.ego_vehicle_state.speed <= 5.0:
         reward -= 1
 
     # Reward for staying on road
