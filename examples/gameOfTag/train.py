@@ -52,7 +52,7 @@ def main(config):
     # Traning parameters
     num_train_epochs = config["model_para"]["num_train_epochs"]
     n_steps = config["model_para"]["n_steps"]
-    max_batch = config["model_para"]["max_batch"]
+    max_traj = config["model_para"]["max_traj"]
     clip_value = config["model_para"]["clip_value"]
     critic_loss_weight = config["model_para"]["critic_loss_weight"]
     ent_discount_val = config["model_para"]["entropy_loss_weight"]
@@ -99,11 +99,11 @@ def main(config):
     episode_reward_predator = 0
     episode_reward_prey = 0
     train = True if mode == Mode.TRAIN else False
-    for batch_num in range(max_batch):
+    for traj_num in range(max_traj):
         [agent.reset() for _, agent in all_agents.items()]
         active_agents = {}
 
-        print(f"[INFO] New batch data collection {batch_num}/{max_batch}")
+        print(f"[INFO] New batch data collection {traj_num}/{max_traj}")
         for cur_step in range(n_steps):
 
             # Update all agents which were active in this batch
@@ -236,7 +236,7 @@ def main(config):
         prey_entropy_loss = np.zeros((num_train_epochs))
 
         # Elapsed steps
-        step = (batch_num + 1) * n_steps
+        step = (traj_num + 1) * n_steps
 
         if mode == Mode.EVALUATE:
             continue
@@ -259,6 +259,7 @@ def main(config):
                         ent_discount_val=ent_discount_val,
                         clip_value=clip_value,
                         critic_loss_weight=critic_loss_weight,
+                        grad_batch=config["model_para"]["grad_batch"],
                     )
                     predator_total_loss[epoch] += loss_tuple[0]
                     predator_actor_loss[epoch] += loss_tuple[1]
@@ -277,6 +278,7 @@ def main(config):
                         ent_discount_val=ent_discount_val,
                         clip_value=clip_value,
                         critic_loss_weight=critic_loss_weight,
+                        grad_batch=config["model_para"]["grad_batch"],
                     )
                     prey_total_loss[epoch] += loss_tuple[0]
                     prey_actor_loss[epoch] += loss_tuple[1]
@@ -303,7 +305,7 @@ def main(config):
         ppo_prey.write_to_tb(records)
 
         # Save model
-        if batch_num % save_interval == 0:
+        if traj_num % save_interval == 0:
             print("[INFO] Saving model")
             ppo_predator.save(step)
             ppo_prey.save(step)

@@ -193,23 +193,29 @@ def train_model(
     ent_discount_val: float,
     clip_value: float,
     critic_loss_weight: float,
+    grad_batch=64,
 ):
     images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
-    stacked_images = tf.stack(images, axis=0)
-    stacked_scalars = tf.stack(scalars, axis=0)
-    with tf.GradientTape() as tape:
-        policy_logits, values = model.predict(
-            x=[stacked_images, stacked_scalars], batch_size=32
-        )
-        act_loss = actor_loss(
-            advantages, old_probs, action_inds, policy_logits, clip_value
-        )
-        cri_loss = critic_loss(discounted_rewards, values, critic_loss_weight)
-        ent_loss = entropy_loss(policy_logits, ent_discount_val)
-        tot_loss = act_loss + cri_loss + ent_loss
+    stacked_image = tf.stack(images, axis=0)
+    stacked_scalar = tf.stack(scalars, axis=0)
 
-    grads = tape.gradient(tot_loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(grads, model.trainable_variables))
+    traj_len = stacked_image.shape[0]
+    assert traj_len == stacked_scalar.shape[0]
+    for ind in range(0, traj_len, grad_batch):
+        image_chunk = stacked_image[ind : ind + grad_batch]
+        scalar_chunk = stacked_scalar[ind : ind + grad_batch]
+
+        with tf.GradientTape() as tape:
+            policy_logits, values = model(x=[image_chunk, scalar_chunk])
+            act_loss = actor_loss(
+                advantages, old_probs, action_inds, policy_logits, clip_value
+            )
+            cri_loss = critic_loss(discounted_rewards, values, critic_loss_weight)
+            ent_loss = entropy_loss(policy_logits, ent_discount_val)
+            tot_loss = act_loss + cri_loss + ent_loss
+
+        grads = tape.gradient(tot_loss, model.trainable_variables)
+        optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
     return tot_loss, act_loss, cri_loss, ent_loss
 
