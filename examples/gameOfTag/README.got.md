@@ -60,5 +60,5 @@ $ PYTHONHASHSEED=0 python3.7 ./examples/gameOfTag/train.py
 ## Tensorboard
 ```
 $ tensorboard --logdir=/home/adai/workspaces/SMARTS/examples/gameOfTag/logs
-$ tensorboard --logdir=/home/adai/workspaces/training
+$ tensorboard --logdir=/home/kyber/workspaces/training
 ```
