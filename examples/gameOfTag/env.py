@@ -216,12 +216,12 @@ def action_adapter(model_action):
         steering = 0
     elif model_action == 2:
         # Turn left
-        throttle = 0.5
+        throttle = 0.4
         brake = 0
         steering = -0.8
     elif model_action == 3:
         # Turn right
-        throttle = 0.5
+        throttle = 0.4
         brake = 0
         steering = 0.8
     elif model_action == 4:
@@ -347,13 +347,13 @@ def prey_reward_adapter(obs, env_reward):
     # Distance based reward
     targets = get_targets(obs.neighborhood_vehicle_states, "predator")
     if targets:
-        # distances = distance_to_targets(ego, targets)
-        # min_distance = np.amin(distances)
-        # dist_reward = inverse(min_distance)
-        # reward -= (
-        #     np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS
-        # )  # Reward [-1:0]
-        pass
+        distances = distance_to_targets(ego, targets)
+        min_distance = np.amin(distances)
+        dist_reward = inverse(min_distance)
+        reward -= (
+            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS
+        )  # Reward [-1:0]
+        # pass
     else:  # No neighborhood predators
         reward += 1
 
