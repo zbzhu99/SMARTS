@@ -86,8 +86,24 @@ def NeuralNetwork(name, num_actions, input1_shape, input2_shape):
     return model
 
 
-class PPO(object):
+class RL:
+    def __init__(self):
+        pass
+
+    def act(self):
+        raise NotImplementedError
+
+    def save(self):
+        raise NotImplementedError
+
+    def close(self):
+        raise NotImplementedError
+
+
+class PPO(RL):
     def __init__(self, name, config, seed):
+        super(PPO, self).__init__()
+
         self.name = name
         self.config = config
         self.seed = seed
@@ -120,6 +136,9 @@ class PPO(object):
             f"{name}_{datetime.now().strftime('%Y_%m_%d_%H_%M')}"
         )
         self.tb = tf.summary.create_file_writer(str(path))
+
+    def close(self):
+        pass
 
     def save(self, version: int):
         save_path = self.model_path / str(version)

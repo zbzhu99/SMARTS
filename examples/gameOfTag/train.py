@@ -80,6 +80,28 @@ def main(config):
     )
     ppo_prey = got_ppo.PPO(AgentType.PREY.value, config, config["env_para"]["seed"] + 2)
 
+
+    # # Create parallel policies
+    # policy_constructors = {
+    #     AgentType.PREDATOR: lambda: got_ppo.PPO(
+    #         name=AgentType.PREDATOR,
+    #         config=config,
+    #         seed=config["env_para"]["seed"] + 1,
+    #     ),
+    #     AgentType.PREY: lambda: got_ppo.PPO(
+    #         name=AgentType.PREY,
+    #         config=config,
+    #         seed=config["env_para"]["seed"] + 2,
+    #     ),
+    # }
+    # policies = ParallelPolicy(
+    #     policy_constructors=policy_constructors,
+    # )
+    #
+    # import sys
+    # sys.exit(1)
+
+
     def interrupt(*args):
         nonlocal mode
         if mode == Mode.TRAIN:
@@ -314,42 +336,6 @@ def main(config):
 
     # Close env
     env.close()
-
-
-# def _train(
-#     num_train_epochs: int,
-#     agents: List[got_agent.TagAgent],
-#     rl_algo: got_ppo.PPO,
-#     ent_discount_val: float,
-#     clip_value: float,
-#     critic_loss_weight: float,
-# ):
-
-#     total_loss = np.zeros((num_train_epochs))
-#     actor_loss = np.zeros((num_train_epochs))
-#     critic_loss = np.zeros(((num_train_epochs)))
-#     entropy_loss = np.zeros((num_train_epochs))
-
-#     for epoch in range(num_train_epochs):
-#         for agent in agents:
-#             loss_tuple = got_ppo.train_model(
-#                 model=rl_algo.model,
-#                 optimizer=rl_algo.optimizer,
-#                 action_inds=agent.action_inds,
-#                 old_probs=tf.gather_nd(agent.probs_softmax, agent.action_inds),
-#                 states=agent.states,
-#                 advantages=agent.advantages,
-#                 discounted_rewards=agent.discounted_rewards,
-#                 ent_discount_val=ent_discount_val,
-#                 clip_value=clip_value,
-#                 critic_loss_weight=critic_loss_weight,
-#             )
-#             total_loss[epoch] += loss_tuple[0]
-#             actor_loss[epoch] += loss_tuple[1]
-#             critic_loss[epoch] += loss_tuple[2]
-#             entropy_loss[epoch] += loss_tuple[3]
-
-#     return total_loss, actor_loss, critic_loss, entropy_loss
 
 
 if __name__ == "__main__":
