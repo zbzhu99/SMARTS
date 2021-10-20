@@ -130,7 +130,7 @@ def main(config):
 
             # Sample action from a distribution
             action_numpy_t = {
-                vehicle: action_sample_t.numpy()[0]
+                vehicle: action_sample_t.numpy()
                 for vehicle, action_sample_t in action_samples_t.items()
             }
             next_states_t, rewards_t, dones_t, _ = env.step(action_numpy_t)
@@ -140,7 +140,7 @@ def main(config):
             for agent_id, _ in states_t.items():
                 all_agents[agent_id].add_trajectory(
                     action=action_samples_t[agent_id],
-                    value=values_t[agent_id].numpy()[0],
+                    value=values_t[agent_id].numpy(),
                     state=states_t[agent_id],
                     done=int(dones_t[agent_id]),
                     prob=actions_t[agent_id],
@@ -209,21 +209,23 @@ def main(config):
                 else:
                     raise Exception(f"Unknown {agent_id}.")
                 all_agents[agent_id].add_last_transition(
-                    value=next_values_t[agent_id].numpy()[0]
+                    value=next_values_t[agent_id].numpy()
                 )
             else:  # Agent is done
                 all_agents[agent_id].add_last_transition(value=np.float32(0))
 
-        # Compute generalised advantages
         for agent_id in active_agents.keys():
+            # Compute generalised advantages
             all_agents[agent_id].compute_advantages()
-            probs_softmax = tf.nn.softmax(all_agents[agent_id].probs)
-            all_agents[agent_id].probs_softmax = probs_softmax
-            actions = tf.squeeze(all_agents[agent_id].actions, axis=1)
+
+            actions = all_agents[agent_id].actions
             action_inds = tf.stack(
-                [tf.range(0, actions.shape[0]), tf.cast(actions, tf.int32)], axis=1
+                [tf.range(0, len(actions)), tf.cast(actions, tf.int32)], axis=1
             )
-            all_agents[agent_id].action_inds = action_inds
+
+            # Compute old probabilities
+            probs_softmax = tf.nn.softmax(all_agents[agent_id].probs)
+            all_agents[agent_id].old_probs = tf.gather_nd(probs_softmax, action_inds)
 
         predator_total_loss = np.zeros((num_train_epochs))
         predator_actor_loss = np.zeros((num_train_epochs))
@@ -251,8 +253,8 @@ def main(config):
                     loss_tuple = got_ppo.train_model(
                         model=ppo_predator.model,
                         optimizer=ppo_predator.optimizer,
-                        action_inds=agent.action_inds,
-                        old_probs=tf.gather_nd(agent.probs_softmax, agent.action_inds),
+                        actions=agent.actions,
+                        old_probs=agent.old_probs,
                         states=agent.states,
                         advantages=agent.advantages,
                         discounted_rewards=agent.discounted_rewards,
@@ -270,8 +272,8 @@ def main(config):
                     loss_tuple = got_ppo.train_model(
                         model=ppo_prey.model,
                         optimizer=ppo_prey.optimizer,
-                        action_inds=agent.action_inds,
-                        old_probs=tf.gather_nd(agent.probs_softmax, agent.action_inds),
+                        actions=agent.actions,
+                        old_probs=agent.old_probs,
                         states=agent.states,
                         advantages=agent.advantages,
                         discounted_rewards=agent.discounted_rewards,

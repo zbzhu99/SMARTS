@@ -150,15 +150,15 @@ class PPO(object):
                     [stacked_images, stacked_scalars]
                 )
                 actions[vehicle] = tf.squeeze(actions_t, axis=0)
-                values[vehicle] = tf.squeeze(values_t, axis=0)
+                values[vehicle] = tf.squeeze(values_t)
 
                 if train:
-                    actions_dist_t = tfp.distributions.Categorical(logits=actions_t)
-                    action_samples[vehicle] = tf.squeeze(
-                        actions_dist_t.sample(1, seed=self.seed), axis=0
+                    actions_dist_t = tfp.distributions.Categorical(
+                        logits=actions[vehicle]
                     )
+                    action_samples[vehicle] = actions_dist_t.sample(seed=self.seed)
                 else:
-                    action_samples[vehicle] = tf.math.argmax(actions_t, axis=1)
+                    action_samples[vehicle] = tf.math.argmax(actions[vehicle])
 
         return actions, action_samples, values
 
@@ -185,7 +185,7 @@ def _load(model_path):
 def train_model(
     model: tf.keras.Model,
     optimizer: tf.keras.optimizers,
-    action_inds,
+    actions: List,
     old_probs,
     states: List[Dict[str, np.ndarray]],
     advantages: np.ndarray,
@@ -204,14 +204,28 @@ def train_model(
     for ind in range(0, traj_len, grad_batch):
         image_chunk = stacked_image[ind : ind + grad_batch]
         scalar_chunk = stacked_scalar[ind : ind + grad_batch]
+        old_probs_chunk = old_probs[ind : ind + grad_batch]
+        advantages_chunk = advantages[ind : ind + grad_batch]
+        actions_chunk = actions[ind : ind + grad_batch]
+        discounted_rewards_chunk = discounted_rewards[ind : ind + grad_batch]
 
         with tf.GradientTape() as tape:
             policy_logits, values = model([image_chunk, scalar_chunk])
             act_loss = actor_loss(
-                advantages, old_probs, action_inds, policy_logits, clip_value
+                advantages=advantages_chunk,
+                old_probs=old_probs_chunk,
+                actions=actions_chunk,
+                policy_logits=policy_logits,
+                clip_value=clip_value,
             )
-            cri_loss = critic_loss(discounted_rewards, values, critic_loss_weight)
-            ent_loss = entropy_loss(policy_logits, ent_discount_val)
+            cri_loss = critic_loss(
+                discounted_rewards=discounted_rewards_chunk,
+                value_est=values,
+                critic_loss_weight=critic_loss_weight,
+            )
+            ent_loss = entropy_loss(
+                policy_logits=policy_logits, ent_discount_val=ent_discount_val
+            )
             tot_loss = act_loss + cri_loss + ent_loss
 
         grads = tape.gradient(tot_loss, model.trainable_variables)
@@ -222,7 +236,10 @@ def train_model(
 
 # Clipped objective term, to be maximized
 # @tf.function(experimental_relax_shapes=True)
-def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
+def actor_loss(advantages, old_probs, actions, policy_logits, clip_value):
+    action_inds = tf.stack(
+        [tf.range(0, len(actions)), tf.cast(actions, tf.int32)], axis=1
+    )
     probs = tf.nn.softmax(policy_logits)
     new_probs = tf.gather_nd(probs, action_inds)
     ratio = new_probs / old_probs  # Ratio is always positive
@@ -236,16 +253,6 @@ def actor_loss(advantages, old_probs, action_inds, policy_logits, clip_value):
     return policy_loss
 
 
-# Entropy term to encourage exploration, to be maximized
-# @tf.function(experimental_relax_shapes=True)
-def entropy_loss(policy_logits, ent_discount_val):
-    probs = tf.nn.softmax(policy_logits)
-    entropy_loss = -tf.reduce_mean(
-        tf.keras.losses.categorical_crossentropy(probs, probs)
-    )
-    return entropy_loss * ent_discount_val
-
-
 # Error term on value estimation, to be minimized
 # @tf.function(experimental_relax_shapes=True)
 def critic_loss(discounted_rewards, value_est, critic_loss_weight):
@@ -255,3 +262,13 @@ def critic_loss(discounted_rewards, value_est, critic_loss_weight):
         )
         * critic_loss_weight
     )
+
+
+# Entropy term to encourage exploration, to be maximized
+# @tf.function(experimental_relax_shapes=True)
+def entropy_loss(policy_logits, ent_discount_val):
+    probs = tf.nn.softmax(policy_logits)
+    entropy_loss = -tf.reduce_mean(
+        tf.keras.losses.categorical_crossentropy(probs, probs)
+    )
+    return entropy_loss * ent_discount_val

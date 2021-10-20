@@ -4,7 +4,6 @@ import tensorflow as tf
 
 class TagAgent:
     def __init__(self, name, config):
-        # Verify name
         if "predator" in name or "prey" in name:
             self.name = name
         else:
@@ -24,7 +23,7 @@ class TagAgent:
         self._advantages = None
         self._returns = None
         self._last_value = None
-        self._probs_softmax = None
+        self._old_probs = None  # Selected action's probability
         self._action_inds = None
 
     @property
@@ -52,12 +51,12 @@ class TagAgent:
         return self._probs
 
     @property
-    def probs_softmax(self):
-        return self._probs_softmax
+    def old_probs(self):
+        return self._old_probs
 
-    @probs_softmax.setter
-    def probs_softmax(self, x):
-        self._probs_softmax = x
+    @old_probs.setter
+    def old_probs(self, x):
+        self._old_probs = x
 
     @property
     def action_inds(self) -> tf.TensorSpec(shape=(None, 2), dtype=tf.dtypes.int32):
