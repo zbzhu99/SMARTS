@@ -309,8 +309,8 @@ def predator_reward_adapter(obs, env_reward):
         min_distance = np.amin(distances)
         dist_reward = inverse(min_distance)
         reward += (
-            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 2
-        )  # Reward [0:2]
+            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 10
+        )  # Reward [0:10]
     # else:  # No neighborhood preys
     #     reward -= 1
 
@@ -351,8 +351,8 @@ def prey_reward_adapter(obs, env_reward):
         min_distance = np.amin(distances)
         dist_reward = inverse(min_distance)
         reward -= (
-            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS
-        )  # Reward [-1:0]
+            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 10
+        )  # Reward [-10:0]
         # pass
     else:  # No neighborhood predators
         reward += 1
