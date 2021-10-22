@@ -22,8 +22,8 @@ env_para:
 
 model_para:
   # Observation and action space
-  observation1_dim: [256, 256, 9]
-  observation2_dim: [6]
+  observation1_dim: [256, 256, 9] # rgb image * num_stack
+  observation2_dim: [6] # [steering, speed] * num_stack
   action_dim: 5
   
   # Optimizer

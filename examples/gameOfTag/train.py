@@ -80,7 +80,6 @@ def main(config):
     )
     ppo_prey = got_ppo.PPO(AgentType.PREY.value, config, config["env_para"]["seed"] + 2)
 
-
     # # Create parallel policies
     # policy_constructors = {
     #     AgentType.PREDATOR: lambda: got_ppo.PPO(
@@ -100,7 +99,6 @@ def main(config):
     #
     # import sys
     # sys.exit(1)
-
 
     def interrupt(*args):
         nonlocal mode
@@ -173,7 +171,10 @@ def main(config):
                 else:
                     episode_reward_prey += rewards_t[agent_id]
                 if dones_t[agent_id] == 1:
-                    if not dones_t["__all__"] and config["model_para"]["downgrade_rewards"]:
+                    if (
+                        not dones_t["__all__"]
+                        and config["model_para"]["downgrade_rewards"]
+                    ):
                         # Downgrade #n last rewards for agents which become done early.
                         downgrade_len = config["model_para"]["downgrade_rewards"]
                         rewards_len = len(all_agents[agent_id].rewards)
@@ -216,6 +217,9 @@ def main(config):
 
             # Assign next_states to states
             states_t = next_states_t
+
+        if mode == Mode.EVALUATE:
+            continue
 
         # Compute and store last state value
         for agent_id in active_agents.keys():
@@ -261,9 +265,6 @@ def main(config):
 
         # Elapsed steps
         step = (traj_num + 1) * n_steps
-
-        if mode == Mode.EVALUATE:
-            continue
 
         print("[INFO] Training")
         # Train predator and prey.
