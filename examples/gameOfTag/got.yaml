@@ -6,8 +6,8 @@ env_para:
   neighborhood_radius: 55 # Radius (meter) for neighborhood vehicles
   rgb_wh: 110 # Height and width (meter) of RGB image in SMARTS observation
   max_episode_steps: 1800 # 3 minutes. Maximum steps per episode.
-  num_stack: 2 # Number of frames to stack
-  num_skip: 2 # Frequency of frames to be stacked
+  num_stack: 3 # Number of frames to stack
+  num_skip: 1 # Frequency of frames to be stacked
   agent_ids: 
     - predator1
     # - predator2
@@ -22,8 +22,8 @@ env_para:
 
 model_para:
   # Observation and action space
-  observation1_dim: [256, 256, 6]
-  observation2_dim: [4]
+  observation1_dim: [256, 256, 9]
+  observation2_dim: [6]
   action_dim: 5
   
   # Optimizer
@@ -34,22 +34,22 @@ model_para:
   critic_loss_weight: 0.5
   entropy_loss_weight: 0 # 0.01
   entropy_loss_discount_rate: 0 # 0.995
-  gamma: 0 # Reward discount
+  gamma: 0.99 # Reward discount
   clip_value: 0.2
 
   # Iteration size
-  n_steps: 512 # Horizon, a.k.a, trajectory length
+  n_steps: 1800 # Horizon, a.k.a, trajectory length
   max_traj: 100000
   num_train_epochs: 3
 
   # Downgrade last #n rewards 
-  downgrade_rewards: 3
+  downgrade_rewards: 0
 
   # Gradient batch size
   grad_batch: 128
 
   # Models and logs
-  save_interval: 25
+  save_interval: 20
   mode: train # train or evaluate
   model_initial: False
 

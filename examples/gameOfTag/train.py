@@ -173,7 +173,7 @@ def main(config):
                 else:
                     episode_reward_prey += rewards_t[agent_id]
                 if dones_t[agent_id] == 1:
-                    if not dones_t["__all__"]:
+                    if not dones_t["__all__"] and config["model_para"]["downgrade_rewards"]:
                         # Downgrade #n last rewards for agents which become done early.
                         downgrade_len = config["model_para"]["downgrade_rewards"]
                         rewards_len = len(all_agents[agent_id].rewards)
