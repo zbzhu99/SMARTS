@@ -18,7 +18,6 @@ NEIGHBOURHOOD_RADIUS = 55
 
 class TagEnv(gym.Env):
     def __init__(self, config: Dict, seed: int = 42):
-        # Update the agents number and env api type.
         self.config = config
         self.neighborhood_radius = config["env_para"]["neighborhood_radius"]
         self.rgb_wh = config["env_para"]["rgb_wh"]
