@@ -43,7 +43,9 @@ class TagEnv(gym.Env):
                 width=256, height=256, resolution=self.rgb_wh / 256
             ),
             vehicle_color="BrightRed",
-            action=smarts_controllers.ActionSpaceType.Continuous,
+            action=getattr(
+                smarts_controllers.ActionSpaceType, config["env_para"]["controller"]
+            ),
             done_criteria=smarts_agent_interface.DoneCriteria(
                 collision=False,
                 off_road=True,
@@ -70,7 +72,9 @@ class TagEnv(gym.Env):
                 width=256, height=256, resolution=self.rgb_wh / 256
             ),
             vehicle_color="BrightBlue",
-            action=smarts_controllers.ActionSpaceType.Continuous,
+            action=getattr(
+                smarts_controllers.ActionSpaceType, config["env_para"]["controller"]
+            ),
             done_criteria=smarts_agent_interface.DoneCriteria(
                 collision=True,
                 off_road=True,
@@ -95,7 +99,7 @@ class TagEnv(gym.Env):
                 agent_builder=got_agent.TagAgent,
                 observation_adapter=observation_adapter,
                 reward_adapter=predator_reward_adapter,
-                action_adapter=action_adapter,
+                action_adapter=action_adapter(config["env_para"]["controller"]),
                 info_adapter=info_adapter,
             )
             if "predator" in agent_id
@@ -104,7 +108,7 @@ class TagEnv(gym.Env):
                 agent_builder=got_agent.TagAgent,
                 observation_adapter=observation_adapter,
                 reward_adapter=prey_reward_adapter,
-                action_adapter=action_adapter,
+                action_adapter=action_adapter(config["env_para"]["controller"]),
                 info_adapter=info_adapter,
             )
             for agent_id in config["env_para"]["agent_ids"]
@@ -197,42 +201,78 @@ def info_adapter(obs, reward, info):
     return reward
 
 
-def action_adapter(model_action):
+def action_adapter(controller):
     # Action space
     # throttle: [0, 1]
     # brake: [0, 1]
     # steering: [-1, 1]
 
-    # Modify action space limits
-    if model_action == 0:
-        # Cruise
-        throttle = 0.3
-        brake = 0
-        steering = 0
-    elif model_action == 1:
-        # Accelerate
-        throttle = 0.6
-        brake = 0
-        steering = 0
-    elif model_action == 2:
-        # Turn left
-        throttle = 0.4
-        brake = 0
-        steering = -0.8
-    elif model_action == 3:
-        # Turn right
-        throttle = 0.4
-        brake = 0
-        steering = 0.8
-    elif model_action == 4:
-        # Brake
-        throttle = 0
-        brake = 0.8
-        steering = 0
-    else:
-        raise Exception("Unknown model action category.")
+    if controller == "Lane":
 
-    return np.array([throttle, brake, steering], dtype=np.float32)
+        def lane(model_action):
+            if model_action == 0:
+                return "keep_lane"
+            if model_action == 1:
+                return "slow_down"
+            if model_action == 2:
+                return "change_lane_left"
+            if model_action == 3:
+                return "change_lane_right"
+            raise Exception("Unknown model action.")
+
+        return lane
+
+    if controller == "LaneWithContinuousSpeed":
+
+        def lane_speed(model_action):
+            speeds = [0, 3, 6, 9]  # Speed selection in m/s
+            lanes = [
+                -1,
+                0,
+                1,
+            ]  # Lane change relative to current lane
+            target_speed = speeds[model_action[0]]
+            lane_change = lanes[model_action[1]]
+            return np.array([target_speed, lane_change], dtype=np.float32)
+
+        return lane_speed
+
+    if controller == "Continuous":
+
+        def discrete(model_action):
+            # Modify action space limits
+            if model_action == 0:
+                # Cruise
+                throttle = 0.3
+                brake = 0
+                steering = 0
+            elif model_action == 1:
+                # Accelerate
+                throttle = 0.6
+                brake = 0
+                steering = 0
+            elif model_action == 2:
+                # Turn left
+                throttle = 0.4
+                brake = 0
+                steering = -0.8
+            elif model_action == 3:
+                # Turn right
+                throttle = 0.4
+                brake = 0
+                steering = 0.8
+            elif model_action == 4:
+                # Brake
+                throttle = 0
+                brake = 0.8
+                steering = 0
+            else:
+                raise Exception("Unknown model action.")
+            return np.array([throttle, brake, steering], dtype=np.float32)
+
+        return discrete
+
+    raise Exception("Unknown controller.")
 
 
 def observation_adapter(obs: smarts_sensors.Observation) -> Dict[str, np.ndarray]:
@@ -303,24 +343,24 @@ def predator_reward_adapter(obs, env_reward):
             print(f"Predator {ego.id} collided with predator vehicle {c.collidee_id}.")
 
     # Distance based reward
-    targets = get_targets(obs.neighborhood_vehicle_states, "prey")
-    if targets:
-        distances = distance_to_targets(ego, targets)
-        min_distance = np.amin(distances)
-        dist_reward = inverse(min_distance)
-        reward += (
-            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 10
-        )  # Reward [0:10]
+    # targets = get_targets(obs.neighborhood_vehicle_states, "prey")
+    # if targets:
+    #     distances = distance_to_targets(ego, targets)
+    #     min_distance = np.amin(distances)
+    #     dist_reward = inverse(min_distance)
+    #     reward += (
+    #         np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 10
+    #     )  # Reward [0:10]
     # else:  # No neighborhood preys
     #     reward -= 1
 
     # Penalty for not moving
     # if obs.events.not_moving:
-    if obs.ego_vehicle_state.speed <= 5.0:
-        reward -= 1
+    if obs.ego_vehicle_state.speed > 5.0:
+        reward += 1
 
     # Reward for staying on road
-    reward += 1
+    # reward += 1
 
     return np.float32(reward)
 
@@ -345,23 +385,23 @@ def prey_reward_adapter(obs, env_reward):
             print(f"Prey {ego.id} collided with prey vehicle {c.collidee_id}.")
 
     # Distance based reward
-    targets = get_targets(obs.neighborhood_vehicle_states, "predator")
-    if targets:
-        distances = distance_to_targets(ego, targets)
-        min_distance = np.amin(distances)
-        dist_reward = inverse(min_distance)
-        reward -= (
-            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 10
-        )  # Reward [-10:0]
-        # pass
-    else:  # No neighborhood predators
-        reward += 1
+    # targets = get_targets(obs.neighborhood_vehicle_states, "predator")
+    # if targets:
+    #     distances = distance_to_targets(ego, targets)
+    #     min_distance = np.amin(distances)
+    #     dist_reward = inverse(min_distance)
+    #     reward -= (
+    #         np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 10
+    #     )  # Reward [-10:0]
+    #     # pass
+    # else:  # No neighborhood predators
+    #     reward += 1
 
     # Penalty for not moving
-    if obs.ego_vehicle_state.speed <= 5.0:
-        reward -= 1
+    if obs.ego_vehicle_state.speed > 5.0:
+        reward += 1
 
     # Reward for staying on road
-    reward += 1
+    # reward += 1
 
     return np.float32(reward)
