@@ -44,7 +44,7 @@ class TagEnv(gym.Env):
             ),
             vehicle_color="BrightRed",
             action=getattr(
-                smarts_controllers.ActionSpaceType, config["env_para"]["controller"]
+                smarts_controllers.ActionSpaceType, config["env_para"]["action_space_type"]
             ),
             done_criteria=smarts_agent_interface.DoneCriteria(
                 collision=False,
@@ -73,7 +73,7 @@ class TagEnv(gym.Env):
             ),
             vehicle_color="BrightBlue",
             action=getattr(
-                smarts_controllers.ActionSpaceType, config["env_para"]["controller"]
+                smarts_controllers.ActionSpaceType, config["env_para"]["action_space_type"]
             ),
             done_criteria=smarts_agent_interface.DoneCriteria(
                 collision=True,
@@ -99,7 +99,7 @@ class TagEnv(gym.Env):
                 agent_builder=got_agent.TagAgent,
                 observation_adapter=observation_adapter,
                 reward_adapter=predator_reward_adapter,
-                action_adapter=action_adapter(config["env_para"]["controller"]),
+                action_adapter=action_adapter(config["env_para"]["action_space_type"]),
                 info_adapter=info_adapter,
             )
             if "predator" in agent_id
@@ -108,7 +108,7 @@ class TagEnv(gym.Env):
                 agent_builder=got_agent.TagAgent,
                 observation_adapter=observation_adapter,
                 reward_adapter=prey_reward_adapter,
-                action_adapter=action_adapter(config["env_para"]["controller"]),
+                action_adapter=action_adapter(config["env_para"]["action_space_type"]),
                 info_adapter=info_adapter,
             )
             for agent_id in config["env_para"]["agent_ids"]
@@ -343,14 +343,14 @@ def predator_reward_adapter(obs, env_reward):
             print(f"Predator {ego.id} collided with predator vehicle {c.collidee_id}.")
 
     # Distance based reward
-    # targets = get_targets(obs.neighborhood_vehicle_states, "prey")
-    # if targets:
-    #     distances = distance_to_targets(ego, targets)
-    #     min_distance = np.amin(distances)
-    #     dist_reward = inverse(min_distance)
-    #     reward += (
-    #         np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 10
-    #     )  # Reward [0:10]
+    targets = get_targets(obs.neighborhood_vehicle_states, "prey")
+    if targets:
+        distances = distance_to_targets(ego, targets)
+        min_distance = np.amin(distances)
+        dist_reward = inverse(min_distance)
+        reward += (
+            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 10
+        )  # Reward [0:10]
     # else:  # No neighborhood preys
     #     reward -= 1
 
@@ -385,15 +385,15 @@ def prey_reward_adapter(obs, env_reward):
             print(f"Prey {ego.id} collided with prey vehicle {c.collidee_id}.")
 
     # Distance based reward
-    # targets = get_targets(obs.neighborhood_vehicle_states, "predator")
-    # if targets:
-    #     distances = distance_to_targets(ego, targets)
-    #     min_distance = np.amin(distances)
-    #     dist_reward = inverse(min_distance)
-    #     reward -= (
-    #         np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 10
-    #     )  # Reward [-10:0]
-    #     # pass
+    targets = get_targets(obs.neighborhood_vehicle_states, "predator")
+    if targets:
+        distances = distance_to_targets(ego, targets)
+        min_distance = np.amin(distances)
+        dist_reward = inverse(min_distance)
+        reward -= (
+            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 10
+        )  # Reward [-10:0]
+        # pass
     # else:  # No neighborhood predators
     #     reward += 1
 
