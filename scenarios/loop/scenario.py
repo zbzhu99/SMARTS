@@ -8,7 +8,7 @@ traffic = t.Traffic(
     flows=[
         t.Flow(
             route=t.RandomRoute(),
-            rate=60 * 60,
+            rate=60 * 1,
             actors={t.TrafficActor(name="car", vehicle_type=vehicle_type): 1},
         )
         for vehicle_type in [
@@ -33,9 +33,9 @@ laner_actor = t.SocialAgentActor(
 gen_scenario(
     t.Scenario(
         traffic={"basic": traffic},
-        social_agent_missions={
-            "all": ([laner_actor, open_agent_actor], [t.Mission(route=t.RandomRoute())])
-        },
+        # social_agent_missions={
+        #     "all": ([laner_actor, open_agent_actor], [t.Mission(route=t.RandomRoute())])
+        # },
         bubbles=[
             t.Bubble(
                 zone=t.PositionalZone(pos=(50, 0), size=(10, 15)),

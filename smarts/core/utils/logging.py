@@ -24,6 +24,52 @@ import sys
 from contextlib import contextmanager
 from io import UnsupportedOperation
 from time import time
+from inspect import currentframe, getframeinfo
+from pathlib import Path
+import csv
+
+class MockProfiler:
+    def __init__(self, title):
+        pass
+
+    def __enter__(self):
+        return None
+
+    def __exit__(self, type, value, traceback):
+        pass
+
+class Profiler:
+    headers = {}
+    data = {}
+    titles = []
+
+    def __init__(self, title):
+        self.title = title
+        if title not in Profiler.headers:
+            frameinfo = getframeinfo(currentframe().f_back)
+            filename = Path(frameinfo.filename)
+            Profiler.titles.append(title)
+            Profiler.headers[title] = f"{filename.name}:{frameinfo.function}:{frameinfo.lineno}:{self.title}"
+            Profiler.data[title] = []
+
+    def __enter__(self):
+        self._start = time()
+        return None
+
+    def __exit__(self, type, value, traceback):
+        elapsed = round((time() - self._start) * 1000.0, 3)
+        Profiler.data[self.title].append(elapsed)
+
+    @classmethod
+    def write_csv(cls, filename):
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["Step", "Total Time"] + [Profiler.headers[title] for title in Profiler.titles])
+            num_rows = len(Profiler.data[Profiler.titles[0]])
+            for i in range(num_rows):
+                all_cols = [Profiler.data[title][i] for title in Profiler.titles]
+                total_time = round(sum(all_cols), 3)
+                writer.writerow([i, total_time] + all_cols)
 
 
 @contextmanager

@@ -21,12 +21,12 @@ def to_mission(start_edge, end_edge):
 
 gen_scenario(
     Scenario(
-        social_agent_missions={
-            "group-1": (actors, [to_mission("edge-north-NS", "edge-south-NS")]),
-            "group-2": (actors, [to_mission("edge-west-WE", "edge-east-WE")]),
-            "group-3": (actors, [to_mission("edge-east-EW", "edge-west-EW")]),
-            "group-4": (actors, [to_mission("edge-south-SN", "edge-north-SN")]),
-        }
+        # social_agent_missions={
+        #     "group-1": (actors, [to_mission("edge-north-NS", "edge-south-NS")]),
+        #     "group-2": (actors, [to_mission("edge-west-WE", "edge-east-WE")]),
+        #     "group-3": (actors, [to_mission("edge-east-EW", "edge-west-EW")]),
+        #     "group-4": (actors, [to_mission("edge-south-SN", "edge-north-SN")]),
+        # }
     ),
     output_dir=Path(__file__).parent,
 )

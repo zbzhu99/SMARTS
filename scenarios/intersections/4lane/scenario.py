@@ -80,7 +80,7 @@ scenario = Scenario(
             flows=[
                 Flow(
                     route=RandomRoute(),
-                    rate=3600,
+                    rate=300,
                     actors={TrafficActor(name="car"): 1.0},
                 )
             ]

@@ -53,17 +53,22 @@ def main(scenarios, sim_name, headless, num_episodes, seed, max_episode_steps=No
         # envision_record_data_replay_path="./data_replay",
     )
 
-    for episode in episodes(n=num_episodes):
+    for episode in range(1):
         agent = agent_spec.build_agent()
         observations = env.reset()
-        episode.record_scenario(env.scenario_log)
+        # episode.record_scenario(env.scenario_log)
 
         dones = {"__all__": False}
+        step = 0
         while not dones["__all__"]:
             agent_obs = observations[AGENT_ID]
             agent_action = agent.act(agent_obs)
             observations, rewards, dones, infos = env.step({AGENT_ID: agent_action})
-            episode.record_step(observations, rewards, dones, infos)
+            print(f"[Episode {episode}][Step {step}]")
+            step += 1
+            if step > 1000:
+                break
+            # episode.record_step(observations, rewards, dones, infos)
 
     env.close()
 

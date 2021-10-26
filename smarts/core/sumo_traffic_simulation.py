@@ -40,7 +40,7 @@ from smarts.core.coordinates import Dimensions, Heading, Pose
 from smarts.core.provider import Provider, ProviderState
 from smarts.core.sumo_road_network import SumoRoadNetwork
 from smarts.core.utils import networking
-from smarts.core.utils.logging import suppress_output
+from smarts.core.utils.logging import suppress_output, timeit
 from smarts.core.vehicle import VEHICLE_CONFIGS, VehicleState
 
 
@@ -86,6 +86,7 @@ class SumoTrafficSimulation(Provider):
     ):
         self._remove_agents_only_mode = remove_agents_only_mode
         self._log = logging.getLogger(self.__class__.__name__)
+        self._log.setLevel(logging.DEBUG)
 
         self._debug = debug
         self._scenario = None
@@ -349,7 +350,9 @@ class SumoTrafficSimulation(Provider):
         """
         # we tell SUMO to step through dt more seconds of the simulation
         self._cumulative_sim_seconds += dt
-        self._traci_conn.simulationStep(self._cumulative_sim_seconds)
+
+        with timeit("TraCI Step", self._log):
+            self._traci_conn.simulationStep(self._cumulative_sim_seconds)
 
         return self._compute_provider_state()
 
