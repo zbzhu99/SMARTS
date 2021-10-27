@@ -86,6 +86,10 @@ class TagAgent:
             ] * (1 - self._dones[t])
 
         discounted_rewards = discounted_rewards[:-1]
+
+        # Cap the minimum reward
+        discounted_rewards[discounted_rewards < -50] = -50
+
         # advantages are bootstrapped discounted rewards - values, using Bellman's equation
         advantages = discounted_rewards - self._values
         # standardise advantages

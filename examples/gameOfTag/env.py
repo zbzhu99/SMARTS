@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from examples.gameOfTag import agent as got_agent
+from examples.gameOfTag.types import AgentType
 from smarts.core import agent as smarts_agent
 from smarts.core import agent_interface as smarts_agent_interface
 from smarts.core import colors as smarts_colors
@@ -18,32 +19,34 @@ NEIGHBOURHOOD_RADIUS = 55
 
 class TagEnv(gym.Env):
     def __init__(self, config: Dict, seed: int = 42):
-        self.config = config
-        self.neighborhood_radius = config["env_para"]["neighborhood_radius"]
-        self.rgb_wh = config["env_para"]["rgb_wh"]
+        self._config = config
+        self._neighborhood_radius = config["env_para"]["neighborhood_radius"]
+        self._rgb_wh = config["env_para"]["rgb_wh"]
+        self.agent_ids = config["env_para"]["agent_ids"] 
         self.predators = []
         self.preys = []
-        for agent_id in config["env_para"]["agent_ids"]:
-            if "predator" in agent_id:
+        for agent_id in self.agent_ids:
+            if AgentType.PREDATOR in agent_id:
                 self.predators.append(agent_id)
-            elif "prey" in agent_id:
+            elif AgentType.PREY in agent_id:
                 self.preys.append(agent_id)
             else:
                 raise ValueError(
-                    f"Expected agent_id to have prefix of 'predator' or 'prey', but got {agent_id}."
+                    f"Expected agent_id to have prefix from {AgentType.__members__}, but got {agent_id}."
                 )
 
         predator_interface = smarts_agent_interface.AgentInterface(
             max_episode_steps=config["env_para"]["max_episode_steps"],
             neighborhood_vehicles=smarts_agent_interface.NeighborhoodVehicles(
-                radius=self.neighborhood_radius
+                radius=self._neighborhood_radius
             ),
             rgb=smarts_agent_interface.RGB(
-                width=256, height=256, resolution=self.rgb_wh / 256
+                width=256, height=256, resolution=self._rgb_wh / 256
             ),
             vehicle_color="BrightRed",
             action=getattr(
-                smarts_controllers.ActionSpaceType, config["env_para"]["action_space_type"]
+                smarts_controllers.ActionSpaceType,
+                config["env_para"]["action_space_type"],
             ),
             done_criteria=smarts_agent_interface.DoneCriteria(
                 collision=False,
@@ -65,14 +68,15 @@ class TagEnv(gym.Env):
         prey_interface = smarts_agent_interface.AgentInterface(
             max_episode_steps=config["env_para"]["max_episode_steps"],
             neighborhood_vehicles=smarts_agent_interface.NeighborhoodVehicles(
-                radius=self.neighborhood_radius
+                radius=self._neighborhood_radius
             ),
             rgb=smarts_agent_interface.RGB(
-                width=256, height=256, resolution=self.rgb_wh / 256
+                width=256, height=256, resolution=self._rgb_wh / 256
             ),
             vehicle_color="BrightBlue",
             action=getattr(
-                smarts_controllers.ActionSpaceType, config["env_para"]["action_space_type"]
+                smarts_controllers.ActionSpaceType,
+                config["env_para"]["action_space_type"],
             ),
             done_criteria=smarts_agent_interface.DoneCriteria(
                 collision=True,
@@ -101,7 +105,7 @@ class TagEnv(gym.Env):
                 action_adapter=action_adapter(config["env_para"]["action_space_type"]),
                 info_adapter=info_adapter,
             )
-            if "predator" in agent_id
+            if AgentType.PREDATOR in agent_id
             else smarts_agent.AgentSpec(
                 interface=prey_interface,
                 agent_builder=got_agent.TagAgent,
@@ -110,7 +114,7 @@ class TagEnv(gym.Env):
                 action_adapter=action_adapter(config["env_para"]["action_space_type"]),
                 info_adapter=info_adapter,
             )
-            for agent_id in config["env_para"]["agent_ids"]
+            for agent_id in self.agent_ids
         }
 
         env = smarts_hiway_env.HiWayEnv(
@@ -127,12 +131,12 @@ class TagEnv(gym.Env):
             num_skip=config["env_para"]["num_skip"],
         )
 
-        self.env = env
+        self._env = env
 
         # Categorical action space
-        self.action_space = gym.spaces.Discrete(config["model_para"]["action_dim"])
+        self.single_action_space = gym.spaces.Discrete(config["model_para"]["action_dim"])
         # Observation space
-        self.observation_space = gym.spaces.Dict(
+        self.single_observation_space = gym.spaces.Dict(
             {
                 "image": gym.spaces.Box(
                     low=0,
@@ -153,7 +157,7 @@ class TagEnv(gym.Env):
 
     def reset(self) -> Dict[str, np.ndarray]:
 
-        raw_state = self.env.reset()
+        raw_state = self._env.reset()
         stacked_state = _stack_obs(raw_state)
 
         self.init_state = stacked_state
@@ -161,7 +165,7 @@ class TagEnv(gym.Env):
 
     def step(self, action):
 
-        raw_state, reward, done, info = self.env.step(action)
+        raw_state, reward, done, info = self._env.step(action)
         stacked_state = _stack_obs(raw_state)
 
         # Plot for debugging purposes
@@ -180,8 +184,8 @@ class TagEnv(gym.Env):
         return stacked_state, reward, done, info
 
     def close(self):
-        if self.env is not None:
-            return self.env.close()
+        if self._env is not None:
+            return self._env.close()
         return None
 
 

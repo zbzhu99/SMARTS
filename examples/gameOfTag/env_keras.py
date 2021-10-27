@@ -2,7 +2,7 @@ import gym
 import matplotlib.pyplot as plt
 import numpy as np
 
-from examples.gameOfTag import agent as got_agent
+from examples.gameOfTag import agent_keras as got_agent
 from examples.gameOfTag.types import AgentType
 from smarts.core import agent as smarts_agent
 from smarts.core import agent_interface as smarts_agent_interface
@@ -13,21 +13,13 @@ from smarts.env import hiway_env as smarts_hiway_env
 from smarts.env.wrappers import frame_stack as smarts_frame_stack
 from typing import Dict, List
 
-import tensorflow as tf
-import numpy as np
-
-from tf_agents.environments import py_environment
-from tf_agents.specs import array_spec
-from tf_agents.trajectories import time_step as ts
 
 NEIGHBOURHOOD_RADIUS = 55
 
 
-class TagEnvTF(py_environment.PyEnvironment):
+class TagEnvKeras(gym.Env):
     def __init__(self, config: Dict, seed: int = 42):
-        super(TagEnvTF).__init__()
-        self._action_dim = config["model_para"]["action_dim"]
-        self._discount = config["model_para"]["gamma"]
+        self._config = config
         self._neighborhood_radius = config["env_para"]["neighborhood_radius"]
         self._rgb_wh = config["env_para"]["rgb_wh"]
         self.agent_ids = config["env_para"]["agent_ids"] 
@@ -141,52 +133,40 @@ class TagEnvTF(py_environment.PyEnvironment):
 
         self._env = env
 
-        # Single agent's action spec
-        self._single_action_spec=array_spec.BoundedArraySpec(
-            shape=(),
-            dtype=np.int32,
-            minimum=0,
-            maximum=config["model_para"]["action_dim"])
-        # Multi agent observation spec
-        self._action_spec={agent_id : self._single_action_spec
-            for agent_id in self.agent_ids
-        }
-        # Single agent's observation spec
-        self._single_observation_spec = array_spec.BoundedArraySpec(
-            shape=(config["model_para"]["observation1_dim"]),
-            dtype=np.uint8,
-            minimum=0,
-            maximum=255)
-        # Multi agent observation spec
-        self._observation_spec = {agent_id: self._single_observation_spec
-            for agent_id in self.agent_ids
-        }
+        # Categorical action space
+        self.single_action_space = gym.spaces.Discrete(config["model_para"]["action_dim"])
+        # Observation space
+        self.single_observation_space = gym.spaces.Dict(
+            {
+                "image": gym.spaces.Box(
+                    low=0,
+                    high=255,
+                    shape=config["model_para"]["observation1_dim"],
+                    dtype=np.uint8,
+                ),
+                "scalar": gym.spaces.Box(
+                    low=np.array([0, -1]),
+                    high=np.array([1e3, 1]),
+                    dtype=np.float32,
+                ),
+            }
+        )
+        # scalar consists of
+        # obs.ego_vehicle_state.speed = [0, 1e3]
+        # obs.ego_vehicle_state.steering = [-1, 1]
 
-    def action_spec(self):
-        return self._action_spec
+    def reset(self) -> Dict[str, np.ndarray]:
 
-    def observation_spec(self):
-        return self._observation_spec
-
-    def single_action_spec(self):
-        return self._single_action_spec
-
-    def single_observation_spec(self):
-        return self._single_observation_spec
-
-    def _reset(self):
-        self._episode_ended = False
         raw_state = self._env.reset()
-        stacked_state = {}
-        for agent_id, state in raw_state.items():
-            stacked_state[agent_id] = _stack_matrix(state)
-        return ts.restart(observation=stacked_state)
+        stacked_state = _stack_obs(raw_state)
 
-    def _step(self, action):
+        self.init_state = stacked_state
+        return stacked_state
+
+    def step(self, action):
+
         raw_state, reward, done, info = self._env.step(action)
-        stacked_state={}
-        for agent_id, state in raw_state.items():
-            stacked_state[agent_id] = _stack_matrix(state)
+        stacked_state = _stack_obs(raw_state)
 
         # Plot for debugging purposes
         # import matplotlib.pyplot as plt
@@ -201,13 +181,7 @@ class TagEnvTF(py_environment.PyEnvironment):
         #         plt.imshow(img)
         # plt.show()
 
-        # return stacked_state, reward, done, info
-
-        if done["__all__"] == True:
-            self._episode_ended = True
-            return ts.termination(observation=stacked_state, reward=reward, outer_dims=1)
-
-        return ts.transition(observation=stacked_state, reward=reward, discount=self._discount, outer_dims=1)
+        return stacked_state, reward, done, info
 
     def close(self):
         if self._env is not None:
@@ -215,14 +189,15 @@ class TagEnvTF(py_environment.PyEnvironment):
         return None
 
 
-def _stack_matrix(states: List[np.ndarray]) -> np.ndarray:
-    # Stack 2D images along the depth dimension
-    if states[0].ndim == 2 or states[0].ndim == 3:
-        return np.dstack(states)
-    else:
-        raise Exception(
-            f"Expected input numpy array with 2 or 3 dimensions, but received input with {states[0].ndim} dimensions."
-        )
+def _stack_obs(state: Dict):
+    stacked_state = {}
+    for agent_id, agent_state in state.items():
+        images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), agent_state)))
+        stacked_image = np.dstack(images)
+        stacked_scalar = np.concatenate(scalars, axis=0)
+        stacked_state[agent_id] = {"image": stacked_image, "scalar": stacked_scalar}
+
+    return stacked_state
 
 
 def info_adapter(obs, reward, info):
@@ -303,7 +278,7 @@ def action_adapter(controller):
     raise Exception("Unknown controller.")
 
 
-def observation_adapter(obs: smarts_sensors.Observation) -> np.ndarray:
+def observation_adapter(obs: smarts_sensors.Observation) -> Dict[str, np.ndarray]:
     # RGB grid map
     rgb = obs.top_down_rgb.data
     # Replace self color to Lime
@@ -324,7 +299,15 @@ def observation_adapter(obs: smarts_sensors.Observation) -> np.ndarray:
     # plt.show()
     # sys.exit(2)
 
-    return frame
+    scalar = np.array(
+        (
+            obs.ego_vehicle_state.speed,
+            obs.ego_vehicle_state.steering,
+        ),
+        dtype=np.float32,
+    )
+
+    return {"image": frame, "scalar": scalar}
 
 
 def get_targets(vehicles, target: str):
@@ -405,15 +388,15 @@ def prey_reward_adapter(obs, env_reward):
             print(f"Prey {ego.id} collided with prey vehicle {c.collidee_id}.")
 
     # Distance based reward
-    targets = get_targets(obs.neighborhood_vehicle_states, "predator")
-    if targets:
-        distances = distance_to_targets(ego, targets)
-        min_distance = np.amin(distances)
-        dist_reward = inverse(min_distance)
-        reward -= (
-            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 10
-        )  # Reward [-10:0]
-        # pass
+    # targets = get_targets(obs.neighborhood_vehicle_states, "predator")
+    # if targets:
+    #     distances = distance_to_targets(ego, targets)
+    #     min_distance = np.amin(distances)
+    #     dist_reward = inverse(min_distance)
+    #     reward -= (
+    #         np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 10
+    #     )  # Reward [-10:0]
+    #     # pass
     # else:  # No neighborhood predators
     #     reward += 1
 

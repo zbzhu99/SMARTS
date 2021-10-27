@@ -1,0 +1,75 @@
+env_para:
+  env_name: smarts
+  seed: 42
+  headless: True
+  visdom: False
+  neighborhood_radius: 55 # Radius (meter) for neighborhood vehicles
+  rgb_wh: 110 # Height and width (meter) of RGB image in SMARTS observation
+  max_episode_steps: 1800 # 3 minutes. Maximum steps per episode.
+  num_stack: 4 # Number of frames to stack
+  num_skip: 1 # Frequency of frames to be stacked
+  # action_space_type: "Lane"
+  # action_space_type: "LaneWithContinuousSpeed"
+  action_space_type: "Continuous"
+  agent_ids: 
+    - predator1
+    # - predator2
+    # - predator3
+    - prey1
+    # - prey2
+  scenarios: 
+    - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
+    # - /home/a84166141/workspaces/SMARTS/scenarios/cloverleaf
+    # - /home/adai/workspaces/SMARTS/scenarios/cloverleaf    
+    # - /src/scenarios/cloverleaf
+
+model_para:
+  # Observation and action space
+  observation1_dim: [256, 256, 12] # rgb image * num_stack
+  observation2_dim: [8] # [steering, speed] * num_stack
+  # action_dim: 4 # Lane
+  # action_dim: 0 # LaneWithContinuousSpeed
+  action_dim: 5 # Continuous    
+  
+  # Optimizer
+  actor_lr_predator: 0.0003
+  critic_lr_predator: 0.001
+  actor_lr_prey: 0.0003
+  crtic_lr_prey: 0.001
+
+  # PPO
+  critic_loss_weight: 0.5
+  entropy_loss_weight: 0 # 0.01
+  entropy_loss_discount_rate: 0 # 0.995
+  gamma: 0.99 # Reward discount
+  lam: 0.97
+  clip_value: 0.2
+  target_kl: 0.01
+
+  # Iteration size
+  n_steps: 1800 # Horizon, a.k.a, trajectory length
+  max_traj: 100000
+  num_train_epochs: 5
+
+  # Downgrade last #n rewards 
+  downgrade_rewards: 0
+
+  # Gradient batch size
+  grad_batch: 128
+
+  # Models and logs
+  save_interval: 20
+  mode: train # train or evaluate
+  model_initial: False
+
+  # Local
+  tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
+  model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
+  # predator_actor: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/predator_2021_10_17_06_03/13056"
+  # predator_critic: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/predator_2021_10_17_06_03/13056"
+  # prey_actor: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/prey_2021_10_17_06_03/13056"
+  # prey_critic: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/prey_2021_10_17_06_03/13056"
+
+  # Docker
+  # tensorboard_path: "/src/examples/gameOfTag/logs/"
+  # model_path: "/src/examples/gameOfTag/models/"
