@@ -66,17 +66,20 @@ def main(config):
 
     # Create agent
     print("[INFO] Creating agents")
-    all_agents = {
-        name: got_agent.TagAgent(name, config)
-        for name in env.agent_ids
-    }
+    all_agents = {name: got_agent.TagAgent(name, config) for name in env.agent_ids}
     all_predators_id = env.predators
     all_preys_id = env.preys
 
     # Create model
     print("[INFO] Creating model")
-    ppo_predator = got_ppo.PPOTF(AgentType.PREDATOR.value, config, config["env_para"]["seed"], observation_spec=env.single_observation_spec(), action_spec=env.single_action_spec())
-    # ppo_prey = got_ppo.PPOTF(AgentType.PREY.value, config, config["env_para"]["seed"], observation_spec=env.single_observation_spec, action_spec=env.single_action_spec)
+    ppo_predator = got_ppo.PPOTF(
+        AgentType.PREDATOR.value,
+        config,
+        config["env_para"]["seed"],
+        observation_spec=env.single_observation_spec(),
+        action_spec=env.single_action_spec(),
+    )
+    ppo_prey = got_ppo.PPOTF(AgentType.PREY.value, config, config["env_para"]["seed"], observation_spec=env.single_observation_spec, action_spec=env.single_action_spec)
     print("After ppo_predator")
 
     # def interrupt(*args):
@@ -100,7 +103,6 @@ def main(config):
     train = True if mode == Mode.TRAIN else False
 
     global_step = tf.compat.v1.train.get_or_create_global_step()
-    
 
     env.close()
 

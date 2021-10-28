@@ -30,7 +30,7 @@ class TagEnvTF(py_environment.PyEnvironment):
         self._discount = config["model_para"]["gamma"]
         self._neighborhood_radius = config["env_para"]["neighborhood_radius"]
         self._rgb_wh = config["env_para"]["rgb_wh"]
-        self.agent_ids = config["env_para"]["agent_ids"] 
+        self.agent_ids = config["env_para"]["agent_ids"]
         self.predators = []
         self.preys = []
         for agent_id in self.agent_ids:
@@ -142,24 +142,26 @@ class TagEnvTF(py_environment.PyEnvironment):
         self._env = env
 
         # Single agent's action spec
-        self._single_action_spec=array_spec.BoundedArraySpec(
+        self._single_action_spec = array_spec.BoundedArraySpec(
             shape=(),
             dtype=np.int32,
             minimum=0,
-            maximum=config["model_para"]["action_dim"])
+            maximum=config["model_para"]["action_dim"],
+        )
         # Multi agent observation spec
-        self._action_spec={agent_id : self._single_action_spec
-            for agent_id in self.agent_ids
+        self._action_spec = {
+            agent_id: self._single_action_spec for agent_id in self.agent_ids
         }
         # Single agent's observation spec
         self._single_observation_spec = array_spec.BoundedArraySpec(
             shape=(config["model_para"]["observation1_dim"]),
             dtype=np.uint8,
             minimum=0,
-            maximum=255)
+            maximum=255,
+        )
         # Multi agent observation spec
-        self._observation_spec = {agent_id: self._single_observation_spec
-            for agent_id in self.agent_ids
+        self._observation_spec = {
+            agent_id: self._single_observation_spec for agent_id in self.agent_ids
         }
 
     def action_spec(self):
@@ -184,7 +186,7 @@ class TagEnvTF(py_environment.PyEnvironment):
 
     def _step(self, action):
         raw_state, reward, done, info = self._env.step(action)
-        stacked_state={}
+        stacked_state = {}
         for agent_id, state in raw_state.items():
             stacked_state[agent_id] = _stack_matrix(state)
 
@@ -205,9 +207,16 @@ class TagEnvTF(py_environment.PyEnvironment):
 
         if done["__all__"] == True:
             self._episode_ended = True
-            return ts.termination(observation=stacked_state, reward=reward, outer_dims=1)
+            return ts.termination(
+                observation=stacked_state, reward=reward, outer_dims=1
+            )
 
-        return ts.transition(observation=stacked_state, reward=reward, discount=self._discount, outer_dims=1)
+        return ts.transition(
+            observation=stacked_state,
+            reward=reward,
+            discount=self._discount,
+            outer_dims=1,
+        )
 
     def close(self):
         if self._env is not None:

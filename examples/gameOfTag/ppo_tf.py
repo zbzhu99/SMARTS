@@ -41,6 +41,7 @@ from tf_agents.networks import value_network
 # Suppress warning
 absl.logging.set_verbosity(absl.logging.ERROR)
 
+
 def NeuralNetwork(name, num_actions, input1_shape, input2_shape):
     filter_num = [32, 32, 64, 64, 128]
     kernel_size = [65, 13, 5, 2, 3]
@@ -140,19 +141,33 @@ class PPOTF(RL):
         )
 
         summaries_flush_secs = 5
-        self.tb = tf.summary.create_file_writer(str(path), flush_millis=summaries_flush_secs * 1000)
+        self.tb = tf.summary.create_file_writer(
+            str(path), flush_millis=summaries_flush_secs * 1000
+        )
 
         self.actor_net = actor_distribution_network.ActorDistributionNetwork(
             observation_spec,
-            action_spec, 
-            conv_layer_params=[(32,32,4),(32,17,2),(64,9,2),(64,3,2)], #(filters, kernel_size, stride)
+            action_spec,
+            conv_layer_params=[
+                (32, 32, 4),
+                (32, 17, 2),
+                (64, 9, 2),
+                (64, 3, 2),
+            ],  # (filters, kernel_size, stride)
             fc_layer_params=[512],
-            activation_fn=tf.keras.activations.tanh)
+            activation_fn=tf.keras.activations.tanh,
+        )
         self.value_net = value_network.ValueNetwork(
             observation_spec,
-            conv_layer_params=[(32,32,4),(32,17,2),(64,9,2),(64,3,2)], #(filters, kernel_size, stride)
+            conv_layer_params=[
+                (32, 32, 4),
+                (32, 17, 2),
+                (64, 9, 2),
+                (64, 3, 2),
+            ],  # (filters, kernel_size, stride)
             fc_layer_params=[512],
-            activation_fn=tf.keras.activations.tanh)
+            activation_fn=tf.keras.activations.tanh,
+        )
 
     def close(self):
         pass
@@ -308,5 +323,3 @@ def entropy_loss(policy_logits, ent_discount_val):
         tf.keras.losses.categorical_crossentropy(probs, probs)
     )
     return entropy_loss * ent_discount_val
-
-

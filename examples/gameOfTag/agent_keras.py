@@ -11,9 +11,9 @@ class TagAgentKeras:
         else:
             raise Exception(f"Expected predator or prey, but got {name}.")
         self._config = config
-        self.reset()
         self._gamma = config["model_para"]["gamma"]
         self._lam = lam
+        self.reset()
 
     def reset(self):
         # Buffer initialization
@@ -24,16 +24,21 @@ class TagAgentKeras:
         self.return_buffer = []
         self.value_buffer = []
         self.logprobability_buffer = []
+        self.done_buffer = []
+        self._last_value = None
         self.gamma, self.lam = self._gamma, self._lam
-        self.pointer, self.trajectory_start_index = 0, 0
 
-    def store(self, observation, action, reward, value, logprobability):
+    def add_transition(self, observation, action, reward, value, logprobability, done):
         # Append one step of agent-environment interaction
         self.observation_buffer.append(observation)
         self.action_buffer.append(action)
         self.reward_buffer.append(reward)
         self.value_buffer.append(value)
         self.logprobability_buffer.append(logprobability)
+        self.done_buffer.append(done)
+
+    def add_last_transition(self, value):
+        self._last_value = value
 
     def finish_trajectory(self, last_value=0):
         # Finish the trajectory by computing advantage estimates and rewards-to-go

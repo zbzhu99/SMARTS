@@ -55,7 +55,7 @@ def NeuralNetwork(name, num_output, input1_shape, input2_shape):
     input1 = tf.keras.layers.Input(shape=input1_shape, dtype=tf.uint8)
     input2 = tf.keras.layers.Input(shape=input2_shape, dtype=tf.float32)
     # Scale and center
-    input1_norm = (tf.cast(input1, tf.float32) / 255.0) - 0.5 
+    input1_norm = (tf.cast(input1, tf.float32) / 255.0) - 0.5
     x_conv = input1_norm
     for ii in range(len(filter_num)):
         x_conv = tf.keras.layers.Conv2D(
@@ -103,106 +103,117 @@ class RL:
         raise NotImplementedError
 
 
-class PPO(RL):
-    def __init__(self, name, config, seed):
-        super(PPO, self).__init__()
+class PPOKeras(RL):
+    def __init__(self, name, config, agent_ids, seed):
+        super(PPOKeras, self).__init__()
 
-        self.name = name
-        self.config = config
-        self.seed = seed
-        self.action_num = config["model"]["action_dim"]
+        self._name = name
+        self._seed = seed
+        self._agent_ids = agent_ids
         self.actor_optimizer = tf.keras.optimizers.Adam(
-            learning_rate=config["model_para"][self.name+"_actor_lr"]
+            learning_rate=config["model_para"][self._name + "_actor_lr"]
         )
         self.critic_optimizer = tf.keras.optimizers.Adam(
-            learning_rate=config["model_para"][self.name+"_critic_lr"]
+            learning_rate=config["model_para"][self._name + "_critic_lr"]
         )
 
         # Model
-        self.actor = None
-        self.critic = None
-        if self.config["model_para"]["model_initial"]:  # Start from existing model
+        self._actor = None
+        self._critic = None
+        if config["model_para"]["model_initial"]:
+            # Start from existing model
             print("[INFO] PPO existing model.")
-            self.actor = _load(self.config["model_para"][self.name+"_actor"])
-            self.critic = _load(self.config["model_para"][self.name+"_critic"])
-        else:  # Start from new model
+            self._actor = _load(config["model_para"][self._name + "_actor"])
+            self._critic = _load(config["model_para"][self._name + "_critic"])
+        else:
+            # Start from new model
             print("[INFO] PPO new model.")
-            self.actor = NeuralNetwork(
-                self.name+"_actor",
-                num_output= self.config["model_para"]["action_dim"],
-                input1_shape = self.config["model_para"]["observation1_dim"],
-                input2_shape = self.config["model_para"]["observation2_dim"],
+            self._actor = NeuralNetwork(
+                self._name + "_actor",
+                num_output=config["model_para"]["action_dim"],
+                input1_shape=config["model_para"]["observation1_dim"],
+                input2_shape=config["model_para"]["observation2_dim"],
             )
-            self.critic = NeuralNetwork(
-                self.name+"_critic",
-                num_output = 1,
-                input1_shape = self.config["model_para"]["observation1_dim"],
-                input2_shape = self.config["model_para"]["observation2_dim"],
+            self._critic = NeuralNetwork(
+                self._name + "_critic",
+                num_output=1,
+                input1_shape=config["model_para"]["observation1_dim"],
+                input2_shape=config["model_para"]["observation2_dim"],
             )
+
         # Path for newly trained model
-        time = datetime.now().strftime('%Y_%m_%d_%H_%M')
-        self.actor_path = Path(self.config["model_para"]["model_path"]).joinpath(
+        time = datetime.now().strftime("%Y_%m_%d_%H_%M")
+        self._actor_path = Path(config["model_para"]["model_path"]).joinpath(
             f"{name}_actor_{time}"
         )
-        self.critic_path = Path(self.config["model_para"]["model_path"]).joinpath(
+        self._critic_path = Path(config["model_para"]["model_path"]).joinpath(
             f"{name}_critic_{time}"
         )
 
         # Model summary
-        self.actor.summary()
-        self.critic.summary()
+        # self._actor.summary()
+        # self._critic.summary()
 
         # Tensorboard
-        tb_actor_path = Path(self.config["model_para"]["tensorboard_path"]).joinpath(
+        tb_path = Path(config["model_para"]["tensorboard_path"]).joinpath(
             f"{name}_actor_{time}"
         )
-        tb_critic_path = Path(self.config["model_para"]["tensorboard_path"]).joinpath(
-            f"{name}_critic_{time}"
-        )
-        self.tb_actor = tf.summary.create_file_writer(str(tb_actor_path))
-        self.tb_critic = tf.summary.create_file_writer(str(tb_critic_path))
+        self.tb = tf.summary.create_file_writer(str(tb_path))
 
     def close(self):
         pass
 
     def save(self, version: int):
         tf.keras.models.save_model(
-            model=self.actor,
-            filepath=self.actor_path / str(version),
+            model=self._actor,
+            filepath=self._actor_path / str(version),
         )
         tf.keras.models.save_model(
-            model=self.critic,
-            filepath=self.critic_path / str(version),
+            model=self._critic,
+            filepath=self._critic_path / str(version),
         )
 
-    def act(self, obs, train: Mode):
-        logits_t = {}
-        action_t = {}
+    def actor(self, obs, train: Mode):
+        states = [
+            obs[agent_id] for agent_id in self._agent_ids if agent_id in obs.keys()
+        ]
+        vehicles = [agent_id for agent_id in self._agent_ids if agent_id in obs.keys()]
 
-        ordered_obs = _dict_to_ordered_list(obs)
+        images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
+        stacked_images = tf.stack(images, axis=0)
+        stacked_scalars = tf.stack(scalars, axis=0)
+        logits = self._actor.predict([stacked_images, stacked_scalars])
 
-        # NOTE: Order of items drawn from dict may affect reproducibility of this
-        # function due to order of sampling by `actions_dist_t.sample()`.
-        for vehicle, state in ordered_obs:
-            if (
-                self.name in vehicle
-            ):  # <---- VERY IMPORTANT DO NOT REMOVE @@ !! @@ !! @@ !!
-                images, scalars = zip(
-                    *(map(lambda x: (x["image"], x["scalar"]), [state]))
-                )
-                stacked_images = tf.stack(images, axis=0)
-                stacked_scalars = tf.stack(scalars, axis=0)
-                logits = self.actor.predict(
-                    [stacked_images, stacked_scalars]
-                )
-                logits_t[vehicle] = logits
+        logit_t = {
+            vehicle: np.expand_dims(logit, axis=0)
+            for vehicle, logit in zip(vehicles, logits)
+        }
 
-                if train == Mode.TRAIN:
-                    action_t[vehicle] = tf.squeeze(tf.random.categorical(logits, 1), axis=1)
-                else:
-                    action_t[vehicle] = tf.math.argmax(logits, 1)
+        action_t = {
+            vehicle: tf.squeeze(
+                tf.random.categorical([logit], 1, seed=self._seed), axis=1
+            )
+            if train == Mode.TRAIN
+            else tf.math.argmax([logit], 1)
+            for vehicle, logit in zip(vehicles, logits)
+        }
 
-        return logits_t, action_t
+        return logit_t, action_t
+
+    def critic(self, obs):
+        states = [
+            obs[agent_id] for agent_id in self._agent_ids if agent_id in obs.keys()
+        ]
+        vehicles = [agent_id for agent_id in self._agent_ids if agent_id in obs.keys()]
+
+        images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
+        stacked_images = tf.stack(images, axis=0)
+        stacked_scalars = tf.stack(scalars, axis=0)
+        values = self._critic.predict([stacked_images, stacked_scalars])
+
+        value_t = {vehicle: value for vehicle, value in zip(vehicles, values)}
+
+        return value_t
 
     def write_to_tb(self, records):
         with self.tb.as_default():
@@ -210,18 +221,21 @@ class PPO(RL):
                 tf.summary.scalar(name, value, step)
 
 
-def _dict_to_ordered_list(dic: Dict[str, Any]) -> List[Tuple[str, Any]]:
-    li = [tuple(x) for x in dic.items()]
-    li.sort(key=lambda tup: tup[0])  # Sort in-place
-
-    return li
-
-
 def _load(model_path):
     return tf.keras.models.load_model(
         model_path,
         compile=False,
     )
+
+
+def logprobabilities(logit, action):
+    # Compute the log-probabilities of taking actions a by using the logits (i.e. the output of the actor)
+    logprobabilities_all = tf.nn.log_softmax(logit)
+    logprobability = tf.reduce_sum(
+        tf.one_hot(action, logit.shape[1]) * logprobabilities_all, axis=1
+    )
+
+    return logprobability
 
 
 def train_model(
@@ -274,17 +288,6 @@ def train_model(
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
     return tot_loss, act_loss, cri_loss, ent_loss
-
-
-
-def logprobabilities(logits, a, num_actions):
-    # Compute the log-probabilities of taking actions a by using the logits (i.e. the output of the actor)
-    logprobabilities_all = tf.nn.log_softmax(logits)
-    logprobability = tf.reduce_sum(
-        tf.one_hot(a, num_actions) * logprobabilities_all, axis=1
-    )
-    return logprobability
-
 
 
 # Train the policy by maxizing the PPO-Clip objective

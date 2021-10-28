@@ -22,7 +22,7 @@ class TagEnvKeras(gym.Env):
         self._config = config
         self._neighborhood_radius = config["env_para"]["neighborhood_radius"]
         self._rgb_wh = config["env_para"]["rgb_wh"]
-        self.agent_ids = config["env_para"]["agent_ids"] 
+        self.agent_ids = config["env_para"]["agent_ids"]
         self.predators = []
         self.preys = []
         for agent_id in self.agent_ids:
@@ -99,7 +99,7 @@ class TagEnvKeras(gym.Env):
         agent_specs = {
             agent_id: smarts_agent.AgentSpec(
                 interface=predator_interface,
-                agent_builder=got_agent.TagAgent,
+                agent_builder=got_agent.TagAgentKeras,
                 observation_adapter=observation_adapter,
                 reward_adapter=predator_reward_adapter,
                 action_adapter=action_adapter(config["env_para"]["action_space_type"]),
@@ -108,7 +108,7 @@ class TagEnvKeras(gym.Env):
             if AgentType.PREDATOR in agent_id
             else smarts_agent.AgentSpec(
                 interface=prey_interface,
-                agent_builder=got_agent.TagAgent,
+                agent_builder=got_agent.TagAgentKeras,
                 observation_adapter=observation_adapter,
                 reward_adapter=prey_reward_adapter,
                 action_adapter=action_adapter(config["env_para"]["action_space_type"]),
@@ -134,7 +134,9 @@ class TagEnvKeras(gym.Env):
         self._env = env
 
         # Categorical action space
-        self.single_action_space = gym.spaces.Discrete(config["model_para"]["action_dim"])
+        self.single_action_space = gym.spaces.Discrete(
+            config["model_para"]["action_dim"]
+        )
         # Observation space
         self.single_observation_space = gym.spaces.Dict(
             {

@@ -32,10 +32,10 @@ model_para:
   action_dim: 5 # Continuous    
   
   # Optimizer
-  actor_lr_predator: 0.0003
-  critic_lr_predator: 0.001
-  actor_lr_prey: 0.0003
-  crtic_lr_prey: 0.001
+  predator_actor_lr: 0.0003
+  predator_critic_lr: 0.001
+  prey_actor_lr: 0.0003
+  prey_critic_lr: 0.001
 
   # PPO
   critic_loss_weight: 0.5

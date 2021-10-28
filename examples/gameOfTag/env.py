@@ -22,7 +22,7 @@ class TagEnv(gym.Env):
         self._config = config
         self._neighborhood_radius = config["env_para"]["neighborhood_radius"]
         self._rgb_wh = config["env_para"]["rgb_wh"]
-        self.agent_ids = config["env_para"]["agent_ids"] 
+        self.agent_ids = config["env_para"]["agent_ids"]
         self.predators = []
         self.preys = []
         for agent_id in self.agent_ids:
@@ -134,7 +134,9 @@ class TagEnv(gym.Env):
         self._env = env
 
         # Categorical action space
-        self.single_action_space = gym.spaces.Discrete(config["model_para"]["action_dim"])
+        self.single_action_space = gym.spaces.Discrete(
+            config["model_para"]["action_dim"]
+        )
         # Observation space
         self.single_observation_space = gym.spaces.Dict(
             {

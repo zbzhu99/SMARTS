@@ -201,14 +201,12 @@ def main(config):
                     f"Episode reward predator: {episode_reward_predator}, "
                     f"Episode reward prey: {episode_reward_prey}."
                 )
-                with ppo_predator.tb.as_default():
-                    tf.summary.scalar(
-                        "episode_reward_predator", episode_reward_predator, episode
-                    )
-                with ppo_prey.tb.as_default():
-                    tf.summary.scalar(
-                        "episode_reward_prey", episode_reward_prey, episode
-                    )
+                ppo_predator.write_to_tb(
+                    [("episode_reward_predator", episode_reward_predator, episode)]
+                )
+                ppo_prey.write_to_tb(
+                    [("episode_reward_prey", episode_reward_prey, episode)]
+                )
 
                 # Reset counters
                 episode_reward_predator = 0

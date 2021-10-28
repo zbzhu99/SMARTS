@@ -43,42 +43,44 @@ from pathlib import Path
 def main(config):
 
     print("[INFO] Train")
-    # Save and eval interval
-    save_interval = config["model_para"].get("save_interval", 50)
-
-    # Mode: Evaluation or Testing
-    mode = Mode(config["model_para"]["mode"])
+    save_interval = config["model_para"].get("save_interval", 20)
+    mode = Mode(config["model_para"]["mode"])  # Mode: Evaluation or Testing
 
     # Traning parameters
     num_train_epochs = config["model_para"]["num_train_epochs"]
     n_steps = config["model_para"]["n_steps"]
     max_traj = config["model_para"]["max_traj"]
     clip_value = config["model_para"]["clip_value"]
-    critic_loss_weight = config["model_para"]["critic_loss_weight"]
-    ent_discount_val = config["model_para"]["entropy_loss_weight"]
-    ent_discount_rate = config["model_para"]["entropy_loss_discount_rate"]
+    # critic_loss_weight = config["model_para"]["critic_loss_weight"]
+    # ent_discount_val = config["model_para"]["entropy_loss_weight"]
+    # ent_discount_rate = config["model_para"]["entropy_loss_discount_rate"]
 
     # Create env
     print("[INFO] Creating environments")
     seed = config["env_para"]["seed"]
     ## seed = random.randint(0, 4294967295)  # [0, 2^32 -1)
-    env = got_env.TagEnv(config, seed)
+    env = got_env.TagEnvKeras(config, seed)
 
     # Create agent
     print("[INFO] Creating agents")
     all_agents = {
-        name: got_agent.TagAgent(name, config)
-        for name in config["env_para"]["agent_ids"]
+        name: got_agent.TagAgentKeras(name, config)
+        for name in env.agent_ids
     }
-    all_predators_id = env.predators
-    all_preys_id = env.preys
+    all_predator_ids = env.predators
+    all_prey_ids = env.preys
 
     # Create model
     print("[INFO] Creating model")
-    ppo_predator = got_ppo.PPO(
-        AgentType.PREDATOR.value, config, config["env_para"]["seed"] + 1
+    ppo_predator = got_ppo.PPOKeras(
+        AgentType.PREDATOR.value,
+        config,
+        all_predator_ids,
+        config["env_para"]["seed"] + 1,
     )
-    ppo_prey = got_ppo.PPO(AgentType.PREY.value, config, config["env_para"]["seed"] + 2)
+    ppo_prey = got_ppo.PPOKeras(
+        AgentType.PREY.value, config, all_prey_ids, config["env_para"]["seed"] + 2
+    )
 
     def interrupt(*args):
         nonlocal mode
@@ -93,7 +95,7 @@ def main(config):
     signal.signal(signal.SIGINT, interrupt)
 
     print("[INFO] Batch loop")
-    states_t = env.reset()
+    obs_t = env.reset()
     episode = 0
     steps_t = 0
     episode_reward_predator = 0
@@ -106,75 +108,64 @@ def main(config):
         for cur_step in range(n_steps):
 
             # Update all agents which were active in this batch
-            active_agents.update({agent_id: True for agent_id, _ in states_t.items()})
+            active_agents.update({agent_id: True for agent_id, _ in obs_t.items()})
 
-            # Predict and value action given state
-            logits_t = {}
+            # Given state, predict action and value
+            logit_t = {}
             action_t = {}
-            logits, action = ppo_predator.act(obs=states_t, train=mode)
-            logits_t.update(logits)
-            action_t.update(action)
-            logits, action = ppo_prey.act(obs=states_t, train=mode)
-            logits_t.update(logits)
-            action_t.update(action)
-            
-            # Get the value and log-probability of the action
             value_t = {}
             logprobability_t = {}
-            value = ppo_predator.critic(states_t)
+
+            logit, action = ppo_predator.actor(obs=obs_t, train=mode)
+            value = ppo_predator.critic(obs_t)
+            logit_t.update(logit)
+            action_t.update(action)
             value_t.update(value)
-            logprobability = got_ppo.logprobabilities(logits, action, ppo_predator.action_num)
-            logprobability_t.update(logprobability)
-            value = ppo_prey.critic(states_t)
+
+            logit, action = ppo_prey.actor(obs=obs_t, train=mode)
+            value = ppo_prey.critic(obs_t)
+            logit_t.update(logit)
+            action_t.update(action)
             value_t.update(value)
-            logprobability = got_ppo.logprobabilities(logits, action, ppo_prey.action_num)
-            logprobability_t.update(logprobability)
+
+            for agent_id, logit in logit_t.items():
+                logprobability_t[agent_id] = got_ppo.logprobabilities(
+                    logit, action_t[agent_id]
+                )
 
             # Sample action from a distribution
             action_numpy_t = {
-                vehicle: action[0].numpy()
-                for vehicle, action in action_t.items()
+                vehicle: action[0].numpy() for vehicle, action in action_t.items()
             }
-            next_states_t, rewards_t, dones_t, _ = env.step(action_numpy_t)
+            next_obs_t, reward_t, done_t, _ = env.step(action_numpy_t)
             steps_t += 1
 
-            # Store state, action and reward
-            for agent_id, _ in states_t.items():
-                all_agents[agent_id].add_trajectory(
-                    action=action_samples_t[agent_id],
-                    value=values_t[agent_id].numpy(),
-                    state=states_t[agent_id],
-                    done=int(dones_t[agent_id]),
-                    prob=actions_t[agent_id],
-                    reward=rewards_t[agent_id],
+            # Store observation, action, and reward
+            for agent_id, _ in obs_t.items():
+                all_agents[agent_id].add_transition(
+                    observation=obs_t[agent_id],
+                    action=action_t[agent_id],
+                    reward=reward_t[agent_id],
+                    value=value_t[agent_id],
+                    logprobability=logprobability_t[agent_id],
+                    done=int(done_t[agent_id]),
                 )
-                if "predator" in agent_id:
-                    episode_reward_predator += rewards_t[agent_id]
+                if AgentType.PREDATOR in agent_id:
+                    episode_reward_predator += reward_t[agent_id]
                 else:
-                    episode_reward_prey += rewards_t[agent_id]
-                if dones_t[agent_id] == 1:
-                    if (
-                        not dones_t["__all__"]
-                        and config["model_para"]["downgrade_rewards"]
-                    ):
-                        # Downgrade #n last rewards for agents which become done early.
-                        downgrade_len = config["model_para"]["downgrade_rewards"]
-                        rewards_len = len(all_agents[agent_id].rewards)
-                        min_len = np.minimum(downgrade_len, rewards_len)
-                        all_agents[agent_id].rewards[-min_len:] = [
-                            all_agents[agent_id].rewards[-1]
-                        ] * min_len
+                    episode_reward_prey += reward_t[agent_id]
+                if done_t[agent_id] == 1:
                     # Remove done agents
-                    del next_states_t[agent_id]
+                    del next_obs_t[agent_id]
                     # Print done agents
                     print(
                         f"   Done: {agent_id}. Cur_Step: {cur_step}. Step: {steps_t}."
                     )
 
             # Reset when episode completes
-            if dones_t["__all__"]:
+            if done_t["__all__"]:
                 # Next episode
-                next_states_t = env.reset()
+                next_obs_t = env.reset()
                 episode += 1
 
                 # Log rewards
@@ -183,48 +174,43 @@ def main(config):
                     f"Episode reward predator: {episode_reward_predator}, "
                     f"Episode reward prey: {episode_reward_prey}."
                 )
-                with ppo_predator.tb.as_default():
-                    tf.summary.scalar(
-                        "episode_reward_predator", episode_reward_predator, episode
-                    )
-                with ppo_prey.tb.as_default():
-                    tf.summary.scalar(
-                        "episode_reward_prey", episode_reward_prey, episode
-                    )
+                ppo_predator.write_to_tb(
+                    [("episode_reward_predator", episode_reward_predator, episode)]
+                )
+                ppo_prey.write_to_tb(
+                    [("episode_reward_prey", episode_reward_prey, episode)]
+                )
 
                 # Reset counters
                 episode_reward_predator = 0
                 episode_reward_prey = 0
                 steps_t = 0
 
-            # Assign next_states to states
-            states_t = next_states_t
+            # Assign next_obs to obs
+            obs_t = next_obs_t
 
+        # Skip the remainder if evaluating
         if mode == Mode.EVALUATE:
             continue
 
         # Compute and store last state value
         for agent_id in active_agents.keys():
-            if dones_t.get(agent_id, None) == 0:  # Agent not done yet
-                if AgentType.PREDATOR.value in agent_id:
-                    _, _, next_values_t = ppo_predator.act(
-                        {agent_id: next_states_t[agent_id]}, train=train
-                    )
-                elif AgentType.PREY.value in agent_id:
-                    _, _, next_values_t = ppo_prey.act(
-                        {agent_id: next_states_t[agent_id]}, train=train
-                    )
+            if done_t.get(agent_id, None) == 0:  # Agent not done yet
+                if AgentType.PREDATOR in agent_id:
+                    next_value_t = ppo_predator.critic({agent_id: next_obs_t[agent_id]})
+                elif AgentType.PREY in agent_id:
+                    next_value_t = ppo_prey.critic({agent_id: next_obs_t[agent_id]})
                 else:
                     raise Exception(f"Unknown {agent_id}.")
                 all_agents[agent_id].add_last_transition(
-                    value=next_values_t[agent_id].numpy()
+                    value=next_value_t[agent_id][0]
                 )
             else:  # Agent is done
                 all_agents[agent_id].add_last_transition(value=np.float32(0))
 
         for agent_id in active_agents.keys():
             # Compute generalised advantages
-            all_agents[agent_id].compute_advantages()
+            all_agents[agent_id].finish_trajectory()
 
             actions = all_agents[agent_id].actions
             action_inds = tf.stack(
@@ -254,7 +240,7 @@ def main(config):
         for epoch in range(num_train_epochs):
             for agent_id in active_agents.keys():
                 agent = all_agents[agent_id]
-                if agent_id in all_predators_id:
+                if agent_id in all_predator_ids:
                     loss_tuple = got_ppo.train_model(
                         model=ppo_predator.model,
                         optimizer=ppo_predator.optimizer,
@@ -263,7 +249,6 @@ def main(config):
                         states=agent.states,
                         advantages=agent.advantages,
                         discounted_rewards=agent.discounted_rewards,
-                        ent_discount_val=ent_discount_val,
                         clip_value=clip_value,
                         critic_loss_weight=critic_loss_weight,
                         grad_batch=config["model_para"]["grad_batch"],
@@ -273,7 +258,7 @@ def main(config):
                     predator_critic_loss[epoch] += loss_tuple[2]
                     predator_entropy_loss[epoch] += loss_tuple[3]
 
-                if agent_id in all_preys_id:
+                if agent_id in all_prey_ids:
                     loss_tuple = got_ppo.train_model(
                         model=ppo_prey.model,
                         optimizer=ppo_prey.optimizer,
@@ -282,7 +267,6 @@ def main(config):
                         states=agent.states,
                         advantages=agent.advantages,
                         discounted_rewards=agent.discounted_rewards,
-                        ent_discount_val=ent_discount_val,
                         clip_value=clip_value,
                         critic_loss_weight=critic_loss_weight,
                         grad_batch=config["model_para"]["grad_batch"],
@@ -292,7 +276,6 @@ def main(config):
                     prey_critic_loss[epoch] += loss_tuple[2]
                     prey_entropy_loss[epoch] += loss_tuple[3]
 
-        ent_discount_val *= ent_discount_rate
 
         print("[INFO] Record metrics")
         # Record predator performance
