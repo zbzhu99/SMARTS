@@ -47,13 +47,8 @@ def main(config):
     mode = Mode(config["model_para"]["mode"])  # Mode: Evaluation or Testing
 
     # Traning parameters
-    num_train_epochs = config["model_para"]["num_train_epochs"]
     n_steps = config["model_para"]["n_steps"]
     max_traj = config["model_para"]["max_traj"]
-    clip_value = config["model_para"]["clip_value"]
-    # critic_loss_weight = config["model_para"]["critic_loss_weight"]
-    # ent_discount_val = config["model_para"]["entropy_loss_weight"]
-    # ent_discount_rate = config["model_para"]["entropy_loss_discount_rate"]
 
     # Create env
     print("[INFO] Creating environments")
@@ -63,10 +58,7 @@ def main(config):
 
     # Create agent
     print("[INFO] Creating agents")
-    all_agents = {
-        name: got_agent.TagAgentKeras(name, config)
-        for name in env.agent_ids
-    }
+    all_agents = {name: got_agent.TagAgentKeras(name, config) for name in env.agent_ids}
     all_predator_ids = env.predators
     all_prey_ids = env.preys
 

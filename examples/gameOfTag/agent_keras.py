@@ -1,18 +1,16 @@
 from examples.gameOfTag.types import AgentType
 import numpy as np
-import tensorflow as tf
-import scipy.signal
 
 
 class TagAgentKeras:
-    def __init__(self, name, config, gamma=0.99, lam=0.95):
+    def __init__(self, name, config):
         if AgentType.PREDATOR in name or AgentType.PREY in name:
             self.name = name
         else:
             raise Exception(f"Expected predator or prey, but got {name}.")
         self._config = config
         self._gamma = config["model_para"]["gamma"]
-        self._lam = lam
+        self._lam = config["model_para"]["lam"]
         self.reset()
 
     def reset(self):
@@ -20,20 +18,19 @@ class TagAgentKeras:
         self.observation_buffer = []
         self.action_buffer = []
         self.advantage_buffer = []
-        self.reward_buffer = []
         self.return_buffer = []
-        self.value_buffer = []
         self.logprobability_buffer = []
         self.done_buffer = []
+        self._reward_buffer = []
+        self._value_buffer = []
         self._last_value = None
-        self.gamma, self.lam = self._gamma, self._lam
 
     def add_transition(self, observation, action, reward, value, logprobability, done):
         # Append one step of agent-environment interaction
         self.observation_buffer.append(observation)
         self.action_buffer.append(action)
-        self.reward_buffer.append(reward)
-        self.value_buffer.append(value)
+        self._reward_buffer.append(reward)
+        self._value_buffer.append(value)
         self.logprobability_buffer.append(logprobability)
         self.done_buffer.append(done)
 

@@ -79,7 +79,13 @@ def main(config):
         observation_spec=env.single_observation_spec(),
         action_spec=env.single_action_spec(),
     )
-    ppo_prey = got_ppo.PPOTF(AgentType.PREY.value, config, config["env_para"]["seed"], observation_spec=env.single_observation_spec, action_spec=env.single_action_spec)
+    ppo_prey = got_ppo.PPOTF(
+        AgentType.PREY.value,
+        config,
+        config["env_para"]["seed"],
+        observation_spec=env.single_observation_spec,
+        action_spec=env.single_action_spec,
+    )
     print("After ppo_predator")
 
     # def interrupt(*args):

@@ -96,8 +96,8 @@ class TagAgent:
         advantages -= np.mean(advantages)
         advantages /= np.std(advantages) + 1e-10
         # standardise rewards too
-        discounted_rewards -= np.mean(discounted_rewards)
-        discounted_rewards /= np.std(discounted_rewards) + 1e-8
+        # discounted_rewards -= np.mean(discounted_rewards)
+        # discounted_rewards /= np.std(discounted_rewards) + 1e-8
 
         self._discounted_rewards = discounted_rewards
         self._advantages = advantages

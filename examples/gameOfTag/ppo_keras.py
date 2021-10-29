@@ -118,23 +118,23 @@ class PPOKeras(RL):
         )
 
         # Model
-        self._actor = None
-        self._critic = None
+        self.actor_model = None
+        self.critic_model = None
         if config["model_para"]["model_initial"]:
             # Start from existing model
             print("[INFO] PPO existing model.")
-            self._actor = _load(config["model_para"][self._name + "_actor"])
-            self._critic = _load(config["model_para"][self._name + "_critic"])
+            self.actor_model = _load(config["model_para"][self._name + "_actor"])
+            self.critic_model = _load(config["model_para"][self._name + "_critic"])
         else:
             # Start from new model
             print("[INFO] PPO new model.")
-            self._actor = NeuralNetwork(
+            self.actor_model = NeuralNetwork(
                 self._name + "_actor",
                 num_output=config["model_para"]["action_dim"],
                 input1_shape=config["model_para"]["observation1_dim"],
                 input2_shape=config["model_para"]["observation2_dim"],
             )
-            self._critic = NeuralNetwork(
+            self.critic_model = NeuralNetwork(
                 self._name + "_critic",
                 num_output=1,
                 input1_shape=config["model_para"]["observation1_dim"],
@@ -151,8 +151,8 @@ class PPOKeras(RL):
         )
 
         # Model summary
-        # self._actor.summary()
-        # self._critic.summary()
+        # self.actor_model.summary()
+        # self.critic_model.summary()
 
         # Tensorboard
         tb_path = Path(config["model_para"]["tensorboard_path"]).joinpath(
@@ -165,11 +165,11 @@ class PPOKeras(RL):
 
     def save(self, version: int):
         tf.keras.models.save_model(
-            model=self._actor,
+            model=self.actor_model,
             filepath=self._actor_path / str(version),
         )
         tf.keras.models.save_model(
-            model=self._critic,
+            model=self.critic_model,
             filepath=self._critic_path / str(version),
         )
 
@@ -182,7 +182,7 @@ class PPOKeras(RL):
         images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
         stacked_images = tf.stack(images, axis=0)
         stacked_scalars = tf.stack(scalars, axis=0)
-        logits = self._actor.predict([stacked_images, stacked_scalars])
+        logits = self.actor_model.predict([stacked_images, stacked_scalars])
 
         logit_t = {
             vehicle: np.expand_dims(logit, axis=0)
@@ -209,7 +209,7 @@ class PPOKeras(RL):
         images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
         stacked_images = tf.stack(images, axis=0)
         stacked_scalars = tf.stack(scalars, axis=0)
-        values = self._critic.predict([stacked_images, stacked_scalars])
+        values = self.critic_model.predict([stacked_images, stacked_scalars])
 
         value_t = {vehicle: value for vehicle, value in zip(vehicles, values)}
 

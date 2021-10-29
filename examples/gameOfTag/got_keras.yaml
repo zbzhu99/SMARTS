@@ -38,21 +38,16 @@ model_para:
   prey_critic_lr: 0.001
 
   # PPO
-  critic_loss_weight: 0.5
-  entropy_loss_weight: 0 # 0.01
-  entropy_loss_discount_rate: 0 # 0.995
   gamma: 0.99 # Reward discount
   lam: 0.97
-  clip_value: 0.2
+  clip_ratio: 0.2
   target_kl: 0.01
 
   # Iteration size
-  n_steps: 1800 # Horizon, a.k.a, trajectory length
+  n_steps: 10 # Horizon, a.k.a, trajectory length
   max_traj: 100000
-  num_train_epochs: 5
-
-  # Downgrade last #n rewards 
-  downgrade_rewards: 0
+  actor_train_epochs: 50
+  critic_train_epochs: 50
 
   # Gradient batch size
   grad_batch: 128
