@@ -122,7 +122,7 @@ def main(config):
             for agent_id, logit in logit_t.items():
                 logprobability_t[agent_id] = got_ppo.logprobabilities(
                     logit, [action_t[agent_id]]
-                )[0]
+                ).numpy()[0]
 
             # Sample action from a distribution
             next_obs_t, reward_t, done_t, _ = env.step(action_t)

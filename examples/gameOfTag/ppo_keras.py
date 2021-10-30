@@ -37,7 +37,7 @@ from pathlib import Path
 absl.logging.set_verbosity(absl.logging.ERROR)
 
 
-def NeuralNetwork(name, num_output, input1_shape, input2_shape):
+def NeuralNetwork(name, num_output, input1_shape):
     # filter_num = [32, 32, 64, 64, 128]
     # kernel_size = [65, 13, 5, 2, 3]
     # pool_size = [4, 2, 2, 2, 1]
@@ -52,7 +52,6 @@ def NeuralNetwork(name, num_output, input1_shape, input2_shape):
     # pool_size = [4, 4, 2]
 
     input1 = tf.keras.layers.Input(shape=input1_shape, dtype=tf.uint8)
-    input2 = tf.keras.layers.Input(shape=input2_shape, dtype=tf.float32)
     # Scale and center
     input1_norm = (tf.cast(input1, tf.float32) / 255.0) - 0.5
     x_conv = input1_norm
@@ -81,9 +80,7 @@ def NeuralNetwork(name, num_output, input1_shape, input2_shape):
 
     output = tf.keras.layers.Dense(units=num_output, name="output")(dense2_out)
 
-    model = tf.keras.Model(
-        inputs=[input1, input2], outputs=output, name=f"AutoDrive_{name}"
-    )
+    model = tf.keras.Model(inputs=input1, outputs=output, name=f"AutoDrive_{name}")
 
     return model
 
@@ -131,13 +128,11 @@ class PPOKeras(RL):
                 self._name + "_actor",
                 num_output=config["model_para"]["action_dim"],
                 input1_shape=config["model_para"]["observation1_dim"],
-                input2_shape=config["model_para"]["observation2_dim"],
             )
             self.critic_model = NeuralNetwork(
                 self._name + "_critic",
                 num_output=1,
                 input1_shape=config["model_para"]["observation1_dim"],
-                input2_shape=config["model_para"]["observation2_dim"],
             )
 
         # Path for newly trained model
@@ -180,8 +175,7 @@ class PPOKeras(RL):
 
         images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
         stacked_images = np.stack(images, axis=0)
-        stacked_scalars = np.stack(scalars, axis=0)
-        logits = self.actor_model.predict([stacked_images, stacked_scalars])
+        logits = self.actor_model.predict(stacked_images)
 
         logit_t = {
             vehicle: np.expand_dims(logit, axis=0)
@@ -205,8 +199,7 @@ class PPOKeras(RL):
 
         images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
         stacked_images = np.stack(images, axis=0)
-        stacked_scalars = np.stack(scalars, axis=0)
-        values = self.critic_model.predict([stacked_images, stacked_scalars])
+        values = self.critic_model.predict(stacked_images)
 
         value_t = {vehicle: value[0] for vehicle, value in zip(vehicles, values)}
 
@@ -228,7 +221,7 @@ def _load(model_path):
 def logprobabilities(logit, action):
     # Compute the log-probabilities of taking actions a by using the logits (i.e. the output of the actor)
     logprobabilities_all = tf.nn.log_softmax(logit)
-    logprobability = np.sum(
+    logprobability = tf.reduce_sum(
         tf.one_hot(action, logit.shape[1]) * logprobabilities_all, axis=1
     )
 
@@ -246,79 +239,70 @@ def train_actor(
     images, scalars = zip(
         *(map(lambda x: (x["image"], x["scalar"]), agent.observation_buffer))
     )
-    stacked_image = tf.stack(images, axis=0)
-    stacked_scalar = tf.stack(scalars, axis=0)
+    stacked_image = np.stack(images, axis=0)
     traj_len = stacked_image.shape[0]
-    assert traj_len == stacked_scalar.shape[0]
+
+    logprobability_buffer = np.array(agent.logprobability_buffer)
 
     for ind in range(0, traj_len, grad_batch):
+        # Chunk data to fit into finite GPU memory for backpropagation
         image_chunk = stacked_image[ind : ind + grad_batch]
-        scalar_chunk = stacked_scalar[ind : ind + grad_batch]
-        old_probs_chunk = old_probs[ind : ind + grad_batch]
-        advantages_chunk = advantages[ind : ind + grad_batch]
-        actions_chunk = actions[ind : ind + grad_batch]
-        discounted_rewards_chunk = discounted_rewards[ind : ind + grad_batch]
+        action_chunk = agent.action_buffer[ind : ind + grad_batch]
+        advantage_chunk = agent.advantage_buffer[ind : ind + grad_batch]
+        logprobability_chunk = logprobability_buffer[ind : ind + grad_batch]
 
-        with tf.GradientTape() as tape:
-            policy_logits, values = model([image_chunk, scalar_chunk])
-            act_loss = actor_loss(
-                advantages=advantages_chunk,
-                old_probs=old_probs_chunk,
-                actions=actions_chunk,
-                policy_logits=policy_logits,
-                clip_value=clip_value,
+        with tf.GradientTape() as tape:  # Record operations for automatic differentiation.
+            logits = policy.actor_model(image_chunk)
+            ratio = tf.exp(
+                logprobabilities(logits, action_chunk) - logprobability_chunk
             )
-            cri_loss = critic_loss(
-                discounted_rewards=discounted_rewards_chunk,
-                value_est=values,
-                critic_loss_weight=critic_loss_weight,
+            min_advantage = tf.where(
+                advantage_chunk > 0,
+                (1 + clip_ratio) * advantage_chunk,
+                (1 - clip_ratio) * advantage_chunk,
             )
-            ent_loss = entropy_loss(
-                policy_logits=policy_logits, ent_discount_val=ent_discount_val
+            policy_loss = -tf.reduce_mean(
+                tf.minimum(ratio * advantage_chunk, min_advantage)
             )
-            tot_loss = act_loss + cri_loss + ent_loss
 
-        grads = tape.gradient(tot_loss, model.trainable_variables)
-        optimizer.apply_gradients(zip(grads, model.trainable_variables))
-
-    return tot_loss, act_loss, cri_loss, ent_loss
-
-
-# Train the policy by maxizing the PPO-Clip objective
-@tf.function
-def train_policy(
-    observation_buffer, action_buffer, logprobability_buffer, advantage_buffer
-):
-
-    with tf.GradientTape() as tape:  # Record operations for automatic differentiation.
-        ratio = tf.exp(
-            logprobabilities(actor(observation_buffer), action_buffer)
-            - logprobability_buffer
+        policy_grads = tape.gradient(
+            policy_loss, policy.actor_model.trainable_variables
         )
-        min_advantage = tf.where(
-            advantage_buffer > 0,
-            (1 + clip_ratio) * advantage_buffer,
-            (1 - clip_ratio) * advantage_buffer,
+        policy.actor_optimizer.apply_gradients(
+            zip(policy_grads, policy.actor_model.trainable_variables)
         )
 
-        policy_loss = -tf.reduce_mean(
-            tf.minimum(ratio * advantage_buffer, min_advantage)
-        )
-    policy_grads = tape.gradient(policy_loss, actor.trainable_variables)
-    policy_optimizer.apply_gradients(zip(policy_grads, actor.trainable_variables))
-
+    # Compute KL
     kl = tf.reduce_mean(
         logprobability_buffer
-        - logprobabilities(actor(observation_buffer), action_buffer)
+        - logprobabilities(
+            policy.actor_model.predict(stacked_image), agent.action_buffer
+        )
     )
     kl = tf.reduce_sum(kl)
+
     return kl
 
 
 # Train the value function by regression on mean-squared error
-@tf.function
-def train_value_function(observation_buffer, return_buffer):
-    with tf.GradientTape() as tape:  # Record operations for automatic differentiation.
-        value_loss = tf.reduce_mean((return_buffer - critic(observation_buffer)) ** 2)
-    value_grads = tape.gradient(value_loss, critic.trainable_variables)
-    value_optimizer.apply_gradients(zip(value_grads, critic.trainable_variables))
+def train_critic(policy, agent, grad_batch):
+    images, scalars = zip(
+        *(map(lambda x: (x["image"], x["scalar"]), agent.observation_buffer))
+    )
+    stacked_image = np.stack(images, axis=0)
+    traj_len = stacked_image.shape[0]
+
+    for ind in range(0, traj_len, grad_batch):
+        # Chunk data to fit into finite GPU memory for backpropagation
+        image_chunk = stacked_image[ind : ind + grad_batch]
+        return_chunk = agent.return_buffer[ind : ind + grad_batch]
+
+        with tf.GradientTape() as tape:  # Record operations for automatic differentiation.
+            value_loss = tf.reduce_mean(
+                (return_chunk - policy.critic_model(image_chunk)) ** 2
+            )
+
+        value_grads = tape.gradient(value_loss, policy.critic_model.trainable_variables)
+        policy.critic_optimizer.apply_gradients(
+            zip(value_grads, policy.critic_model.trainable_variables)
+        )
