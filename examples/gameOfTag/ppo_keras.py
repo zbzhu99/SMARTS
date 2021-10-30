@@ -173,6 +173,9 @@ class PPOKeras(RL):
         ]
         vehicles = [agent_id for agent_id in self._agent_ids if agent_id in obs.keys()]
 
+        if len(states) == 0:
+            return {}, {}
+
         images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
         stacked_images = np.stack(images, axis=0)
         logits = self.actor_model.predict(stacked_images)
@@ -196,6 +199,9 @@ class PPOKeras(RL):
             obs[agent_id] for agent_id in self._agent_ids if agent_id in obs.keys()
         ]
         vehicles = [agent_id for agent_id in self._agent_ids if agent_id in obs.keys()]
+
+        if len(states) == 0:
+            return {}
 
         images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
         stacked_images = np.stack(images, axis=0)
