@@ -1,11 +1,11 @@
-import random
-from pathlib import Path
+# import random
+# from pathlib import Path
 
-from smarts.sstudio import gen_scenario
-from smarts.sstudio import types as t
-from smarts.core import seed
+# from smarts.sstudio import gen_scenario
+# from smarts.sstudio import types as t
+# from smarts.core import seed
 
-seed(42)
+# seed(42)
 
 # traffic = t.Traffic(
 #     flows=[
@@ -28,15 +28,15 @@ seed(42)
 # )
 
 # training missions
-ego_missions = [
-    t.EndlessMission(begin=("top", 2, 5)),  # pred
-    t.EndlessMission(begin=("top", 2, 30)),  # prey
-]
+# ego_missions = [
+#     t.EndlessMission(begin=("top", 2, 5)),  # pred
+#     t.EndlessMission(begin=("top", 2, 30)),  # prey
+# ]
 
 
-scenario = t.Scenario(
-    # traffic={"all": traffic},
-    ego_missions=ego_missions,
-)
+# scenario = t.Scenario(
+#     # traffic={"all": traffic},
+#     ego_missions=ego_missions,
+# )
 
-gen_scenario(scenario, output_dir=str(Path(__file__).parent))
+# gen_scenario(scenario, output_dir=str(Path(__file__).parent))
