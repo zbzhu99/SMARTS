@@ -18,7 +18,7 @@ NEIGHBOURHOOD_RADIUS = 55
 
 
 class TagEnvKeras(gym.Env):
-    def __init__(self, config: Dict, seed: int = 42):
+    def __init__(self, config: Dict):
         self._config = config
         self._neighborhood_radius = config["env_para"]["neighborhood_radius"]
         self._rgb_wh = config["env_para"]["rgb_wh"]
@@ -122,7 +122,7 @@ class TagEnvKeras(gym.Env):
             agent_specs=agent_specs,
             headless=config["env_para"]["headless"],
             visdom=config["env_para"]["visdom"],
-            seed=seed,
+            seed=config["env_para"]["seed"],
         )
         # Wrap env with FrameStack to stack multiple observations
         env = smarts_frame_stack.FrameStack(

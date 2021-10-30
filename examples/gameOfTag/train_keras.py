@@ -52,8 +52,7 @@ def main(config):
 
     # Create env
     print("[INFO] Creating environments")
-    seed = config["env_para"]["seed"]
-    env = got_env.TagEnvKeras(config, seed)
+    env = got_env.TagEnvKeras(config)
 
     # Create agent
     print("[INFO] Creating agents")
