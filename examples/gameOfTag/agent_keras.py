@@ -7,7 +7,7 @@ class TagAgentKeras:
         if AgentType.PREDATOR in name or AgentType.PREY in name:
             self.name = name
         else:
-            raise Exception(f"Expected predator or prey, but got {name}.")
+            raise Exception(f"Expected {AgentType.__members__}, but got {name}.")
         self._config = config
         self._gamma = config["model_para"]["gamma"]
         self._lam = config["model_para"]["lam"]
@@ -20,7 +20,7 @@ class TagAgentKeras:
         self.advantage_buffer = []
         self.return_buffer = []
         self.logprobability_buffer = []
-        self.done_buffer = []
+        self._done_buffer = []
         self._reward_buffer = []
         self._value_buffer = []
         self._last_value = None
@@ -32,45 +32,46 @@ class TagAgentKeras:
         self._reward_buffer.append(reward)
         self._value_buffer.append(value)
         self.logprobability_buffer.append(logprobability)
-        self.done_buffer.append(done)
+        self._done_buffer.append(done)
 
     def add_last_transition(self, value):
         self._last_value = value
 
-    def finish_trajectory(self, last_value=0):
+    def finish_trajectory(self):
         # Finish the trajectory by computing advantage estimates and rewards-to-go
-        path_slice = slice(self.trajectory_start_index, self.pointer)
-        rewards = np.append(self.reward_buffer[path_slice], last_value)
-        values = np.append(self.value_buffer[path_slice], last_value)
-
-        deltas = rewards[:-1] + self.gamma * values[1:] - values[:-1]
-
-        self.advantage_buffer[path_slice] = discounted_cumulative_sums(
-            deltas, self.gamma * self.lam
+        values = np.append(self._value_buffer, self._last_value)
+        dones = np.array(self._done_buffer)
+        deltas = (
+            self._reward_buffer + (self._gamma * values[1:] * (1 - dones)) - values[:-1]
         )
-        self.return_buffer[path_slice] = discounted_cumulative_sums(
-            rewards, self.gamma
-        )[:-1]
 
-        self.trajectory_start_index = self.pointer
-
-    def get(self):
-        # Get all data of the buffer and normalize the advantages
-        self.pointer, self.trajectory_start_index = 0, 0
+        # Generalised advantage estimate
+        self.advantage_buffer = np.append(deltas, 0).astype(np.float32)
+        for t in reversed(range(len(deltas))):
+            self.advantage_buffer[t] = deltas[
+                t
+            ] + self._gamma * self._lam * self.advantage_buffer[t + 1] * (1 - dones[t])
+        self.advantage_buffer = self.advantage_buffer[:-1]
         advantage_mean, advantage_std = (
             np.mean(self.advantage_buffer),
             np.std(self.advantage_buffer),
         )
         self.advantage_buffer = (self.advantage_buffer - advantage_mean) / advantage_std
-        return (
-            self.observation_buffer,
-            self.action_buffer,
-            self.advantage_buffer,
-            self.return_buffer,
-            self.logprobability_buffer,
+
+        # Return = Discounted sum of rewards
+        self.return_buffer = np.append(self._reward_buffer, self._last_value).astype(
+            np.float32
         )
+        for t in reversed(range(len(self._reward_buffer))):
+            self.return_buffer[t] = self._reward_buffer[
+                t
+            ] + self._gamma * self.return_buffer[t + 1] * (1 - dones[t])
+        self.return_buffer = self.return_buffer[:-1]
+
+        # Cap the minimum Return
+        self.return_buffer[self.return_buffer < -50] = -50
 
 
-def discounted_cumulative_sums(x, discount):
-    # Discounted cumulative sums of vectors for computing rewards-to-go and advantage estimates
-    return scipy.signal.lfilter([1], [1, float(-discount)], x[::-1], axis=0)[::-1]
+# def discounted_cumulative_sums(x, discount):
+#     # Discounted cumulative sums of vectors for computing rewards-to-go and advantage estimates
+#     return scipy.signal.lfilter([1], [1, float(-discount)], x[::-1], axis=0)[::-1]

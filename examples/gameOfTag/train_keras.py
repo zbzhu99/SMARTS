@@ -53,7 +53,6 @@ def main(config):
     # Create env
     print("[INFO] Creating environments")
     seed = config["env_para"]["seed"]
-    ## seed = random.randint(0, 4294967295)  # [0, 2^32 -1)
     env = got_env.TagEnvKeras(config, seed)
 
     # Create agent
@@ -122,14 +121,11 @@ def main(config):
 
             for agent_id, logit in logit_t.items():
                 logprobability_t[agent_id] = got_ppo.logprobabilities(
-                    logit, action_t[agent_id]
-                )
+                    logit, [action_t[agent_id]]
+                )[0]
 
             # Sample action from a distribution
-            action_numpy_t = {
-                vehicle: action[0].numpy() for vehicle, action in action_t.items()
-            }
-            next_obs_t, reward_t, done_t, _ = env.step(action_numpy_t)
+            next_obs_t, reward_t, done_t, _ = env.step(action_t)
             steps_t += 1
 
             # Store observation, action, and reward
@@ -194,34 +190,12 @@ def main(config):
                     next_value_t = ppo_prey.critic({agent_id: next_obs_t[agent_id]})
                 else:
                     raise Exception(f"Unknown {agent_id}.")
-                all_agents[agent_id].add_last_transition(
-                    value=next_value_t[agent_id][0]
-                )
+                all_agents[agent_id].add_last_transition(value=next_value_t[agent_id])
             else:  # Agent is done
                 all_agents[agent_id].add_last_transition(value=np.float32(0))
 
-        for agent_id in active_agents.keys():
-            # Compute generalised advantages
+            # Compute generalised advantages and return
             all_agents[agent_id].finish_trajectory()
-
-            actions = all_agents[agent_id].actions
-            action_inds = tf.stack(
-                [tf.range(0, len(actions)), tf.cast(actions, tf.int32)], axis=1
-            )
-
-            # Compute old probabilities
-            probs_softmax = tf.nn.softmax(all_agents[agent_id].probs)
-            all_agents[agent_id].old_probs = tf.gather_nd(probs_softmax, action_inds)
-
-        predator_total_loss = np.zeros((num_train_epochs))
-        predator_actor_loss = np.zeros((num_train_epochs))
-        predator_critic_loss = np.zeros(((num_train_epochs)))
-        predator_entropy_loss = np.zeros((num_train_epochs))
-
-        prey_total_loss = np.zeros((num_train_epochs))
-        prey_actor_loss = np.zeros((num_train_epochs))
-        prey_critic_loss = np.zeros(((num_train_epochs)))
-        prey_entropy_loss = np.zeros((num_train_epochs))
 
         # Elapsed steps
         step = (traj_num + 1) * n_steps
@@ -229,62 +203,35 @@ def main(config):
         print("[INFO] Training")
         # Train predator and prey.
         # Run multiple gradient ascent on the samples.
-        for epoch in range(num_train_epochs):
-            for agent_id in active_agents.keys():
-                agent = all_agents[agent_id]
-                if agent_id in all_predator_ids:
-                    loss_tuple = got_ppo.train_model(
-                        model=ppo_predator.model,
-                        optimizer=ppo_predator.optimizer,
-                        actions=agent.actions,
-                        old_probs=agent.old_probs,
-                        states=agent.states,
-                        advantages=agent.advantages,
-                        discounted_rewards=agent.discounted_rewards,
-                        clip_value=clip_value,
-                        critic_loss_weight=critic_loss_weight,
-                        grad_batch=config["model_para"]["grad_batch"],
-                    )
-                    predator_total_loss[epoch] += loss_tuple[0]
-                    predator_actor_loss[epoch] += loss_tuple[1]
-                    predator_critic_loss[epoch] += loss_tuple[2]
-                    predator_entropy_loss[epoch] += loss_tuple[3]
+        active_predators = [
+            all_agents[agent_id]
+            for agent_id in active_agents.keys()
+            if AgentType.PREDATOR in agent_id
+        ]
+        active_preys = [
+            all_agents[agent_id]
+            for agent_id in active_agents.keys()
+            if AgentType.PREY in agent_id
+        ]
 
-                if agent_id in all_prey_ids:
-                    loss_tuple = got_ppo.train_model(
-                        model=ppo_prey.model,
-                        optimizer=ppo_prey.optimizer,
-                        actions=agent.actions,
-                        old_probs=agent.old_probs,
-                        states=agent.states,
-                        advantages=agent.advantages,
-                        discounted_rewards=agent.discounted_rewards,
-                        clip_value=clip_value,
-                        critic_loss_weight=critic_loss_weight,
-                        grad_batch=config["model_para"]["grad_batch"],
-                    )
-                    prey_total_loss[epoch] += loss_tuple[0]
-                    prey_actor_loss[epoch] += loss_tuple[1]
-                    prey_critic_loss[epoch] += loss_tuple[2]
-                    prey_entropy_loss[epoch] += loss_tuple[3]
-
-
-        print("[INFO] Record metrics")
-        # Record predator performance
-        records = []
-        records.append(("predator_tot_loss", np.mean(predator_total_loss), step))
-        records.append(("predator_critic_loss", np.mean(predator_critic_loss), step))
-        records.append(("predator_actor_loss", np.mean(predator_actor_loss), step))
-        records.append(("predator_entropy_loss", np.mean(predator_entropy_loss), step))
-        ppo_predator.write_to_tb(records)
-
-        # Record prey perfromance
-        records = []
-        records.append(("prey_tot_loss", np.mean(prey_total_loss), step))
-        records.append(("prey_critic_loss", np.mean(prey_critic_loss), step))
-        records.append(("prey_actor_loss", np.mean(prey_actor_loss), step))
-        records.append(("prey_entropy_loss", np.mean(prey_entropy_loss), step))
-        ppo_prey.write_to_tb(records)
+        for policy, agents in [
+            (ppo_predator, active_predators),
+            (ppo_prey, active_preys),
+        ]:
+            update_actor(
+                policy,
+                agents,
+                config["model_para"]["actor_train_epochs"],
+                config["model_para"]["target_kl"],
+                config["model_para"]["clip_ratio"],
+                config["model_para"]["grad_batch"],
+            )
+            update_critic(
+                policy,
+                agents,
+                config["model_para"]["critic_train_epochs"],
+                config["model_para"]["grad_batch"],
+            )
 
         # Save model
         if traj_num % save_interval == 0:
@@ -294,6 +241,23 @@ def main(config):
 
     # Close env
     env.close()
+
+
+def update_actor(policy, agents, iterations, target_kl, clip_ratio, grad_batch):
+    for agent in agents:
+        for _ in range(iterations):
+            kl = got_ppo.train_actor(
+                policy=policy, agent=agent, clip_ratio=clip_ratio, grad_batch=grad_batch
+            )
+            if kl > 1.5 * target_kl:
+                # Early Stopping
+                break
+
+
+def update_critic(policy, agents, iterations, grad_batch):
+    for agent in agents:
+        for _ in range(iterations):
+            got_ppo.train_critic(policy=policy, agent=agent, grad_batch=grad_batch)
 
 
 if __name__ == "__main__":

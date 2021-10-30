@@ -32,7 +32,6 @@ import absl.logging
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
 
 # Suppress warning
 absl.logging.set_verbosity(absl.logging.ERROR)
@@ -180,8 +179,8 @@ class PPOKeras(RL):
         vehicles = [agent_id for agent_id in self._agent_ids if agent_id in obs.keys()]
 
         images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
-        stacked_images = tf.stack(images, axis=0)
-        stacked_scalars = tf.stack(scalars, axis=0)
+        stacked_images = np.stack(images, axis=0)
+        stacked_scalars = np.stack(scalars, axis=0)
         logits = self.actor_model.predict([stacked_images, stacked_scalars])
 
         logit_t = {
@@ -190,11 +189,9 @@ class PPOKeras(RL):
         }
 
         action_t = {
-            vehicle: tf.squeeze(
-                tf.random.categorical([logit], 1, seed=self._seed), axis=1
-            )
+            vehicle: tf.random.categorical([logit], 1, seed=self._seed).numpy()[0][0]
             if train == Mode.TRAIN
-            else tf.math.argmax([logit], 1)
+            else np.argmax(logit)
             for vehicle, logit in zip(vehicles, logits)
         }
 
@@ -207,11 +204,11 @@ class PPOKeras(RL):
         vehicles = [agent_id for agent_id in self._agent_ids if agent_id in obs.keys()]
 
         images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
-        stacked_images = tf.stack(images, axis=0)
-        stacked_scalars = tf.stack(scalars, axis=0)
+        stacked_images = np.stack(images, axis=0)
+        stacked_scalars = np.stack(scalars, axis=0)
         values = self.critic_model.predict([stacked_images, stacked_scalars])
 
-        value_t = {vehicle: value for vehicle, value in zip(vehicles, values)}
+        value_t = {vehicle: value[0] for vehicle, value in zip(vehicles, values)}
 
         return value_t
 
@@ -231,32 +228,29 @@ def _load(model_path):
 def logprobabilities(logit, action):
     # Compute the log-probabilities of taking actions a by using the logits (i.e. the output of the actor)
     logprobabilities_all = tf.nn.log_softmax(logit)
-    logprobability = tf.reduce_sum(
+    logprobability = np.sum(
         tf.one_hot(action, logit.shape[1]) * logprobabilities_all, axis=1
     )
 
     return logprobability
 
 
-def train_model(
-    model: tf.keras.Model,
-    optimizer: tf.keras.optimizers,
-    actions: List,
-    old_probs,
-    states: List[Dict[str, np.ndarray]],
-    advantages: np.ndarray,
-    discounted_rewards: np.ndarray,
-    ent_discount_val: float,
-    clip_value: float,
-    critic_loss_weight: float,
-    grad_batch=64,
+# Train the policy by maxizing the PPO-Clip objective
+def train_actor(
+    policy,
+    agent,
+    clip_ratio,
+    grad_batch,
 ):
-    images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
+
+    images, scalars = zip(
+        *(map(lambda x: (x["image"], x["scalar"]), agent.observation_buffer))
+    )
     stacked_image = tf.stack(images, axis=0)
     stacked_scalar = tf.stack(scalars, axis=0)
-
     traj_len = stacked_image.shape[0]
     assert traj_len == stacked_scalar.shape[0]
+
     for ind in range(0, traj_len, grad_batch):
         image_chunk = stacked_image[ind : ind + grad_batch]
         scalar_chunk = stacked_scalar[ind : ind + grad_batch]
