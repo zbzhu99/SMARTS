@@ -108,6 +108,11 @@ shifted_map-AUTOGEN.net.xml
 *.shf
 *.tfrecord*
 
+# Tensorflow
+events.out.tfevents.*
+*/gameOfTag/logs/
+*/gameOfTag/models/
+
 # Manually generated sumo route files
 !zoo/evaluation/scenarios/**/traffic/*.rou.xml
 !smarts/sstudio/tests/*.rou.xml
@@ -134,9 +139,6 @@ ultra/ultra/scenarios/task*/*/
 
 # Singularity
 *.sif
-
-# Tensorflow
-events.out.tfevents.*
 
 # Folder containing observations collected .pkl files for imitation learning
 collected_observations/
