@@ -355,17 +355,13 @@ def predator_reward_adapter(obs, env_reward):
     #     dist_reward = inverse(min_distance)
     #     reward += (
     #         np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 5
-    #     )  # Reward [0:10]
+    #     )  # Reward [0:5]
     # else:  # No neighborhood preys
     #     reward -= 1
 
-    # Penalty for not moving
-    # if obs.events.not_moving:
+    # Reward for driving on the road
     if obs.ego_vehicle_state.speed > 5.0:
         reward += 1
-
-    # Reward for staying on road
-    # reward += 1
 
     return np.float32(reward)
 
@@ -392,21 +388,18 @@ def prey_reward_adapter(obs, env_reward):
     # Distance based reward
     targets = get_targets(obs.neighborhood_vehicle_states, AgentType.PREDATOR)
     if targets:
-        distances = distance_to_targets(ego, targets)
-        min_distance = np.amin(distances)
-        dist_reward = inverse(min_distance)
-        reward -= (
-            np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 5
-        )  # Reward [-10:0]
-        # pass
+        # distances = distance_to_targets(ego, targets)
+        # min_distance = np.amin(distances)
+        # dist_reward = inverse(min_distance)
+        # reward -= (
+        #     np.clip(dist_reward, 0, NEIGHBOURHOOD_RADIUS) / NEIGHBOURHOOD_RADIUS * 5
+        # )  # Reward [-5:0]
+        pass
     else:  # No neighborhood predators
         reward += 1
 
-    # Penalty for not moving
+    # Reward for driving on the road
     if obs.ego_vehicle_state.speed > 5.0:
         reward += 1
-
-    # Reward for staying on road
-    # reward += 1
 
     return np.float32(reward)

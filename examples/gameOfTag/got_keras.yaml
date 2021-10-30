@@ -62,10 +62,10 @@ model_para:
   # Local
   # tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
   # model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
-  # predator_actor: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/predator_2021_10_17_06_03/13056"
-  # predator_critic: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/predator_2021_10_17_06_03/13056"
-  # prey_actor: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/prey_2021_10_17_06_03/13056"
-  # prey_critic: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/prey_2021_10_17_06_03/13056"
+  # predator_actor: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator_actor_2021_10_30_05_29/378"
+  # predator_critic: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/predator_critic_2021_10_30_05_29/378"
+  # prey_actor: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey_actor_2021_10_30_05_29/378"
+  # prey_critic: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/prey_critic_2021_10_30_05_29/378"
 
   # Docker
   tensorboard_path: "/src/examples/gameOfTag/logs/"
