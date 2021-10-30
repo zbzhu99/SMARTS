@@ -145,8 +145,8 @@ class PPOKeras(RL):
         )
 
         # Model summary
-        # self.actor_model.summary()
-        # self.critic_model.summary()
+        self.actor_model.summary()
+        self.critic_model.summary()
 
         # Tensorboard
         tb_path = Path(config["model_para"]["tensorboard_path"]).joinpath(

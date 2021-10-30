@@ -18,10 +18,12 @@ env_para:
     - prey1
     # - prey2
   scenarios: 
+    # - /home/kyber/workspaces/SMARTS/scenarios/game_of_tag_demo_map
     # - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
     # - /home/a84166141/workspaces/SMARTS/scenarios/cloverleaf
     # - /home/adai/workspaces/SMARTS/scenarios/cloverleaf    
-    - /src/scenarios/cloverleaf
+    # - /src/scenarios/cloverleaf
+    - /src/scenarios/game_of_tag_demo_map
 
 model_para:
   # Observation and action space

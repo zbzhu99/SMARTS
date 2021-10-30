@@ -18,10 +18,12 @@ env_para:
     - prey1
     # - prey2
   scenarios: 
-    - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
+    # - /home/kyber/workspaces/SMARTS/scenarios/game_of_tag_demo_map
+    # - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
     # - /home/a84166141/workspaces/SMARTS/scenarios/cloverleaf
     # - /home/adai/workspaces/SMARTS/scenarios/cloverleaf    
     # - /src/scenarios/cloverleaf
+    - /src/scenarios/game_of_tag_demo_map
 
 model_para:
   # Observation and action space
@@ -38,16 +40,16 @@ model_para:
   prey_critic_lr: 0.001
 
   # PPO
-  gamma: 0.99 # Reward discount
-  lam: 0.97
+  gamma: 0.99 # Reward decay
+  lam: 0.97 # Advantage decay
   clip_ratio: 0.2
   target_kl: 0.01
 
   # Iteration size
-  n_steps: 10 # Horizon, a.k.a, trajectory length
+  n_steps: 1800 # Horizon, a.k.a, trajectory length
   max_traj: 100000
-  actor_train_epochs: 50
-  critic_train_epochs: 50
+  actor_train_epochs: 10
+  critic_train_epochs: 10
 
   # Gradient batch size
   grad_batch: 128
@@ -58,13 +60,13 @@ model_para:
   model_initial: False
 
   # Local
-  tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
-  model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
+  # tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
+  # model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
   # predator_actor: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/predator_2021_10_17_06_03/13056"
   # predator_critic: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/predator_2021_10_17_06_03/13056"
   # prey_actor: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/prey_2021_10_17_06_03/13056"
   # prey_critic: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/prey_2021_10_17_06_03/13056"
 
   # Docker
-  # tensorboard_path: "/src/examples/gameOfTag/logs/"
-  # model_path: "/src/examples/gameOfTag/models/"
+  tensorboard_path: "/src/examples/gameOfTag/logs/"
+  model_path: "/src/examples/gameOfTag/models/"
