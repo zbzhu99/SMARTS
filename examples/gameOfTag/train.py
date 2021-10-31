@@ -43,33 +43,25 @@ from pathlib import Path
 def main(config):
 
     print("[INFO] Train")
-    # Save and eval interval
-    save_interval = config["model_para"].get("save_interval", 50)
-
-    # Mode: Evaluation or Testing
-    mode = Mode(config["model_para"]["mode"])
+    save_interval = config["model_para"].get("save_interval", 20)
+    mode = Mode(config["model_para"]["mode"])  # Mode: Evaluation or Testing
 
     # Traning parameters
     num_train_epochs = config["model_para"]["num_train_epochs"]
     n_steps = config["model_para"]["n_steps"]
     max_traj = config["model_para"]["max_traj"]
-    clip_value = config["model_para"]["clip_value"]
+    clip_value = config["model_para"]["clip_ratio"]
     critic_loss_weight = config["model_para"]["critic_loss_weight"]
     ent_discount_val = config["model_para"]["entropy_loss_weight"]
     ent_discount_rate = config["model_para"]["entropy_loss_discount_rate"]
 
     # Create env
     print("[INFO] Creating environments")
-    seed = config["env_para"]["seed"]
-    ## seed = random.randint(0, 4294967295)  # [0, 2^32 -1)
-    env = got_env.TagEnv(config, seed)
+    env = got_env.TagEnv(config)
 
     # Create agent
     print("[INFO] Creating agents")
-    all_agents = {
-        name: got_agent.TagAgent(name, config)
-        for name in config["env_para"]["agent_ids"]
-    }
+    all_agents = {name: got_agent.TagAgent(name, config) for name in env.agent_ids}
     all_predators_id = env.predators
     all_preys_id = env.preys
 
@@ -118,7 +110,6 @@ def main(config):
     steps_t = 0
     episode_reward_predator = 0
     episode_reward_prey = 0
-    train = True if mode == Mode.TRAIN else False
     for traj_num in range(max_traj):
         [agent.reset() for _, agent in all_agents.items()]
         active_agents = {}
@@ -137,9 +128,9 @@ def main(config):
                 actions_t_predator,
                 action_samples_t_predator,
                 values_t_predator,
-            ) = ppo_predator.act(obs=states_t, train=train)
+            ) = ppo_predator.act(obs=states_t, train=mode)
             actions_t_prey, action_samples_t_prey, values_t_prey = ppo_prey.act(
-                obs=states_t, train=train
+                obs=states_t, train=mode
             )
             actions_t.update(actions_t_predator)
             actions_t.update(actions_t_prey)
@@ -166,7 +157,7 @@ def main(config):
                     prob=actions_t[agent_id],
                     reward=rewards_t[agent_id],
                 )
-                if "predator" in agent_id:
+                if AgentType.PREDATOR in agent_id:
                     episode_reward_predator += rewards_t[agent_id]
                 else:
                     episode_reward_prey += rewards_t[agent_id]
@@ -216,19 +207,20 @@ def main(config):
             # Assign next_states to states
             states_t = next_states_t
 
+        # Skip the remainder if evaluating
         if mode == Mode.EVALUATE:
             continue
 
         # Compute and store last state value
         for agent_id in active_agents.keys():
             if dones_t.get(agent_id, None) == 0:  # Agent not done yet
-                if AgentType.PREDATOR.value in agent_id:
+                if AgentType.PREDATOR in agent_id:
                     _, _, next_values_t = ppo_predator.act(
-                        {agent_id: next_states_t[agent_id]}, train=train
+                        {agent_id: next_states_t[agent_id]}, train=mode
                     )
-                elif AgentType.PREY.value in agent_id:
+                elif AgentType.PREY in agent_id:
                     _, _, next_values_t = ppo_prey.act(
-                        {agent_id: next_states_t[agent_id]}, train=train
+                        {agent_id: next_states_t[agent_id]}, train=mode
                     )
                 else:
                     raise Exception(f"Unknown {agent_id}.")

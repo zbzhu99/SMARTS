@@ -1,5 +1,5 @@
-from examples.gameOfTag.types import AgentType
 import numpy as np
+from examples.gameOfTag.types import AgentType
 
 
 class TagAgentKeras:

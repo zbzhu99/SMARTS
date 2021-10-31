@@ -1,4 +1,5 @@
 import os
+from examples.gameOfTag.types import Mode
 
 # Set pythonhashseed
 os.environ["PYTHONHASHSEED"] = "0"
@@ -147,7 +148,7 @@ class PPO(RL):
             filepath=save_path,
         )
 
-    def act(self, obs, train: bool):
+    def act(self, obs, train: Mode):
         actions = {}
         action_samples = {}
         values = {}
@@ -171,7 +172,7 @@ class PPO(RL):
                 actions[vehicle] = tf.squeeze(actions_t, axis=0)
                 values[vehicle] = tf.squeeze(values_t)
 
-                if train:
+                if train == Mode.TRAIN:
                     actions_dist_t = tfp.distributions.Categorical(
                         logits=actions[vehicle]
                     )

@@ -150,7 +150,7 @@ class PPOKeras(RL):
 
         # Tensorboard
         tb_path = Path(config["model_para"]["tensorboard_path"]).joinpath(
-            f"{name}_actor_{time}"
+            f"{name}_{time}"
         )
         self.tb = tf.summary.create_file_writer(str(tb_path))
 

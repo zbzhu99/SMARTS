@@ -1,16 +1,17 @@
 import numpy as np
 import tensorflow as tf
+from examples.gameOfTag.types import AgentType
 
 
 class TagAgent:
     def __init__(self, name, config):
-        if "predator" in name or "prey" in name:
+        if AgentType.PREDATOR in name or AgentType.PREY in name:
             self.name = name
         else:
-            raise Exception(f"Expected predator or prey, but got {name}.")
+            raise Exception(f"Expected {AgentType.__members__}, but got {name}.")
         self._config = config
-        self.reset()
         self._gamma = config["model_para"]["gamma"]
+        self.reset()
 
     def reset(self):
         self._states = []

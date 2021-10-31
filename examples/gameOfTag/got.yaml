@@ -8,9 +8,9 @@ env_para:
   max_episode_steps: 1800 # 3 minutes. Maximum steps per episode.
   num_stack: 4 # Number of frames to stack
   num_skip: 1 # Frequency of frames to be stacked
-  action_space_type: "Lane"
+  # action_space_type: "Lane"
   # action_space_type: "LaneWithContinuousSpeed"
-  # action_space_type: "Continuous"
+  action_space_type: "Continuous"
   agent_ids: 
     - predator1
     # - predator2
@@ -29,9 +29,9 @@ model_para:
   # Observation and action space
   observation1_dim: [256, 256, 12] # rgb image * num_stack
   observation2_dim: [8] # [steering, speed] * num_stack
-  action_dim: 4 # Lane
+  # action_dim: 4 # Lane
   # action_dim: 0 # LaneWithContinuousSpeed
-  # action_dim: 5 # Continuous    
+  action_dim: 5 # Continuous    
   
   # Optimizer
   initial_lr_predator: 0.0003
@@ -42,7 +42,7 @@ model_para:
   entropy_loss_weight: 0 # 0.01
   entropy_loss_discount_rate: 0 # 0.995
   gamma: 0.99 # Reward discount
-  clip_value: 0.2
+  clip_ratio: 0.2
 
   # Iteration size
   n_steps: 1800 # Horizon, a.k.a, trajectory length
