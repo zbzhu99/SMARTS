@@ -360,8 +360,8 @@ def predator_reward_adapter(obs, env_reward):
     #     reward -= 1
 
     # Reward for driving on the road
-    if obs.ego_vehicle_state.speed > 5.0:
-        reward += 1
+    # if obs.ego_vehicle_state.speed > 5.0:
+    #     reward += 1
 
     return np.float32(reward)
 
@@ -399,7 +399,7 @@ def prey_reward_adapter(obs, env_reward):
         reward += 1
 
     # Reward for driving on the road
-    if obs.ego_vehicle_state.speed > 5.0:
-        reward += 1
+    # if obs.ego_vehicle_state.speed > 5.0:
+    #     reward += 1
 
     return np.float32(reward)
