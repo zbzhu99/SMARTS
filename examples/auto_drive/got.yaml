@@ -60,5 +60,5 @@ model_para:
   # path_old_model: "/home/kyber/workspaces/training/cruiser_2021_10_17_02_00/models/cruiser_2021_10_17_06_03/13056"
 
   # Docker
-  tensorboard_path: "/src/examples/auto_drive/logs/"
-  model_path: "/src/examples/auto_drive/models/"
+  path_tensorboard: "/src/examples/auto_drive/logs/"
+  path_new_model: "/src/examples/auto_drive/models/"
