@@ -32,16 +32,16 @@ class PPO(rl.RL):
             self.model = _load(self.config["model_para"]["path_old_model"])
         else:  # Start from new model
             print("[INFO] PPO new model.")
-            self.model = cnn.getattr(config["model_para"]["nn"])(
+            self.model = getattr(cnn, config["model_para"]["nn"])(
                 self.name,
                 self.config["model_para"]["action_dim"],
                 self.config["model_para"]["observation1_dim"],
                 self.config["model_para"]["observation2_dim"],
             )
         # Path for newly trained model
-        self.path_new_model = Path(self.config["model_para"]["path_new_model"]).joinpath(
-            f"{name}_{datetime.now().strftime('%Y_%m_%d_%H_%M')}"
-        )
+        self.path_new_model = Path(
+            self.config["model_para"]["path_new_model"]
+        ).joinpath(f"{name}_{datetime.now().strftime('%Y_%m_%d_%H_%M')}")
         # Model summary
         self.model.summary()
 
