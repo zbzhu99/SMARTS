@@ -22,7 +22,7 @@ class Traffic(gym.Env):
         self._rgb_wh = config["env_para"]["rgb_wh"]
         self.agent_ids = config["env_para"]["agent_ids"]
 
-        agent_interface = smarts_agent_interface.AgentInterface(
+        vehicle_interface = smarts_agent_interface.AgentInterface(
             max_episode_steps=config["env_para"]["max_episode_steps"],
             neighborhood_vehicles=smarts_agent_interface.NeighborhoodVehicles(
                 radius=self._neighborhood_radius
@@ -48,7 +48,7 @@ class Traffic(gym.Env):
         # Create agent spec
         agent_specs = {
             agent_id: smarts_agent.AgentSpec(
-                interface=agent_interface,
+                interface=vehicle_interface,
                 agent_builder=None,
                 observation_adapter=observation_adapter,
                 reward_adapter=reward_adapter,
@@ -272,8 +272,6 @@ def inverse(x: float) -> float:
 def reward_adapter(obs, env_reward):
     ego = obs.ego_vehicle_state
     reward = 0
-
-    print("EGO ID :   ",ego.id)
 
     # Penalty for driving off road
     if obs.events.off_road:

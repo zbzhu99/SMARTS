@@ -55,10 +55,10 @@ model_para:
   model_initial: False
 
   # Local
-  path_tensorboard: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
-  path_new_model: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
-  path_old_model: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/predator_2021_10_17_06_03/13056"
+  # path_tensorboard: "/home/kyber/workspaces/SMARTS/examples/auto_drive/logs/"
+  # path_new_model: "/home/kyber/workspaces/SMARTS/examples/auto_drive/models/"
+  # path_old_model: "/home/kyber/workspaces/training/cruiser_2021_10_17_02_00/models/cruiser_2021_10_17_06_03/13056"
 
   # Docker
-  # tensorboard_path: "/src/examples/gameOfTag/logs/"
-  # model_path: "/src/examples/gameOfTag/models/"
+  tensorboard_path: "/src/examples/auto_drive/logs/"
+  model_path: "/src/examples/auto_drive/models/"
