@@ -5,25 +5,20 @@ env_para:
   visdom: False
   neighborhood_radius: 55 # Radius (meter) for neighborhood vehicles
   rgb_wh: 110 # Height and width (meter) of RGB image in SMARTS observation
-  max_episode_steps: 1800 # 3 minutes. Maximum steps per episode.
+  max_episode_steps: 200 # 20 seconds. Maximum steps per episode.
   num_stack: 4 # Number of frames to stack
   num_skip: 1 # Frequency of frames to be stacked
   action_space_type: "Lane"
   # action_space_type: "LaneWithContinuousSpeed"
   # action_space_type: "Continuous"
   agent_ids: 
-    - predator1
+    - Bear1
     # - predator2
-    # - predator3
-    - prey1
+    # - prey1
     # - prey2
   scenarios: 
-    # - /home/kyber/workspaces/SMARTS/scenarios/game_of_tag_demo_map
-    # - /home/kyber/workspaces/SMARTS/scenarios/cloverleaf
-    # - /home/a84166141/workspaces/SMARTS/scenarios/cloverleaf
-    # - /home/adai/workspaces/SMARTS/scenarios/cloverleaf    
-    # - /src/scenarios/cloverleaf
-    - /src/scenarios/game_of_tag_demo_map
+    - /home/kyber/workspaces/SMARTS/scenarios/loop
+    # - /src/scenarios/loop
 
 model_para:
   # Observation and action space
@@ -39,21 +34,21 @@ model_para:
 
   # PPO
   critic_loss_weight: 0.5
-  entropy_loss_weight: 0 # 0.01
-  entropy_loss_discount_rate: 0 # 0.995
   gamma: 0.99 # Reward discount
   clip_ratio: 0.2
 
-  # Iteration size
-  n_steps: 1800 # Horizon, a.k.a, trajectory length
-  max_traj: 100000
-  num_train_epochs: 3
+  # NeuralNetwork
+  nn: NeuralNetwork1
+  # nn: NeuralNetwork2
+  # nn: ResidualNet
 
-  # Downgrade last #n rewards 
-  downgrade_rewards: 0
+  # Iteration size
+  n_steps: 4000 # Horizon, a.k.a, trajectory length
+  max_traj: 100000
+  num_train_epochs: 1
 
   # Gradient batch size
-  grad_batch: 128
+  grad_batch: 256
 
   # Models and logs
   save_interval: 20
@@ -61,11 +56,11 @@ model_para:
   model_initial: False
 
   # Local
-  # tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
-  # model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
+  tensorboard_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/logs/"
+  model_path: "/home/kyber/workspaces/SMARTS/examples/gameOfTag/models/"
   # model_predator: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/predator_2021_10_17_06_03/13056"
   # model_prey: "/home/kyber/workspaces/training/got_2021_10_17_02_00/models/prey_2021_10_17_06_03/13056"
 
   # Docker
-  tensorboard_path: "/src/examples/gameOfTag/logs/"
-  model_path: "/src/examples/gameOfTag/models/"
+  # tensorboard_path: "/src/examples/gameOfTag/logs/"
+  # model_path: "/src/examples/gameOfTag/models/"
