@@ -132,7 +132,7 @@ class HiWayEnv(gym.Env):
             agent_interfaces=agent_interfaces,
             traffic_sim=SumoTrafficSimulation(
                 headless=sumo_headless,
-                time_resolution=timestep_sec,
+                time_resolution=fixed_timestep_sec,
                 num_external_sumo_clients=num_external_sumo_clients,
                 sumo_port=sumo_port,
                 auto_start=sumo_auto_start,
