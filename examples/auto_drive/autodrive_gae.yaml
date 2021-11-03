@@ -42,13 +42,13 @@ model_para:
   # NeuralNetwork
   # nn: NeuralNetwork1
   nn: NeuralNetwork2
-  # nn: ResidualNet
+  # nn: DreamerV2
 
   # Iteration size
   n_steps: 4000 # Horizon, a.k.a, trajectory length
   max_traj: 100000
-  actor_train_epochs: 10
-  critic_train_epochs: 10
+  actor_train_epochs: 80
+  critic_train_epochs: 80
 
   # Gradient batch size
   grad_batch: 256
