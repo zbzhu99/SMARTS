@@ -238,7 +238,7 @@ def update_critic(policy, agents, iterations, grad_batch):
 
 
 if __name__ == "__main__":
-    config_yaml = (Path(__file__).absolute().parent).joinpath("got_keras.yaml")
+    config_yaml = (Path(__file__).absolute().parent).joinpath("autodrive_gae.yaml")
     with open(config_yaml, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
