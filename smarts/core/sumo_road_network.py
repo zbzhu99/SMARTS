@@ -26,7 +26,7 @@ import trimesh
 import trimesh.scene
 from cached_property import cached_property
 from functools import lru_cache
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import Polygon
 from shapely.ops import snap, triangulate
 from subprocess import check_output
 from trimesh.exchange import gltf

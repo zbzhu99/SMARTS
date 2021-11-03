@@ -16,7 +16,7 @@ NEIGHBOURHOOD_RADIUS = 55
 
 
 class Traffic(gym.Env):
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict, seed:int):
         self._config = config
         self._neighborhood_radius = config["env_para"]["neighborhood_radius"]
         self._rgb_wh = config["env_para"]["rgb_wh"]
@@ -63,7 +63,7 @@ class Traffic(gym.Env):
             agent_specs=agent_specs,
             headless=config["env_para"]["headless"],
             visdom=config["env_para"]["visdom"],
-            seed=config["env_para"]["seed"],
+            seed=seed,
         )
         # Wrap env with FrameStack to stack multiple observations
         env = smarts_frame_stack.FrameStack(
@@ -287,4 +287,9 @@ def reward_adapter(obs, env_reward):
 
     # Distance based reward
     reward += env_reward
+
+    # Speed based reward
+    if obs.ego_vehicle_state.speed > 10.0:
+        reward += 1
+
     return np.float32(reward)

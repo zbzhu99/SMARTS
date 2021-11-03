@@ -54,7 +54,7 @@ def main(config):
 
     # Create env
     print("[INFO] Creating environments")
-    env = traffic.Traffic(config)
+    env = traffic.Traffic(config, config["env_para"]["seed"])
 
     # Create agent
     print("[INFO] Creating agents")
@@ -83,6 +83,7 @@ def main(config):
     episode = 0
     steps_t = 0
     episode_reward = 0
+    flag_crash = False
     for traj_num in range(max_traj):
         [agent.reset() for _, agent in all_agents.items()]
         active_agents = {}
@@ -111,7 +112,22 @@ def main(config):
                 vehicle: action_sample_t.numpy()
                 for vehicle, action_sample_t in action_samples_t.items()
             }
-            next_states_t, rewards_t, dones_t, _ = env.step(action_numpy_t)
+            try:
+                next_states_t, rewards_t, dones_t, _ = env.step(action_numpy_t)
+            except:
+                # To counter tracii error
+                print(
+                    f"   Simulation crashed and reset. Cur_Step: {cur_step}. Step: {steps_t}."
+                )
+                step = traj_num * n_steps + cur_step
+                policy.save(-1*step)
+                new_env = traffic.Traffic(config, config["env_para"]["seed"]+step)
+                env = new_env
+                next_states_t = env.reset()
+                states_t = next_states_t
+                flag_crash = True
+                break
+
             steps_t += 1
 
             # Store state, action and reward
@@ -152,6 +168,11 @@ def main(config):
 
             # Assign next_states to states
             states_t = next_states_t
+
+        # If env crash due to tracii error, reset env and skip to next trajectory.
+        if flag_crash == True:
+            flag_crash = False
+            continue
 
         # Skip the remainder if evaluating
         if run_mode == mode.Mode.EVALUATE:
