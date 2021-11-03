@@ -287,5 +287,4 @@ def reward_adapter(obs, env_reward):
 
     # Distance based reward
     reward += env_reward
-    print("Env Reward:: ------> ", env_reward)
     return np.float32(reward)

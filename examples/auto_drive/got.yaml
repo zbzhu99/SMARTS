@@ -17,8 +17,8 @@ env_para:
     # - prey1
     # - prey2
   scenarios: 
-    - /home/kyber/workspaces/SMARTS/scenarios/loop
-    # - /src/scenarios/loop
+    # - /home/kyber/workspaces/SMARTS/scenarios/loop
+    - /src/scenarios/loop
 
 model_para:
   # Observation and action space
