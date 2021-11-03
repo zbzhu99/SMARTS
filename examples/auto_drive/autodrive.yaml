@@ -44,7 +44,7 @@ model_para:
   # Iteration size
   n_steps: 4000 # Horizon, a.k.a, trajectory length
   max_traj: 100000
-  num_train_epochs: 1
+  num_train_epochs: 3
 
   # Gradient batch size
   grad_batch: 256

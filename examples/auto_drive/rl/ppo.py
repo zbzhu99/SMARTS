@@ -113,7 +113,7 @@ def train_model(
     states: List[Dict[str, np.ndarray]],
     advantages: np.ndarray,
     discounted_rewards: np.ndarray,
-    clip_value: float,
+    clip_ratio: float,
     critic_loss_weight: float,
     grad_batch=64,
 ):
@@ -138,7 +138,7 @@ def train_model(
                 old_probs=old_probs_chunk,
                 actions=actions_chunk,
                 policy_logits=policy_logits,
-                clip_value=clip_value,
+                clip_ratio=clip_ratio,
             )
             cri_loss = critic_loss(
                 discounted_rewards=discounted_rewards_chunk,
@@ -154,7 +154,7 @@ def train_model(
 
 
 # Clipped objective term, to be maximized
-def actor_loss(advantages, old_probs, actions, policy_logits, clip_value):
+def actor_loss(advantages, old_probs, actions, policy_logits, clip_ratio):
     action_inds = tf.stack(
         [tf.range(0, len(actions)), tf.cast(actions, tf.int32)], axis=1
     )
@@ -165,7 +165,7 @@ def actor_loss(advantages, old_probs, actions, policy_logits, clip_value):
     policy_loss = -tf.reduce_mean(  # -Expectation
         tf.math.minimum(
             ratio * advantages,
-            tf.clip_by_value(ratio, 1.0 - clip_value, 1.0 + clip_value) * advantages,
+            tf.clip_by_value(ratio, 1.0 - clip_ratio, 1.0 + clip_ratio) * advantages,
         )
     )
     return policy_loss
