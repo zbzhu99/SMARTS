@@ -1,86 +1,28 @@
 import absl.logging
+import numpy as np
+import tensorflow as tf
 
 from datetime import datetime
 from pathlib import Path
+from examples.auto_drive.rl import mode, rl
+from examples.auto_drive.nn import cnn
 
 # Suppress warning
 absl.logging.set_verbosity(absl.logging.ERROR)
 
 
-def NeuralNetwork(name, num_output, input1_shape):
-    # filter_num = [32, 32, 64, 64, 128]
-    # kernel_size = [65, 13, 5, 2, 3]
-    # pool_size = [4, 2, 2, 2, 1]
-    # stride_size = [1, 1, 1, 1, 1]
-
-    filter_num = [32, 32, 64, 64]
-    kernel_size = [32, 17, 9, 3]
-    stride_size = [4, 2, 2, 2]
-
-    # filter_num = [16, 32, 64]
-    # kernel_size = [33, 17, 9]
-    # pool_size = [4, 4, 2]
-
-    input1 = tf.keras.layers.Input(shape=input1_shape, dtype=tf.uint8)
-    # Scale and center
-    input1_norm = (tf.cast(input1, tf.float32) / 255.0) - 0.5
-    x_conv = input1_norm
-    for ii in range(len(filter_num)):
-        x_conv = tf.keras.layers.Conv2D(
-            filters=filter_num[ii],
-            kernel_size=kernel_size[ii],
-            strides=stride_size[ii],
-            padding="valid",
-            activation=tf.keras.activations.tanh,
-            name=f"conv2d_{ii}",
-        )(x_conv)
-        # x_conv = tf.keras.layers.MaxPool2D(
-        #     pool_size=pool_size[ii], name=f"maxpool_{ii}"
-        # )(x_conv)
-
-    flatten_out = tf.keras.layers.Flatten()(x_conv)
-
-    dense1_out = tf.keras.layers.Dense(
-        units=64, activation=tf.keras.activations.tanh, name="dense_1"
-    )(flatten_out)
-
-    dense2_out = tf.keras.layers.Dense(
-        units=64, activation=tf.keras.activations.tanh, name="dense_2"
-    )(dense1_out)
-
-    output = tf.keras.layers.Dense(units=num_output, name="output")(dense2_out)
-
-    model = tf.keras.Model(inputs=input1, outputs=output, name=f"AutoDrive_{name}")
-
-    return model
-
-
-class RL:
-    def __init__(self):
-        pass
-
-    def act(self):
-        raise NotImplementedError
-
-    def save(self):
-        raise NotImplementedError
-
-    def close(self):
-        raise NotImplementedError
-
-
-class PPOKeras(RL):
+class PPOGAE(rl.RL):
     def __init__(self, name, config, agent_ids, seed):
-        super(PPOKeras, self).__init__()
+        super(PPOGAE, self).__init__()
 
         self._name = name
         self._seed = seed
         self._agent_ids = agent_ids
         self.actor_optimizer = tf.keras.optimizers.Adam(
-            learning_rate=config["model_para"][self._name + "_actor_lr"]
+            learning_rate=config["model_para"]["actor_lr"]
         )
         self.critic_optimizer = tf.keras.optimizers.Adam(
-            learning_rate=config["model_para"][self._name + "_critic_lr"]
+            learning_rate=config["model_para"]["critic_lr"]
         )
 
         # Model
@@ -89,17 +31,17 @@ class PPOKeras(RL):
         if config["model_para"]["model_initial"]:
             # Start from existing model
             print("[INFO] PPO existing model.")
-            self.actor_model = _load(config["model_para"][self._name + "_actor"])
-            self.critic_model = _load(config["model_para"][self._name + "_critic"])
+            self.actor_model = _load(config["model_para"]["path_old_actor"])
+            self.critic_model = _load(config["model_para"]["path_old_critic"])
         else:
             # Start from new model
             print("[INFO] PPO new model.")
-            self.actor_model = NeuralNetwork(
+            self.actor_model = getattr(cnn, config["model_para"]["nn"])(
                 self._name + "_actor",
                 num_output=config["model_para"]["action_dim"],
                 input1_shape=config["model_para"]["observation1_dim"],
             )
-            self.critic_model = NeuralNetwork(
+            self.critic_model = getattr(cnn, config["model_para"]["nn"])(
                 self._name + "_critic",
                 num_output=1,
                 input1_shape=config["model_para"]["observation1_dim"],
@@ -107,10 +49,10 @@ class PPOKeras(RL):
 
         # Path for newly trained model
         time = datetime.now().strftime("%Y_%m_%d_%H_%M")
-        self._actor_path = Path(config["model_para"]["model_path"]).joinpath(
+        self._actor_path = Path(config["model_para"]["path_new_model"]).joinpath(
             f"{name}_actor_{time}"
         )
-        self._critic_path = Path(config["model_para"]["model_path"]).joinpath(
+        self._critic_path = Path(config["model_para"]["path_new_model"]).joinpath(
             f"{name}_critic_{time}"
         )
 
@@ -119,10 +61,10 @@ class PPOKeras(RL):
         self.critic_model.summary()
 
         # Tensorboard
-        tb_path = Path(config["model_para"]["tensorboard_path"]).joinpath(
+        path_tensorboard = Path(config["model_para"]["path_tensorboard"]).joinpath(
             f"{name}_{time}"
         )
-        self.tb = tf.summary.create_file_writer(str(tb_path))
+        self.tb = tf.summary.create_file_writer(str(path_tensorboard))
 
     def close(self):
         pass
@@ -137,7 +79,7 @@ class PPOKeras(RL):
             filepath=self._critic_path / str(version),
         )
 
-    def actor(self, obs, train: Mode):
+    def actor(self, obs, train: mode.Mode):
         states = [
             obs[agent_id] for agent_id in self._agent_ids if agent_id in obs.keys()
         ]
@@ -157,7 +99,7 @@ class PPOKeras(RL):
 
         action_t = {
             vehicle: tf.random.categorical([logit], 1, seed=self._seed).numpy()[0][0]
-            if train == Mode.TRAIN
+            if train == mode.Mode.TRAIN
             else np.argmax(logit)
             for vehicle, logit in zip(vehicles, logits)
         }

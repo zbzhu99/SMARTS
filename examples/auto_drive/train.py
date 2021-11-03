@@ -120,8 +120,8 @@ def main(config):
                     f"   Simulation crashed and reset. Cur_Step: {cur_step}. Step: {steps_t}."
                 )
                 step = traj_num * n_steps + cur_step
-                policy.save(-1*step)
-                new_env = traffic.Traffic(config, config["env_para"]["seed"]+step)
+                policy.save(-1 * step)
+                new_env = traffic.Traffic(config, config["env_para"]["seed"] + step)
                 env = new_env
                 next_states_t = env.reset()
                 states_t = next_states_t

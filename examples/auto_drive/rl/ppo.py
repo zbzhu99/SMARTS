@@ -3,8 +3,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
-from examples.auto_drive.rl import mode
-from examples.auto_drive.rl import rl
+from examples.auto_drive.rl import mode, rl
 from examples.auto_drive.nn import cnn
 from datetime import datetime
 from pathlib import Path
@@ -18,36 +17,38 @@ class PPO(rl.RL):
     def __init__(self, name, config, seed):
         super(PPO, self).__init__()
 
-        self.name = name
-        self.config = config
-        self.seed = seed
+        self._name = name
+        self._seed = seed
         self.optimizer = tf.keras.optimizers.Adam(
             learning_rate=config["model_para"]["initial_lr"]
         )
 
         # Model
         self.model = None
-        if self.config["model_para"]["model_initial"]:  # Start from existing model
+        if config["model_para"]["model_initial"]:  # Start from existing model
             print("[INFO] PPO existing model.")
-            self.model = _load(self.config["model_para"]["path_old_model"])
+            self.model = _load(config["model_para"]["path_old_model"])
         else:  # Start from new model
             print("[INFO] PPO new model.")
             self.model = getattr(cnn, config["model_para"]["nn"])(
-                self.name,
-                self.config["model_para"]["action_dim"],
-                self.config["model_para"]["observation1_dim"],
-                self.config["model_para"]["observation2_dim"],
+                self._name,
+                config["model_para"]["action_dim"],
+                config["model_para"]["observation1_dim"],
+                config["model_para"]["observation2_dim"],
             )
+
         # Path for newly trained model
-        self.path_new_model = Path(
-            self.config["model_para"]["path_new_model"]
-        ).joinpath(f"{name}_{datetime.now().strftime('%Y_%m_%d_%H_%M')}")
+        time = datetime.now().strftime("%Y_%m_%d_%H_%M")
+        self.path_new_model = Path(config["model_para"]["path_new_model"]).joinpath(
+            f"{name}_{time}"
+        )
+
         # Model summary
         self.model.summary()
 
         # Tensorboard
-        path_tensorboard = Path(self.config["model_para"]["path_tensorboard"]).joinpath(
-            f"{name}_{datetime.now().strftime('%Y_%m_%d_%H_%M')}"
+        path_tensorboard = Path(config["model_para"]["path_tensorboard"]).joinpath(
+            f"{name}_{time}"
         )
         self.tb = tf.summary.create_file_writer(str(path_tensorboard))
 
@@ -55,10 +56,9 @@ class PPO(rl.RL):
         pass
 
     def save(self, version: int):
-        save_path = self.path_new_model / str(version)
         tf.keras.models.save_model(
             model=self.model,
-            filepath=save_path,
+            filepath=self.path_new_model / str(version),
         )
 
     def act(self, obs, train: mode.Mode):
@@ -79,7 +79,7 @@ class PPO(rl.RL):
 
             if train == mode.Mode.TRAIN:
                 actions_dist_t = tfp.distributions.Categorical(logits=actions[vehicle])
-                action_samples[vehicle] = actions_dist_t.sample(seed=self.seed)
+                action_samples[vehicle] = actions_dist_t.sample(seed=self._seed)
             else:
                 action_samples[vehicle] = tf.math.argmax(actions[vehicle])
 
@@ -154,7 +154,6 @@ def train_model(
 
 
 # Clipped objective term, to be maximized
-# @tf.function(experimental_relax_shapes=True)
 def actor_loss(advantages, old_probs, actions, policy_logits, clip_value):
     action_inds = tf.stack(
         [tf.range(0, len(actions)), tf.cast(actions, tf.int32)], axis=1
@@ -173,7 +172,6 @@ def actor_loss(advantages, old_probs, actions, policy_logits, clip_value):
 
 
 # Error term on value estimation, to be minimized
-# @tf.function(experimental_relax_shapes=True)
 def critic_loss(discounted_rewards, value_est, critic_loss_weight):
     return (
         tf.reduce_mean(

@@ -16,7 +16,7 @@ NEIGHBOURHOOD_RADIUS = 55
 
 
 class Traffic(gym.Env):
-    def __init__(self, config: Dict, seed:int):
+    def __init__(self, config: Dict, seed: int):
         self._config = config
         self._neighborhood_radius = config["env_para"]["neighborhood_radius"]
         self._rgb_wh = config["env_para"]["rgb_wh"]

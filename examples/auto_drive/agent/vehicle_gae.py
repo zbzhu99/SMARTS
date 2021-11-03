@@ -1,15 +1,9 @@
 import numpy as np
-from examples.gameOfTag.agent import behaviour
 
 
-class VehicleKeras:
+class VehicleGAE:
     def __init__(self, name, config):
-        if behaviour.Behaviour.CRUISER in name:
-            self.name = name
-        else:
-            raise Exception(
-                f"Expected {behaviour.Behaviour.__members__}, but got {name}."
-            )
+        self.name = name
         self._config = config
         self._gamma = config["model_para"]["gamma"]
         self._lam = config["model_para"]["lam"]
