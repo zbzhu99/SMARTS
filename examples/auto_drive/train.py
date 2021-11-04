@@ -27,6 +27,7 @@ tf.random.set_seed(123)
 
 # --------------------------------------------------------------------------
 
+import argparse
 import signal
 import sys
 import warnings
@@ -248,6 +249,48 @@ def main(config):
     env.close()
 
 
+def replace_args(config):
+    parser = argparse.ArgumentParser("train")
+    parser.add_argument("--headless", action="store_true")
+    parser.add_argument(
+        "--mode",
+        default=None,
+    )
+    parser.add_argument("--model_initial", action="store_true")
+    parser.add_argument(
+        "--path_tensorboard",
+        default=None,
+    )
+    parser.add_argument(
+        "--path_new_model",
+        default=None,
+    )
+    parser.add_argument(
+        "--path_old_model",
+        default=None,
+    )
+    args = parser.parse_args()
+
+    if args.headless == False:
+        config["env_para"]["headless"] = False
+    config["model_para"]["mode"] = args.mode or config["model_para"]["mode"]
+    config["model_para"]["model_initial"] = (
+        args.model_initial or config["model_para"]["model_initial"]
+    )
+    config["model_para"]["path_tensorboard"] = (
+        args.path_tensorboard or config["model_para"]["path_tensorboard"]
+    )
+    config["model_para"]["path_new_model"] = (
+        args.path_new_model or config["model_para"]["path_new_model"]
+    )
+    if config["model_para"]["model_initial"]:
+        config["model_para"]["path_old_model"] = (
+            args.path_old_model or config["model_para"]["path_old_model"]
+        )
+
+    return config
+
+
 if __name__ == "__main__":
     config_yaml = (Path(__file__).absolute().parent).joinpath("autodrive.yaml")
     with open(config_yaml, "r") as file:
@@ -271,5 +314,7 @@ if __name__ == "__main__":
             ResourceWarning,
         )
         # raise SystemError("GPU device not found")
+
+    config = replace_args(config)
 
     main(config=config)
