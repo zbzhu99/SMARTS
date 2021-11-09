@@ -75,9 +75,7 @@ class Traffic(gym.Env):
         self._env = env
 
         # Categorical action space
-        self.single_action_space = gym.spaces.Discrete(
-            config["action_dim"]
-        )
+        self.single_action_space = gym.spaces.Discrete(config["action_dim"])
         # Observation space
         self.single_observation_space = gym.spaces.Dict(
             {
@@ -154,13 +152,14 @@ def action_adapter(controller):
     # steering: [-1, 1]
 
     if controller == "Continuous":
+
         def continuous(model_action):
             throttle, brake, steering = model_action
             # Modify action space limits
             throttle = (throttle + 1) / 2
             brake = (brake + 1) / 2
             return np.array([throttle, brake, steering], dtype=np.float)
-        
+
         return continuous
 
     if controller == "Lane":

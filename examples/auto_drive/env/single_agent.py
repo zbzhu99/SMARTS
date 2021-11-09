@@ -11,8 +11,9 @@ from typing import Dict
 
 NEIGHBOURHOOD_RADIUS = 55
 
+
 class SingleAgent(gym.Wrapper):
-    def __init__(self, config:Dict, seed: int):
+    def __init__(self, config: Dict, seed: int):
         self._neighborhood_radius = config["neighborhood_radius"]
         self._rgb_wh = config["rgb_wh"]
         self.agent_id = config["agent_ids"][0]
@@ -68,9 +69,8 @@ class SingleAgent(gym.Wrapper):
         )
         # Observation space
         self.observation_space = gym.spaces.Box(
-            low=0, high=255, shape=(256,256,3), dtype=np.uint8
+            low=0, high=255, shape=(256, 256, 3), dtype=np.uint8
         )
-
 
     def reset(self) -> np.ndarray:
         raw_states = self.env.reset()
@@ -119,13 +119,14 @@ def action_adapter(controller):
     # steering: [-1, 1]
 
     if controller == "Continuous":
+
         def continuous(model_action):
             throttle, brake, steering = model_action
             # Modify action space limits
             throttle = (throttle + 1) / 2
             brake = (brake + 1) / 2
             return np.array([throttle, brake, steering], dtype=np.float)
-        
+
         return continuous
 
     if controller == "Lane":
@@ -194,6 +195,7 @@ def action_adapter(controller):
         return discrete
 
     raise Exception("Unknown controller.")
+
 
 def observation_adapter(obs) -> np.ndarray:
     # RGB grid map

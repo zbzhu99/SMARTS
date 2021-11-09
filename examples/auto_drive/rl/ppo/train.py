@@ -62,9 +62,7 @@ def main(config):
 
     # Create model
     print("[INFO] Creating model")
-    policy = ppo.PPO(
-        behaviour.Behaviour.CRUISER, config, config["seed"] + 1
-    )
+    policy = ppo.PPO(behaviour.Behaviour.CRUISER, config, config["seed"] + 1)
 
     def interrupt(*args):
         nonlocal run_mode
@@ -246,7 +244,6 @@ def main(config):
 
     # Close env
     env.close()
-
 
 
 if __name__ == "__main__":
