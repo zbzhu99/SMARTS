@@ -41,18 +41,20 @@ def main(config):
     print("[INFO] Creating environments")
     env = single_agent.SingleAgent(config["dreamerv2"], config["dreamerv2"]["seed"])
 
-    # config = dv2.defaults.update({
-    #     'logdir': '~/logdir/minigrid',
-    #     'log_every': 1e3,
-    #     'train_every': 10,
-    #     'prefill': 1e5,
-    #     'actor_ent': 3e-3,
-    #     'loss_scales.kl': 1.0,
-    #     'discount': 0.99,
-    # }).parse_flags()
+    logdir = (Path(__file__).absolute().parent).joinpath("logs")
 
-    # # Train dreamerv2 with env
-    # dv2.train(env, config)
+    config = dv2.defaults.update({
+        'logdir': logdir,
+        'log_every': 1e3,
+        'train_every': 10,
+        'prefill': 1e5,
+        'actor_ent': 3e-3,
+        'loss_scales.kl': 1.0,
+        'discount': 0.99,
+    }).parse_flags()
+
+    # Train dreamerv2 with env
+    dv2.train(env, config)
 
 
 if __name__ == "__main__":
