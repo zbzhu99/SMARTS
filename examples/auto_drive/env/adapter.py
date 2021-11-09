@@ -1,22 +1,29 @@
 import gym
 import numpy as np
+from enum import Enum
 
-from examples.auto_drive.env.controller import Controller
 from smarts.core import colors as smarts_colors
+
+
+class Adapter(str, Enum):
+    CONTINUOUS='continuous'
+    LANE='lane'
+    DISCRETE='discrete'
+
 
 def info_adapter(obs, reward, info):
     return info
 
 def action_space(controller):
-    if controller == Controller.CONTINUOUS:
+    if controller == Adapter.CONTINUOUS:
         return gym.spaces.Box(
             low=-1.0, high=1.0, shape=(3,), dtype=np.float
         )
 
-    if controller == Controller.LANE:
+    if controller == Adapter.LANE:
         return gym.spaces.Dsicrete(4)
         
-    if controller == Controller.DISCRETE:
+    if controller == Adapter.DISCRETE:
         return gym.spaces.Dsicrete(5)
 
     raise Exception("Unknown controller.")
@@ -28,7 +35,7 @@ def action_adapter(controller):
     # brake: [0, 1]
     # steering: [-1, 1]
 
-    if controller == Controller.CONTINUOUS:
+    if controller == Adapter.CONTINUOUS:
 
         def continuous(model_action):
             throttle, brake, steering = model_action
@@ -39,7 +46,7 @@ def action_adapter(controller):
 
         return continuous
 
-    if controller == Controller.LANE:
+    if controller == Adapter.LANE:
 
         def lane(model_action):
             if model_action == 0:
@@ -54,7 +61,7 @@ def action_adapter(controller):
 
         return lane
 
-    if controller == Controller.DISCRETE:
+    if controller == Adapter.DISCRETE:
 
         def discrete(model_action):
             # Modify action space limits

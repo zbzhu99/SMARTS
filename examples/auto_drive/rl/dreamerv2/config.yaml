@@ -6,9 +6,11 @@ dreamerv2:
   neighborhood_radius: 55 # Radius (meter) for neighborhood vehicles
   rgb_wh: 110 # Height and width (meter) of RGB image in SMARTS observation
   max_episode_steps: 200 # 20 seconds. Maximum steps per episode.
-  action_space_type: "continuous"
-  # action_space_type: "lane"
-  # action_space_type: "discrete"
+  action_space_type: "Continuous"
+  # action_space_type: "Lane"
+  action_adapter: "continuous"
+  # action_adapter: "lane"
+  # action_adapter: "discrete"
   agent_ids: 
     - Tigger1
   scenarios: 
@@ -18,10 +20,6 @@ dreamerv2:
   # Observation and action space
   # observation1_dim: [256, 256, 12] # rgb image * num_stack
   # observation2_dim: [8] # [steering, speed] * num_stack
-  # action_dim: 4 # Lane
-  # action_dim: 0 # LaneWithContinuousSpeed
-  # action_dim: 5 # Discrete
-  action_dim: 3 # Continuous    
   
   # Iteration size
   n_steps: 4000 # Horizon, a.k.a, trajectory length

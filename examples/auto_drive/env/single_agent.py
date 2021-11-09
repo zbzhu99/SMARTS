@@ -48,7 +48,7 @@ class SingleAgent(gym.Wrapper):
                 agent_builder=None,
                 observation_adapter=adapter.observation_adapter,
                 reward_adapter=adapter.reward_adapter,
-                action_adapter=adapter.action_adapter(config["action_space_type"]),
+                action_adapter=adapter.action_adapter(config["action_adapter"]),
                 info_adapter=adapter.info_adapter,
             )
         }
@@ -65,7 +65,7 @@ class SingleAgent(gym.Wrapper):
         super(SingleAgent, self).__init__(env)
 
         # Action space
-        self.action_space = adapter.action_space(config['action_space_type'])
+        self.action_space = adapter.action_space(config['action_adapter'])
         # Observation space
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(256, 256, 3), dtype=np.uint8
