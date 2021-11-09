@@ -27,7 +27,6 @@ tf.random.set_seed(123)
 
 # --------------------------------------------------------------------------
 
-import argparse
 import signal
 import sys
 import warnings
@@ -43,19 +42,19 @@ from pathlib import Path
 def main(config):
 
     print("[INFO] Train")
-    save_interval = config["model_para"].get("save_interval", 20)
-    run_mode = mode.Mode(config["model_para"]["mode"])  # Mode: Evaluation or Testing
+    save_interval = config.get("save_interval", 20)
+    run_mode = mode.Mode(config["mode"])  # Mode: Evaluation or Testing
 
     # Traning parameters
-    num_train_epochs = config["model_para"]["num_train_epochs"]
-    n_steps = config["model_para"]["n_steps"]
-    max_traj = config["model_para"]["max_traj"]
-    clip_ratio = config["model_para"]["clip_ratio"]
-    critic_loss_weight = config["model_para"]["critic_loss_weight"]
+    num_train_epochs = config["num_train_epochs"]
+    n_steps = config["n_steps"]
+    max_traj = config["max_traj"]
+    clip_ratio = config["clip_ratio"]
+    critic_loss_weight = config["critic_loss_weight"]
 
     # Create env
     print("[INFO] Creating environments")
-    env = traffic.Traffic(config, config["env_para"]["seed"])
+    env = traffic.Traffic(config["ppo"], config["ppo"]["seed"])
 
     # Create agent
     print("[INFO] Creating agents")
@@ -64,7 +63,7 @@ def main(config):
     # Create model
     print("[INFO] Creating model")
     policy = ppo.PPO(
-        behaviour.Behaviour.CRUISER, config, config["env_para"]["seed"] + 1
+        behaviour.Behaviour.CRUISER, config, config["seed"] + 1
     )
 
     def interrupt(*args):
@@ -122,7 +121,7 @@ def main(config):
                 )
                 step = traj_num * n_steps + cur_step
                 policy.save(-1 * step)
-                new_env = traffic.Traffic(config, config["env_para"]["seed"] + step)
+                new_env = traffic.Traffic(config, config["seed"] + step)
                 env = new_env
                 next_states_t = env.reset()
                 states_t = next_states_t
@@ -227,7 +226,7 @@ def main(config):
                     discounted_rewards=agent.discounted_rewards,
                     clip_ratio=clip_ratio,
                     critic_loss_weight=critic_loss_weight,
-                    grad_batch=config["model_para"]["grad_batch"],
+                    grad_batch=config["grad_batch"],
                 )
                 total_loss[epoch] += loss_tuple[0]
                 actor_loss[epoch] += loss_tuple[1]
@@ -249,50 +248,9 @@ def main(config):
     env.close()
 
 
-def replace_args(config):
-    parser = argparse.ArgumentParser("train")
-    parser.add_argument("--headless", action="store_true")
-    parser.add_argument(
-        "--mode",
-        default=None,
-    )
-    parser.add_argument("--model_initial", action="store_true")
-    parser.add_argument(
-        "--path_tensorboard",
-        default=None,
-    )
-    parser.add_argument(
-        "--path_new_model",
-        default=None,
-    )
-    parser.add_argument(
-        "--path_old_model",
-        default=None,
-    )
-    args = parser.parse_args()
-
-    if args.headless == False:
-        config["env_para"]["headless"] = False
-    config["model_para"]["mode"] = args.mode or config["model_para"]["mode"]
-    config["model_para"]["model_initial"] = (
-        args.model_initial or config["model_para"]["model_initial"]
-    )
-    config["model_para"]["path_tensorboard"] = (
-        args.path_tensorboard or config["model_para"]["path_tensorboard"]
-    )
-    config["model_para"]["path_new_model"] = (
-        args.path_new_model or config["model_para"]["path_new_model"]
-    )
-    if config["model_para"]["model_initial"]:
-        config["model_para"]["path_old_model"] = (
-            args.path_old_model or config["model_para"]["path_old_model"]
-        )
-
-    return config
-
 
 if __name__ == "__main__":
-    config_yaml = (Path(__file__).absolute().parent).joinpath("autodrive.yaml")
+    config_yaml = (Path(__file__).absolute().parent).joinpath("config.yaml")
     with open(config_yaml, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
@@ -315,6 +273,4 @@ if __name__ == "__main__":
         )
         # raise SystemError("GPU device not found")
 
-    config = replace_args(config)
-
-    main(config=config)
+    main(config=config["ppo"])

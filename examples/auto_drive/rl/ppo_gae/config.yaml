@@ -1,4 +1,4 @@
-env_para:
+ppo_gae:
   env_name: smarts
   seed: 42
   headless: True
@@ -21,7 +21,6 @@ env_para:
     # - /home/kyber/workspaces/SMARTS/scenarios/loop
     - /src/scenarios/loop
 
-model_para:
   # Observation and action space
   observation1_dim: [256, 256, 12] # rgb image * num_stack
   observation2_dim: [8] # [steering, speed] * num_stack

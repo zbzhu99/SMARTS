@@ -6,21 +6,16 @@ from smarts.core import agent as smarts_agent
 from smarts.core import agent_interface as smarts_agent_interface
 from smarts.core import colors as smarts_colors
 from smarts.core import controllers as smarts_controllers
-from smarts.core import sensors as smarts_sensors
 from smarts.env import hiway_env as smarts_hiway_env
-from smarts.env.wrappers import frame_stack as smarts_frame_stack
 from typing import Dict
-
 
 NEIGHBOURHOOD_RADIUS = 55
 
-
-class Traffic(gym.Env):
-    def __init__(self, config: Dict, seed: int):
-        self._config = config
+class SingleAgent(gym.Wrapper):
+    def __init__(self, config:Dict, seed: int):
         self._neighborhood_radius = config["neighborhood_radius"]
         self._rgb_wh = config["rgb_wh"]
-        self.agent_ids = config["agent_ids"]
+        self.agent_id = config["agent_ids"][0]
 
         vehicle_interface = smarts_agent_interface.AgentInterface(
             max_episode_steps=config["max_episode_steps"],
@@ -45,9 +40,8 @@ class Traffic(gym.Env):
             ),
         )
 
-        # Create agent spec
         agent_specs = {
-            agent_id: smarts_agent.AgentSpec(
+            self.agent_id: smarts_agent.AgentSpec(
                 interface=vehicle_interface,
                 agent_builder=None,
                 observation_adapter=observation_adapter,
@@ -55,7 +49,6 @@ class Traffic(gym.Env):
                 action_adapter=action_adapter(config["action_space_type"]),
                 info_adapter=info_adapter,
             )
-            for agent_id in self.agent_ids
         }
 
         env = smarts_hiway_env.HiWayEnv(
@@ -65,86 +58,58 @@ class Traffic(gym.Env):
             visdom=config["visdom"],
             seed=seed,
         )
-        # Wrap env with FrameStack to stack multiple observations
-        env = smarts_frame_stack.FrameStack(
-            env=env,
-            num_stack=config["num_stack"],
-            num_skip=config["num_skip"],
-        )
 
-        self._env = env
+        # Initialize base env
+        super(SingleAgent, self).__init__(env)
 
-        # Categorical action space
-        self.single_action_space = gym.spaces.Discrete(
-            config["action_dim"]
+        # Action space
+        self.action_space = gym.spaces.Box(
+            low=-1.0, high=1.0, shape=(3,), dtype=np.float
         )
         # Observation space
-        self.single_observation_space = gym.spaces.Dict(
-            {
-                "image": gym.spaces.Box(
-                    low=0,
-                    high=255,
-                    shape=config["observation1_dim"],
-                    dtype=np.uint8,
-                ),
-                "scalar": gym.spaces.Box(
-                    low=np.array([0, -1]),
-                    high=np.array([1e3, 1]),
-                    dtype=np.float32,
-                ),
-            }
+        self.observation_space = gym.spaces.Box(
+            low=0, high=255, shape=(256,256,3), dtype=np.uint8
         )
-        # scalar consists of
-        # obs.ego_vehicle_state.speed = [0, 1e3]
-        # obs.ego_vehicle_state.steering = [-1, 1]
 
-    def reset(self) -> Dict[str, np.ndarray]:
 
-        raw_state = self._env.reset()
-        stacked_state = _stack_obs(raw_state)
+    def reset(self) -> np.ndarray:
+        raw_states = self.env.reset()
 
-        self.init_state = stacked_state
-        return stacked_state
+        return raw_states[self.agent_id]
 
     def step(self, action):
-
-        raw_state, reward, done, info = self._env.step(action)
-        stacked_state = _stack_obs(raw_state)
+        raw_states, rewards, dones, infos = self.env.step({self.agent_id: action})
 
         # Plot for debugging purposes
         # import matplotlib.pyplot as plt
-        # fig=plt.figure(figsize=(10,10))
-        # columns = 4 # number of stacked images
+        # columns = 2 # number of frames stacked for each agent
         # rgb_gray = 3 # 3 for rgb and 1 for grayscale
-        # rows = len(stacked_state.keys())
-        # for row, (_, state) in enumerate(stacked_state.items()):
-        #     for col in range(0, columns):
-        #         img = state["image"][:,:,col*rgb_gray:col*rgb_gray+rgb_gray]
-        #         fig.add_subplot(rows, columns, row*columns + col + 1)
-        #         plt.imshow(img)
+        # n_states = len(states.keys())
+        # fig, axes = plt.subplots(1, n_states*columns, figsize=(10, 10))
+        # fig.tight_layout()
+        # ax = axes.ravel()
+        # for row, (agent_id, state) in enumerate(states.items()):
+        #     for col in range(columns):
+        #         img = state[:,:,rgb_gray*col:rgb_gray*col+rgb_gray]
+        #         ax[row*columns+col].imshow(img)
+        #         ax[row*columns+col].set_title(agent_id)
         # plt.show()
 
-        return stacked_state, reward, done, info
+        return (
+            raw_states[self.agent_id],
+            rewards[self.agent_id],
+            dones[self.agent_id],
+            infos[self.agent_id],
+        )
 
     def close(self):
-        if self._env is not None:
-            return self._env.close()
+        if self.env is not None:
+            return self.env.close()
         return None
 
 
-def _stack_obs(state: Dict):
-    stacked_state = {}
-    for agent_id, agent_state in state.items():
-        images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), agent_state)))
-        stacked_image = np.dstack(images)
-        stacked_scalar = np.concatenate(scalars, axis=0)
-        stacked_state[agent_id] = {"image": stacked_image, "scalar": stacked_scalar}
-
-    return stacked_state
-
-
 def info_adapter(obs, reward, info):
-    return reward
+    return info
 
 
 def action_adapter(controller):
@@ -230,8 +195,7 @@ def action_adapter(controller):
 
     raise Exception("Unknown controller.")
 
-
-def observation_adapter(obs: smarts_sensors.Observation) -> Dict[str, np.ndarray]:
+def observation_adapter(obs) -> np.ndarray:
     # RGB grid map
     rgb = obs.top_down_rgb.data
     # Replace self color to Lime
@@ -252,31 +216,7 @@ def observation_adapter(obs: smarts_sensors.Observation) -> Dict[str, np.ndarray
     # plt.show()
     # sys.exit(2)
 
-    scalar = np.array(
-        (
-            obs.ego_vehicle_state.speed,
-            obs.ego_vehicle_state.steering,
-        ),
-        dtype=np.float32,
-    )
-
-    return {"image": frame, "scalar": scalar}
-
-
-def get_targets(vehicles, target: str):
-    target_vehicles = [vehicle for vehicle in vehicles if target in vehicle.id]
-    return target_vehicles
-
-
-def distance_to_targets(ego, targets):
-    distances = (
-        [np.linalg.norm(ego.position - target.position) for target in targets],
-    )
-    return distances
-
-
-def inverse(x: float) -> float:
-    return -x + NEIGHBOURHOOD_RADIUS
+    return frame
 
 
 def reward_adapter(obs, env_reward):
