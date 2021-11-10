@@ -20,26 +20,26 @@ class PPO(rl.RL):
         self._name = name
         self._seed = seed
         self.optimizer = tf.keras.optimizers.Adam(
-            learning_rate=config["model_para"]["initial_lr"]
+            learning_rate=config["initial_lr"]
         )
 
         # Model
         self.model = None
-        if config["model_para"]["model_initial"]:  # Start from existing model
+        if config["model_initial"]:  # Start from existing model
             print("[INFO] PPO existing model.")
-            self.model = _load(config["model_para"]["path_old_model"])
+            self.model = _load(config["path_old_model"])
         else:  # Start from new model
             print("[INFO] PPO new model.")
-            self.model = getattr(cnn, config["model_para"]["nn"])(
+            self.model = getattr(cnn, config["nn"])(
                 self._name,
-                config["model_para"]["action_dim"],
-                config["model_para"]["observation1_dim"],
-                config["model_para"]["observation2_dim"],
+                config["action_dim"],
+                config["observation1_dim"],
+                config["observation2_dim"],
             )
 
         # Path for newly trained model
         time = datetime.now().strftime("%Y_%m_%d_%H_%M")
-        self.path_new_model = Path(config["model_para"]["path_new_model"]).joinpath(
+        self.path_new_model = Path(config["path_new_model"]).joinpath(
             f"{name}_{time}"
         )
 
@@ -47,7 +47,7 @@ class PPO(rl.RL):
         self.model.summary()
 
         # Tensorboard
-        path_tensorboard = Path(config["model_para"]["path_tensorboard"]).joinpath(
+        path_tensorboard = Path(config["path_tensorboard"]).joinpath(
             f"{name}_{time}"
         )
         self.tb = tf.summary.create_file_writer(str(path_tensorboard))

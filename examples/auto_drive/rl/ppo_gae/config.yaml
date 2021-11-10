@@ -8,15 +8,13 @@ ppo_gae:
   max_episode_steps: 200 # 3 minutes. Maximum steps per episode.
   num_stack: 4 # Number of frames to stack
   num_skip: 1 # Frequency of frames to be stacked
-  # action_space_type: "Lane"
-  # action_space_type: "LaneWithContinuousSpeed"
   action_space_type: "Continuous"
+  # action_space_type: "Lane"
+  action_adapter: "continuous"
+  # action_adapter: "lane"
+  # action_adapter: "discrete"
   agent_ids: 
     - Bear1
-    # - predator2
-    # - predator3
-    # - prey1
-    # - prey2
   scenarios: 
     # - /home/kyber/workspaces/SMARTS/scenarios/loop
     - /src/scenarios/loop

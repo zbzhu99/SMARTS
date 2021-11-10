@@ -19,40 +19,40 @@ class PPOGAE(rl.RL):
         self._seed = seed
         self._agent_ids = agent_ids
         self.actor_optimizer = tf.keras.optimizers.Adam(
-            learning_rate=config["model_para"]["actor_lr"]
+            learning_rate=config["actor_lr"]
         )
         self.critic_optimizer = tf.keras.optimizers.Adam(
-            learning_rate=config["model_para"]["critic_lr"]
+            learning_rate=config["critic_lr"]
         )
 
         # Model
         self.actor_model = None
         self.critic_model = None
-        if config["model_para"]["model_initial"]:
+        if config["model_initial"]:
             # Start from existing model
             print("[INFO] PPO existing model.")
-            self.actor_model = _load(config["model_para"]["path_old_actor"])
-            self.critic_model = _load(config["model_para"]["path_old_critic"])
+            self.actor_model = _load(config["path_old_actor"])
+            self.critic_model = _load(config["path_old_critic"])
         else:
             # Start from new model
             print("[INFO] PPO new model.")
-            self.actor_model = getattr(cnn, config["model_para"]["nn"])(
+            self.actor_model = getattr(cnn, config["nn"])(
                 self._name + "_actor",
-                num_output=config["model_para"]["action_dim"],
-                input1_shape=config["model_para"]["observation1_dim"],
+                num_output=config["action_dim"],
+                input1_shape=config["observation1_dim"],
             )
-            self.critic_model = getattr(cnn, config["model_para"]["nn"])(
+            self.critic_model = getattr(cnn, config["nn"])(
                 self._name + "_critic",
                 num_output=1,
-                input1_shape=config["model_para"]["observation1_dim"],
+                input1_shape=config["observation1_dim"],
             )
 
         # Path for newly trained model
         time = datetime.now().strftime("%Y_%m_%d_%H_%M")
-        self._actor_path = Path(config["model_para"]["path_new_model"]).joinpath(
+        self._actor_path = Path(config["path_new_model"]).joinpath(
             f"{name}_actor_{time}"
         )
-        self._critic_path = Path(config["model_para"]["path_new_model"]).joinpath(
+        self._critic_path = Path(config["path_new_model"]).joinpath(
             f"{name}_critic_{time}"
         )
 
@@ -61,7 +61,7 @@ class PPOGAE(rl.RL):
         self.critic_model.summary()
 
         # Tensorboard
-        path_tensorboard = Path(config["model_para"]["path_tensorboard"]).joinpath(
+        path_tensorboard = Path(config["path_tensorboard"]).joinpath(
             f"{name}_{time}"
         )
         self.tb = tf.summary.create_file_writer(str(path_tensorboard))
