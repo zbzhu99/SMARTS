@@ -30,14 +30,15 @@ tf.random.set_seed(123)
 import signal
 import sys
 import warnings
+from datetime import datetime
+from pathlib import Path
+
 import yaml
 
-from datetime import datetime
-from examples.auto_drive.env import traffic
 from examples.auto_drive.agent import behaviour, vehicle_gae
-from examples.auto_drive.rl.ppo_gae import ppo_gae
+from examples.auto_drive.env import traffic
 from examples.auto_drive.rl import mode
-from pathlib import Path
+from examples.auto_drive.rl.ppo_gae import ppo_gae
 
 
 def main(config, modeldir, logdir):
@@ -65,7 +66,8 @@ def main(config, modeldir, logdir):
         config=config,
         agent_ids=env.agent_ids,
         seed=config["seed"] + 1,
-        modeldir=modeldir, logdir=logdir
+        modeldir=modeldir,
+        logdir=logdir,
     )
 
     def interrupt(*args):
@@ -268,7 +270,17 @@ if __name__ == "__main__":
 
     name = "ppo_gae"
     time = datetime.now().strftime("%Y_%m_%d_%H_%M")
-    logdir = (Path(__file__).absolute().parents[2]).joinpath("logs").joinpath(name).joinpath(time)
-    modeldir = (Path(__file__).absolute().parents[2]).joinpath("models").joinpath(name).joinpath(time)
+    logdir = (
+        (Path(__file__).absolute().parents[2])
+        .joinpath("logs")
+        .joinpath(name)
+        .joinpath(time)
+    )
+    modeldir = (
+        (Path(__file__).absolute().parents[2])
+        .joinpath("models")
+        .joinpath(name)
+        .joinpath(time)
+    )
 
     main(config=config["ppo_gae"], modeldir=modeldir, logdir=logdir)

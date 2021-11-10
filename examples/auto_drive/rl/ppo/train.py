@@ -30,15 +30,15 @@ tf.random.set_seed(123)
 import signal
 import sys
 import warnings
+from datetime import datetime
+from pathlib import Path
+
 import yaml
 
-from datetime import datetime
+from examples.auto_drive.agent import behaviour, vehicle
 from examples.auto_drive.env import traffic
-from examples.auto_drive.agent import behaviour
-from examples.auto_drive.agent import vehicle
-from examples.auto_drive.rl.ppo import ppo
 from examples.auto_drive.rl import mode
-from pathlib import Path
+from examples.auto_drive.rl.ppo import ppo
 
 
 def main(config, modeldir, logdir):
@@ -64,7 +64,9 @@ def main(config, modeldir, logdir):
 
     # Create model
     print("[INFO] Creating model")
-    policy = ppo.PPO(behaviour.Behaviour.CRUISER, config, config["seed"] + 1, modeldir, logdir)
+    policy = ppo.PPO(
+        behaviour.Behaviour.CRUISER, config, config["seed"] + 1, modeldir, logdir
+    )
 
     def interrupt(*args):
         nonlocal run_mode
@@ -274,8 +276,17 @@ if __name__ == "__main__":
 
     name = "ppo"
     time = datetime.now().strftime("%Y_%m_%d_%H_%M")
-    logdir = (Path(__file__).absolute().parents[2]).joinpath("logs").joinpath(name).joinpath(time)
-    modeldir = (Path(__file__).absolute().parents[2]).joinpath("models").joinpath(name).joinpath(time)
+    logdir = (
+        (Path(__file__).absolute().parents[2])
+        .joinpath("logs")
+        .joinpath(name)
+        .joinpath(time)
+    )
+    modeldir = (
+        (Path(__file__).absolute().parents[2])
+        .joinpath("models")
+        .joinpath(name)
+        .joinpath(time)
+    )
 
     main(config=config[name], modeldir=modeldir, logdir=logdir)
-

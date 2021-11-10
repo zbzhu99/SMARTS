@@ -1,15 +1,15 @@
+from pathlib import Path
+from typing import Dict
+
 import gym
 import matplotlib.pyplot as plt
 import numpy as np
 
 import examples.auto_drive.env.adapter as adapter
-
-from pathlib import Path
 from smarts.core import agent as smarts_agent
 from smarts.core import agent_interface as smarts_agent_interface
 from smarts.core import controllers as smarts_controllers
 from smarts.env import hiway_env as smarts_hiway_env
-from typing import Dict
 
 NEIGHBOURHOOD_RADIUS = 55
 
@@ -66,7 +66,7 @@ class SingleAgent(gym.Wrapper):
         super(SingleAgent, self).__init__(env)
 
         # Action space
-        self.action_space = adapter.action_space(config['action_adapter'])
+        self.action_space = adapter.action_space(config["action_adapter"])
         # Observation space
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(256, 256, 3), dtype=np.uint8
@@ -106,5 +106,3 @@ class SingleAgent(gym.Wrapper):
         if self.env is not None:
             return self.env.close()
         return None
-
-

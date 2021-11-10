@@ -1,11 +1,12 @@
+from typing import Any, Dict, List, Tuple
+
 import absl.logging
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 
-from examples.auto_drive.rl import mode, rl
 from examples.auto_drive.nn import cnn
-from typing import Any, Dict, List, Tuple
+from examples.auto_drive.rl import mode, rl
 
 # Suppress warning
 absl.logging.set_verbosity(absl.logging.ERROR)
@@ -17,9 +18,7 @@ class PPO(rl.RL):
 
         self._name = name
         self._seed = seed
-        self.optimizer = tf.keras.optimizers.Adam(
-            learning_rate=config["initial_lr"]
-        )
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=config["initial_lr"])
 
         # Model
         self.model = None

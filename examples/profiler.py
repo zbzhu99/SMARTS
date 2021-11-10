@@ -1,10 +1,10 @@
 # Filename: profiler.py
-import cProfile
-import pstats
-import line_profiler
 import atexit
-
+import cProfile
 import pathlib
+import pstats
+
+import line_profiler
 
 ROOT = pathlib.Path(__file__).parent.absolute()
 

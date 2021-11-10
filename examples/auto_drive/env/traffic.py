@@ -1,16 +1,16 @@
+from pathlib import Path
+from typing import Dict
+
 import gym
 import matplotlib.pyplot as plt
 import numpy as np
 
 import examples.auto_drive.env.adapter as adapter
-
-from pathlib import Path
 from smarts.core import agent as smarts_agent
 from smarts.core import agent_interface as smarts_agent_interface
 from smarts.core import controllers as smarts_controllers
 from smarts.env import hiway_env as smarts_hiway_env
 from smarts.env.wrappers import frame_stack as smarts_frame_stack
-from typing import Dict
 
 
 class Traffic(gym.Env):
@@ -73,7 +73,7 @@ class Traffic(gym.Env):
         self._env = env
 
         # Action space
-        self.action_space = adapter.action_space(config['action_adapter'])
+        self.action_space = adapter.action_space(config["action_adapter"])
         # Observation space
         self.single_observation_space = gym.spaces.Dict(
             {

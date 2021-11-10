@@ -1,10 +1,11 @@
+from pathlib import Path
+
 import absl.logging
 import numpy as np
 import tensorflow as tf
 
-from pathlib import Path
-from examples.auto_drive.rl import mode, rl
 from examples.auto_drive.nn import cnn
+from examples.auto_drive.rl import mode, rl
 
 # Suppress warning
 absl.logging.set_verbosity(absl.logging.ERROR)
@@ -47,21 +48,15 @@ class PPOGAE(rl.RL):
             )
 
         # Path for newly trained model
-        self._actor_path = modeldir.joinpath(
-            f"{self._name}_actor"
-        )
-        self._critic_path = modeldir.joinpath(
-            f"{self._name}_critic"
-        )
+        self._actor_path = modeldir.joinpath(f"{self._name}_actor")
+        self._critic_path = modeldir.joinpath(f"{self._name}_critic")
 
         # Model summary
         self.actor_model.summary()
         self.critic_model.summary()
 
         # Tensorboard
-        path_tensorboard = logdir.joinpath(
-            f"{self._name}"
-        )
+        path_tensorboard = logdir.joinpath(f"{self._name}")
         self.tb = tf.summary.create_file_writer(str(path_tensorboard))
 
     def close(self):

@@ -1,29 +1,30 @@
+from enum import Enum
+from typing import Dict
+
 import gym
 import numpy as np
-from enum import Enum
 
 from smarts.core import colors as smarts_colors
 from smarts.core import sensors as smarts_sensors
-from typing import Dict
+
 
 class Adapter(str, Enum):
-    CONTINUOUS='continuous'
-    LANE='lane'
-    DISCRETE='discrete'
+    CONTINUOUS = "continuous"
+    LANE = "lane"
+    DISCRETE = "discrete"
 
 
 def info_adapter(obs, reward, info):
     return info
 
+
 def action_space(controller):
     if controller == Adapter.CONTINUOUS:
-        return gym.spaces.Box(
-            low=-1.0, high=1.0, shape=(3,), dtype=np.float
-        )
+        return gym.spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float)
 
     if controller == Adapter.LANE:
         return gym.spaces.Discrete(4)
-        
+
     if controller == Adapter.DISCRETE:
         return gym.spaces.Discrete(5)
 
@@ -99,6 +100,7 @@ def action_adapter(controller):
 
     raise Exception("Unknown controller.")
 
+
 def observation_adapter_1(obs: smarts_sensors.Observation) -> Dict[str, np.ndarray]:
     # RGB grid map
     rgb = obs.top_down_rgb.data
@@ -155,6 +157,7 @@ def observation_adapter_2(obs) -> np.ndarray:
 
     return frame
 
+
 def get_targets(vehicles, target: str):
     target_vehicles = [vehicle for vehicle in vehicles if target in vehicle.id]
     return target_vehicles
@@ -167,7 +170,7 @@ def distance_to_targets(ego, targets):
     return distances
 
 
-def inverse(x: float, radius:float) -> float:
+def inverse(x: float, radius: float) -> float:
     return -x + radius
 
 

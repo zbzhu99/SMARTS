@@ -24,9 +24,6 @@ import numpy as np
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
 import smarts
-import warnings
-
-from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from envision.client import Client as Envision
 from smarts.core.scenario import Scenario
 from smarts.core.smarts import SMARTS

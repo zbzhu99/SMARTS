@@ -27,13 +27,14 @@ tf.random.set_seed(123)
 
 # --------------------------------------------------------------------------
 
-import dreamerv2.api as dv2
 import warnings
+from datetime import datetime
+from pathlib import Path
+
+import dreamerv2.api as dv2
 import yaml
 
 from examples.auto_drive.env import single_agent
-from datetime import datetime
-from pathlib import Path
 
 
 def main(config, modeldir, logdir):
@@ -42,15 +43,18 @@ def main(config, modeldir, logdir):
     print("[INFO] Creating environments")
     env = single_agent.SingleAgent(config, config["seed"])
 
-    config = dv2.defaults.update({
-        'logdir': logdir,
-        'log_every': 1e3,
-        'train_every': 10,
-        'prefill': 1e5,
-        'actor_ent': 3e-3,
-        'loss_scales.kl': 1.0,
-        'discount': 0.99,
-    }).parse_flags()
+    config = dv2.defaults.update(
+        {
+            "logdir": logdir,
+            "log_every": 3,
+            "train_every": 3,
+            "eval_every": 3,
+            "task": None,
+            "prefill": 1000,
+            # 'dataset.length':10,
+            "replay.minlen": 10,
+        }
+    ).parse_flags()
 
     # Train dreamerv2 with env
     dv2.train(env, config)
@@ -82,7 +86,17 @@ if __name__ == "__main__":
 
     name = "dreamerv2"
     time = datetime.now().strftime("%Y_%m_%d_%H_%M")
-    logdir = (Path(__file__).absolute().parents[2]).joinpath("logs").joinpath(name).joinpath(time)
-    modeldir = (Path(__file__).absolute().parents[2]).joinpath("models").joinpath(name).joinpath(time)
+    logdir = (
+        (Path(__file__).absolute().parents[2])
+        .joinpath("logs")
+        .joinpath(name)
+        .joinpath(time)
+    )
+    modeldir = (
+        (Path(__file__).absolute().parents[2])
+        .joinpath("models")
+        .joinpath(name)
+        .joinpath(time)
+    )
 
     main(config=config[name], modeldir=modeldir, logdir=logdir)
