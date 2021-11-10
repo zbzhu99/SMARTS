@@ -32,6 +32,7 @@ import warnings
 import yaml
 
 from examples.auto_drive.env import single_agent
+from datetime import datetime
 from pathlib import Path
 
 
@@ -39,9 +40,10 @@ def main(config):
 
     # Create env
     print("[INFO] Creating environments")
-    env = single_agent.SingleAgent(config["dreamerv2"], config["dreamerv2"]["seed"])
+    env = single_agent.SingleAgent(config, config["seed"])
 
-    logdir = (Path(__file__).absolute().parent).joinpath("logs")
+    time = datetime.now().strftime("%Y_%m_%d_%H_%M")
+    logdir = (Path(__file__).absolute().parent).joinpath("logs").joinpath(f"{time}")
 
     config = dv2.defaults.update({
         'logdir': logdir,
@@ -81,4 +83,4 @@ if __name__ == "__main__":
         )
         # raise SystemError("GPU device not found")
 
-    main(config=config)
+    main(config=config["dreamerv2"])

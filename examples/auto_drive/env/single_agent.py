@@ -15,17 +15,15 @@ NEIGHBOURHOOD_RADIUS = 55
 
 class SingleAgent(gym.Wrapper):
     def __init__(self, config: Dict, seed: int):
-        self._neighborhood_radius = config["neighborhood_radius"]
-        self._rgb_wh = config["rgb_wh"]
         self.agent_id = config["agent_ids"][0]
 
         vehicle_interface = smarts_agent_interface.AgentInterface(
             max_episode_steps=config["max_episode_steps"],
             neighborhood_vehicles=smarts_agent_interface.NeighborhoodVehicles(
-                radius=self._neighborhood_radius
+                radius=config["neighborhood_radius"]
             ),
             rgb=smarts_agent_interface.RGB(
-                width=256, height=256, resolution=self._rgb_wh / 256
+                width=256, height=256, resolution=config["rgb_wh"] / 256
             ),
             vehicle_color="BrightRed",
             action=getattr(

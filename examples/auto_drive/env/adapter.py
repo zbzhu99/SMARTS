@@ -21,10 +21,10 @@ def action_space(controller):
         )
 
     if controller == Adapter.LANE:
-        return gym.spaces.Dsicrete(4)
+        return gym.spaces.Discrete(4)
         
     if controller == Adapter.DISCRETE:
-        return gym.spaces.Dsicrete(5)
+        return gym.spaces.Discrete(5)
 
     raise Exception("Unknown controller.")
 
