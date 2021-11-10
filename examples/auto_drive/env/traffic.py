@@ -17,6 +17,7 @@ class Traffic(gym.Env):
     def __init__(self, config: Dict, seed: int):
         self._config = config
         self.agent_ids = config["agent_ids"]
+        rgb_wh = 256
 
         vehicle_interface = smarts_agent_interface.AgentInterface(
             max_episode_steps=config["max_episode_steps"],
@@ -24,7 +25,7 @@ class Traffic(gym.Env):
                 radius=config["neighborhood_radius"]
             ),
             rgb=smarts_agent_interface.RGB(
-                width=256, height=256, resolution=config["rgb_wh"] / 256
+                width=rgb_wh, height=rgb_wh, resolution=config["rgb_wh"] / rgb_wh
             ),
             vehicle_color="BrightRed",
             action=getattr(

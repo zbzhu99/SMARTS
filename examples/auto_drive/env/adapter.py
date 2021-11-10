@@ -10,8 +10,8 @@ from smarts.core import sensors as smarts_sensors
 
 class Adapter(str, Enum):
     CONTINUOUS = "continuous"
-    LANE = "lane"
     DISCRETE = "discrete"
+    LANE = "lane"
 
 
 def info_adapter(obs, reward, info):
