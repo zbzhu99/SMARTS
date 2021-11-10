@@ -110,8 +110,8 @@ shifted_map-AUTOGEN.net.xml
 
 # Tensorflow
 events.out.tfevents.*
-*/gameOfTag/logs/
-*/gameOfTag/models/
+*/auto_drive/logs/
+*/auto_drive/models/
 
 # Manually generated sumo route files
 !zoo/evaluation/scenarios/**/traffic/*.rou.xml
