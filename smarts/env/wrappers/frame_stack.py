@@ -31,29 +31,36 @@ from smarts.core import sensors
 
 class FrameStack(gym.Wrapper):
     """Wrapper stacks num_stack (default=3) consecutive frames, in a moving-window fashion,
-    and returns the stacked_frames. If num_skip (default=1) is specified, stacked_frames[::num_skip]
-    is returned.
+    and returns the stacked_frames.
 
     Note:
         Wrapper returns a deepcopy of the stacked frames, which may be expensive for large
         frames and large num_stack values.
     """
 
-    def __init__(self, env: gym.Env, num_stack: int = 3, num_skip: int = 1):
+    def __init__(self, env: gym.Env, num_stack: int = 3):
         """
         Args:
             env (gym.Env): Gym environment to be wrapped.
             num_stack (int, optional): Number of frames to be stacked. Defaults to 3.
-            num_skip (int, optional): Frequency of frames used in returned stacked frames. Defaults to 1.
         """
         assert num_stack > 1, f"Expected num_stack > 1, but got {num_stack}."
-        assert num_skip > 0, f"Expected num_skip > 0, but got {num_skip}."
         super(FrameStack, self).__init__(env)
-        self._num_stack = (num_stack - 1) * num_skip + 1
-        self._num_skip = num_skip
+        self._num_stack = num_stack
         self._frames = {
             key: deque(maxlen=self._num_stack) for key in self.env.agent_specs.keys()
         }
+
+        if self.observation_space:
+            self.observation_space = gym.spaces.Dict({
+                agent_id: gym.spaces.Tuple([space] * self._num_stack)
+                for agent_id, space in self.observation_space.items()
+            })
+        if self.action_space:      
+            self.action_space = gym.spaces.Dict({
+                agent_id: gym.spaces.Tuple([space] * self._num_stack)
+                for agent_id, space in self.action_space.items()
+            })
 
     def _get_observations(
         self, frame: sensors.Observation
@@ -65,7 +72,7 @@ class FrameStack(gym.Wrapper):
         for agent_id, observation in frame.items():
             self._frames[agent_id].appendleft(observation)
             frames_list = list(self._frames[agent_id])
-            new_frames[agent_id] = copy.deepcopy(frames_list[:: self._num_skip])
+            new_frames[agent_id] = copy.deepcopy(frames_list)
 
         return new_frames
 

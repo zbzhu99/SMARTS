@@ -16,34 +16,20 @@ ppo:
     - Bear1
   scenarios: 
     - loop
-
-  # Observation and action space
   observation1_dim: [256, 256, 12] # rgb image * num_stack
   observation2_dim: [8] # [steering, speed] * num_stack
   # action_dim: 5 # Discrete    
   action_dim: 4 # Lane
-  
-  # Optimizer
   initial_lr: 0.0003
-
-  # PPO
   critic_loss_weight: 0.5
   gamma: 0.99 # Reward discount
   clip_ratio: 0.2
-
-  # NeuralNetwork
   nn: NeuralNetwork1
   # nn: NeuralNetwork2
-
-  # Iteration size
-  n_steps: 4000 # Horizon, a.k.a, trajectory length
+  n_steps: 2000 # Horizon, a.k.a, trajectory length
   max_traj: 100000
   num_train_epochs: 3
-
-  # Gradient batch size
   grad_batch: 256
-
-  # Models and logs
   save_interval: 20
   mode: train # train or evaluate
   model_initial: False
