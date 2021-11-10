@@ -36,14 +36,11 @@ from datetime import datetime
 from pathlib import Path
 
 
-def main(config):
+def main(config, modeldir, logdir):
 
     # Create env
     print("[INFO] Creating environments")
     env = single_agent.SingleAgent(config, config["seed"])
-
-    time = datetime.now().strftime("%Y_%m_%d_%H_%M")
-    logdir = (Path(__file__).absolute().parent).joinpath("logs").joinpath(f"{time}")
 
     config = dv2.defaults.update({
         'logdir': logdir,
@@ -83,4 +80,9 @@ if __name__ == "__main__":
         )
         # raise SystemError("GPU device not found")
 
-    main(config=config["dreamerv2"])
+    name = "dreamerv2"
+    time = datetime.now().strftime("%Y_%m_%d_%H_%M")
+    logdir = (Path(__file__).absolute().parents[2]).joinpath("logs").joinpath(name).joinpath(time)
+    modeldir = (Path(__file__).absolute().parents[2]).joinpath("models").joinpath(name).joinpath(time)
+
+    main(config=config[name], modeldir=modeldir, logdir=logdir)

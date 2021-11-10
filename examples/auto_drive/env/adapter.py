@@ -3,7 +3,8 @@ import numpy as np
 from enum import Enum
 
 from smarts.core import colors as smarts_colors
-
+from smarts.core import sensors as smarts_sensors
+from typing import Dict
 
 class Adapter(str, Enum):
     CONTINUOUS='continuous'
@@ -98,8 +99,39 @@ def action_adapter(controller):
 
     raise Exception("Unknown controller.")
 
+def observation_adapter_1(obs: smarts_sensors.Observation) -> Dict[str, np.ndarray]:
+    # RGB grid map
+    rgb = obs.top_down_rgb.data
+    # Replace self color to Lime
+    coloured_self = rgb.copy()
+    coloured_self[123:132, 126:130, 0] = smarts_colors.Colors.Lime.value[0] * 255
+    coloured_self[123:132, 126:130, 1] = smarts_colors.Colors.Lime.value[1] * 255
+    coloured_self[123:132, 126:130, 2] = smarts_colors.Colors.Lime.value[2] * 255
+    frame = coloured_self.astype(np.uint8)
 
-def observation_adapter(obs) -> np.ndarray:
+    # Plot graph
+    # fig, axes = plt.subplots(1, 2, figsize=(10, 10))
+    # ax = axes.ravel()
+    # ax[0].imshow(rgb)
+    # ax[0].set_title("RGB")
+    # ax[1].imshow(frame)
+    # ax[1].set_title("Frame")
+    # fig.tight_layout()
+    # plt.show()
+    # sys.exit(2)
+
+    scalar = np.array(
+        (
+            obs.ego_vehicle_state.speed,
+            obs.ego_vehicle_state.steering,
+        ),
+        dtype=np.float32,
+    )
+
+    return {"image": frame, "scalar": scalar}
+
+
+def observation_adapter_2(obs) -> np.ndarray:
     # RGB grid map
     rgb = obs.top_down_rgb.data
     # Replace self color to Lime
@@ -122,6 +154,21 @@ def observation_adapter(obs) -> np.ndarray:
     # sys.exit(2)
 
     return frame
+
+def get_targets(vehicles, target: str):
+    target_vehicles = [vehicle for vehicle in vehicles if target in vehicle.id]
+    return target_vehicles
+
+
+def distance_to_targets(ego, targets):
+    distances = (
+        [np.linalg.norm(ego.position - target.position) for target in targets],
+    )
+    return distances
+
+
+def inverse(x: float, radius:float) -> float:
+    return -x + radius
 
 
 def reward_adapter(obs, env_reward):

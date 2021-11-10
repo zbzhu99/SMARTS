@@ -2,7 +2,6 @@ import absl.logging
 import numpy as np
 import tensorflow as tf
 
-from datetime import datetime
 from pathlib import Path
 from examples.auto_drive.rl import mode, rl
 from examples.auto_drive.nn import cnn
@@ -12,7 +11,7 @@ absl.logging.set_verbosity(absl.logging.ERROR)
 
 
 class PPOGAE(rl.RL):
-    def __init__(self, name, config, agent_ids, seed):
+    def __init__(self, name, config, agent_ids, seed, modeldir, logdir):
         super(PPOGAE, self).__init__()
 
         self._name = name
@@ -48,12 +47,11 @@ class PPOGAE(rl.RL):
             )
 
         # Path for newly trained model
-        time = datetime.now().strftime("%Y_%m_%d_%H_%M")
-        self._actor_path = Path(config["path_new_model"]).joinpath(
-            f"{name}_actor_{time}"
+        self._actor_path = modeldir.joinpath(
+            f"{self._name}_actor"
         )
-        self._critic_path = Path(config["path_new_model"]).joinpath(
-            f"{name}_critic_{time}"
+        self._critic_path = modeldir.joinpath(
+            f"{self._name}_critic"
         )
 
         # Model summary
@@ -61,8 +59,8 @@ class PPOGAE(rl.RL):
         self.critic_model.summary()
 
         # Tensorboard
-        path_tensorboard = Path(config["path_tensorboard"]).joinpath(
-            f"{name}_{time}"
+        path_tensorboard = logdir.joinpath(
+            f"{self._name}"
         )
         self.tb = tf.summary.create_file_writer(str(path_tensorboard))
 

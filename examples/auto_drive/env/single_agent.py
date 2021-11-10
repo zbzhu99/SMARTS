@@ -4,6 +4,7 @@ import numpy as np
 
 import examples.auto_drive.env.adapter as adapter
 
+from pathlib import Path
 from smarts.core import agent as smarts_agent
 from smarts.core import agent_interface as smarts_agent_interface
 from smarts.core import controllers as smarts_controllers
@@ -44,15 +45,17 @@ class SingleAgent(gym.Wrapper):
             self.agent_id: smarts_agent.AgentSpec(
                 interface=vehicle_interface,
                 agent_builder=None,
-                observation_adapter=adapter.observation_adapter,
+                observation_adapter=adapter.observation_adapter_2,
                 reward_adapter=adapter.reward_adapter,
                 action_adapter=adapter.action_adapter(config["action_adapter"]),
                 info_adapter=adapter.info_adapter,
             )
         }
 
+        base = (Path(__file__).absolute().parents[3]).joinpath("scenarios")
+        scenarios = [base.joinpath(scenario) for scenario in config["scenarios"]]
         env = smarts_hiway_env.HiWayEnv(
-            scenarios=config["scenarios"],
+            scenarios=scenarios,
             agent_specs=agent_specs,
             headless=config["headless"],
             visdom=config["visdom"],

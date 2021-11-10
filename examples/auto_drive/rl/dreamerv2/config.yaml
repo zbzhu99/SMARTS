@@ -14,8 +14,7 @@ dreamerv2:
   agent_ids: 
     - Tigger1
   scenarios: 
-    - /home/kyber/workspaces/SMARTS/scenarios/loop
-    # - /src/scenarios/loop
+    - loop
 
   # Observation and action space
   # observation1_dim: [256, 256, 12] # rgb image * num_stack
@@ -35,10 +34,7 @@ dreamerv2:
   model_initial: False
 
   # Local
-  path_tensorboard: "/home/kyber/workspaces/SMARTS/examples/auto_drive/logs/"
-  path_new_model: "/home/kyber/workspaces/SMARTS/examples/auto_drive/models/"
-  # path_old_model: "/home/kyber/workspaces/training/cruiser_2021_10_17_02_00/models/cruiser_2021_10_17_06_03/13056"
+  # path_old_model: "/home/kyber/workspaces/training/cruiser_2021_10_17_02_00/models/dreamerv2/cruiser_2021_10_17_06_03/13056"
 
   # Docker
-  # path_tensorboard: "/src/examples/auto_drive/logs/"
-  # path_new_model: "/src/examples/auto_drive/models/"
+  # path_old_model: "/src/training/cruiser_2021_10_17_02_00/models/dreamerv2/cruiser_2021_10_17_06_03/13056"

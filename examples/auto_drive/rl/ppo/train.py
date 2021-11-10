@@ -32,14 +32,16 @@ import sys
 import warnings
 import yaml
 
+from datetime import datetime
 from examples.auto_drive.env import traffic
 from examples.auto_drive.agent import behaviour
 from examples.auto_drive.agent import vehicle
-from examples.auto_drive.rl import ppo, mode
+from examples.auto_drive.rl.ppo import ppo
+from examples.auto_drive.rl import mode
 from pathlib import Path
 
 
-def main(config):
+def main(config, modeldir, logdir):
 
     print("[INFO] Train")
     save_interval = config.get("save_interval", 20)
@@ -54,7 +56,7 @@ def main(config):
 
     # Create env
     print("[INFO] Creating environments")
-    env = traffic.Traffic(config["ppo"], config["ppo"]["seed"])
+    env = traffic.Traffic(config, config["seed"])
 
     # Create agent
     print("[INFO] Creating agents")
@@ -62,7 +64,7 @@ def main(config):
 
     # Create model
     print("[INFO] Creating model")
-    policy = ppo.PPO(behaviour.Behaviour.CRUISER, config, config["seed"] + 1)
+    policy = ppo.PPO(behaviour.Behaviour.CRUISER, config, config["seed"] + 1, modeldir, logdir)
 
     def interrupt(*args):
         nonlocal run_mode
@@ -270,4 +272,10 @@ if __name__ == "__main__":
         )
         # raise SystemError("GPU device not found")
 
-    main(config=config["ppo"])
+    name = "ppo"
+    time = datetime.now().strftime("%Y_%m_%d_%H_%M")
+    logdir = (Path(__file__).absolute().parents[2]).joinpath("logs").joinpath(name).joinpath(time)
+    modeldir = (Path(__file__).absolute().parents[2]).joinpath("models").joinpath(name).joinpath(time)
+
+    main(config=config[name], modeldir=modeldir, logdir=logdir)
+

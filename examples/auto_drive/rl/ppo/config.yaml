@@ -10,21 +10,18 @@ ppo:
   num_skip: 1 # Frequency of frames to be stacked
   action_space_type: "Continuous"
   # action_space_type: "Lane"
-  action_adapter: "continuous"
+  action_adapter: "discrete"
   # action_adapter: "lane"
-  # action_adapter: "discrete"
   agent_ids: 
     - Bear1
   scenarios: 
-    # - /home/kyber/workspaces/SMARTS/scenarios/loop
-    - /src/scenarios/loop
+    - loop
 
   # Observation and action space
   observation1_dim: [256, 256, 12] # rgb image * num_stack
   observation2_dim: [8] # [steering, speed] * num_stack
+  # action_dim: 5 # Discrete    
   action_dim: 4 # Lane
-  # action_dim: 0 # LaneWithContinuousSpeed
-  # action_dim: 5 # Continuous    
   
   # Optimizer
   initial_lr: 0.0003
@@ -37,7 +34,6 @@ ppo:
   # NeuralNetwork
   nn: NeuralNetwork1
   # nn: NeuralNetwork2
-  # nn: ResidualNet
 
   # Iteration size
   n_steps: 4000 # Horizon, a.k.a, trajectory length
@@ -53,10 +49,7 @@ ppo:
   model_initial: False
 
   # Local
-  # path_tensorboard: "/home/kyber/workspaces/SMARTS/examples/auto_drive/logs/"
-  # path_new_model: "/home/kyber/workspaces/SMARTS/examples/auto_drive/models/"
-  # path_old_model: "/home/kyber/workspaces/training/cruiser_2021_10_17_02_00/models/cruiser_2021_10_17_06_03/13056"
+  # path_old_model: "/home/kyber/workspaces/training/cruiser_2021_10_17_02_00/models/ppo/cruiser_2021_10_17_06_03/13056"
 
   # Docker
-  path_tensorboard: "/src/examples/auto_drive/logs/"
-  path_new_model: "/src/examples/auto_drive/models/"
+  # path_old_model: "/src/training/cruiser_2021_10_17_02_00/models/ppo/cruiser_2021_10_17_06_03/13056"

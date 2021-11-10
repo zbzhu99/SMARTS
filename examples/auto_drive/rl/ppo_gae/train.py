@@ -27,19 +27,20 @@ tf.random.set_seed(123)
 
 # --------------------------------------------------------------------------
 
-import argparse
 import signal
 import sys
 import warnings
 import yaml
 
+from datetime import datetime
 from examples.auto_drive.env import traffic
 from examples.auto_drive.agent import behaviour, vehicle_gae
-from examples.auto_drive.rl import ppo_gae, mode
+from examples.auto_drive.rl.ppo_gae import ppo_gae
+from examples.auto_drive.rl import mode
 from pathlib import Path
 
 
-def main(config):
+def main(config, modeldir, logdir):
 
     print("[INFO] Train")
     save_interval = config.get("save_interval", 20)
@@ -60,10 +61,11 @@ def main(config):
     # Create model
     print("[INFO] Creating model")
     policy = ppo_gae.PPOGAE(
-        behaviour.Behaviour.CRUISER,
-        config,
-        env.agent_ids,
-        config["seed"] + 1,
+        name=behaviour.Behaviour.CRUISER,
+        config=config,
+        agent_ids=env.agent_ids,
+        seed=config["seed"] + 1,
+        modeldir=modeldir, logdir=logdir
     )
 
     def interrupt(*args):
@@ -264,4 +266,9 @@ if __name__ == "__main__":
         )
         # raise SystemError("GPU device not found")
 
-    main(config=config["ppo_gae"])
+    name = "ppo_gae"
+    time = datetime.now().strftime("%Y_%m_%d_%H_%M")
+    logdir = (Path(__file__).absolute().parents[2]).joinpath("logs").joinpath(name).joinpath(time)
+    modeldir = (Path(__file__).absolute().parents[2]).joinpath("models").joinpath(name).joinpath(time)
+
+    main(config=config["ppo_gae"], modeldir=modeldir, logdir=logdir)

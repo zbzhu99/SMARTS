@@ -6,7 +6,7 @@ class Vehicle:
     def __init__(self, name, config):
         self.name = name
         self._config = config
-        self._gamma = config["model_para"]["gamma"]
+        self._gamma = config["gamma"]
         self.reset()
 
     def reset(self):

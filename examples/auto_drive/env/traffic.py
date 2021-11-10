@@ -2,33 +2,29 @@ import gym
 import matplotlib.pyplot as plt
 import numpy as np
 
+import examples.auto_drive.env.adapter as adapter
+
+from pathlib import Path
 from smarts.core import agent as smarts_agent
 from smarts.core import agent_interface as smarts_agent_interface
-from smarts.core import colors as smarts_colors
 from smarts.core import controllers as smarts_controllers
-from smarts.core import sensors as smarts_sensors
 from smarts.env import hiway_env as smarts_hiway_env
 from smarts.env.wrappers import frame_stack as smarts_frame_stack
 from typing import Dict
 
 
-NEIGHBOURHOOD_RADIUS = 55
-
-
 class Traffic(gym.Env):
     def __init__(self, config: Dict, seed: int):
         self._config = config
-        self._neighborhood_radius = config["neighborhood_radius"]
-        self._rgb_wh = config["rgb_wh"]
         self.agent_ids = config["agent_ids"]
 
         vehicle_interface = smarts_agent_interface.AgentInterface(
             max_episode_steps=config["max_episode_steps"],
             neighborhood_vehicles=smarts_agent_interface.NeighborhoodVehicles(
-                radius=self._neighborhood_radius
+                radius=config["neighborhood_radius"]
             ),
             rgb=smarts_agent_interface.RGB(
-                width=256, height=256, resolution=self._rgb_wh / 256
+                width=256, height=256, resolution=config["rgb_wh"] / 256
             ),
             vehicle_color="BrightRed",
             action=getattr(
@@ -50,16 +46,18 @@ class Traffic(gym.Env):
             agent_id: smarts_agent.AgentSpec(
                 interface=vehicle_interface,
                 agent_builder=None,
-                observation_adapter=observation_adapter,
-                reward_adapter=reward_adapter,
-                action_adapter=action_adapter(config["action_space_type"]),
-                info_adapter=info_adapter,
+                observation_adapter=adapter.observation_adapter_1,
+                reward_adapter=adapter.reward_adapter,
+                action_adapter=adapter.action_adapter(config["action_adapter"]),
+                info_adapter=adapter.info_adapter,
             )
             for agent_id in self.agent_ids
         }
 
+        base = (Path(__file__).absolute().parents[3]).joinpath("scenarios")
+        scenarios = [base.joinpath(scenario) for scenario in config["scenarios"]]
         env = smarts_hiway_env.HiWayEnv(
-            scenarios=config["scenarios"],
+            scenarios=scenarios,
             agent_specs=agent_specs,
             headless=config["headless"],
             visdom=config["visdom"],
@@ -74,8 +72,8 @@ class Traffic(gym.Env):
 
         self._env = env
 
-        # Categorical action space
-        self.single_action_space = gym.spaces.Discrete(config["action_dim"])
+        # Action space
+        self.action_space = adapter.action_space(config['action_adapter'])
         # Observation space
         self.single_observation_space = gym.spaces.Dict(
             {
@@ -139,162 +137,3 @@ def _stack_obs(state: Dict):
         stacked_state[agent_id] = {"image": stacked_image, "scalar": stacked_scalar}
 
     return stacked_state
-
-
-def info_adapter(obs, reward, info):
-    return reward
-
-
-def action_adapter(controller):
-    # Action space
-    # throttle: [0, 1]
-    # brake: [0, 1]
-    # steering: [-1, 1]
-
-    if controller == "Continuous":
-
-        def continuous(model_action):
-            throttle, brake, steering = model_action
-            # Modify action space limits
-            throttle = (throttle + 1) / 2
-            brake = (brake + 1) / 2
-            return np.array([throttle, brake, steering], dtype=np.float)
-
-        return continuous
-
-    if controller == "Lane":
-
-        def lane(model_action):
-            if model_action == 0:
-                return "keep_lane"
-            if model_action == 1:
-                return "slow_down"
-            if model_action == 2:
-                return "change_lane_left"
-            if model_action == 3:
-                return "change_lane_right"
-            raise Exception("Unknown model action.")
-
-        return lane
-
-    if controller == "LaneWithContinuousSpeed":
-
-        def lane_speed(model_action):
-            speeds = [0, 3, 6, 9]  # Speed selection in m/s
-            lanes = [
-                -1,
-                0,
-                1,
-            ]  # Lane change relative to current lane
-            target_speed = speeds[model_action[0]]
-            lane_change = lanes[model_action[1]]
-            return np.array([target_speed, lane_change], dtype=np.float32)
-
-        return lane_speed
-
-    if controller == "Discrete":
-
-        def discrete(model_action):
-            # Modify action space limits
-            if model_action == 0:
-                # Cruise
-                throttle = 0.3
-                brake = 0
-                steering = 0
-            elif model_action == 1:
-                # Accelerate
-                throttle = 0.6
-                brake = 0
-                steering = 0
-            elif model_action == 2:
-                # Turn left
-                throttle = 0.5
-                brake = 0
-                steering = -0.8
-            elif model_action == 3:
-                # Turn right
-                throttle = 0.5
-                brake = 0
-                steering = 0.8
-            elif model_action == 4:
-                # Brake
-                throttle = 0
-                brake = 0.8
-                steering = 0
-            else:
-                raise Exception("Unknown model action.")
-            return np.array([throttle, brake, steering], dtype=np.float32)
-
-        return discrete
-
-    raise Exception("Unknown controller.")
-
-
-def observation_adapter(obs: smarts_sensors.Observation) -> Dict[str, np.ndarray]:
-    # RGB grid map
-    rgb = obs.top_down_rgb.data
-    # Replace self color to Lime
-    coloured_self = rgb.copy()
-    coloured_self[123:132, 126:130, 0] = smarts_colors.Colors.Lime.value[0] * 255
-    coloured_self[123:132, 126:130, 1] = smarts_colors.Colors.Lime.value[1] * 255
-    coloured_self[123:132, 126:130, 2] = smarts_colors.Colors.Lime.value[2] * 255
-    frame = coloured_self.astype(np.uint8)
-
-    # Plot graph
-    # fig, axes = plt.subplots(1, 2, figsize=(10, 10))
-    # ax = axes.ravel()
-    # ax[0].imshow(rgb)
-    # ax[0].set_title("RGB")
-    # ax[1].imshow(frame)
-    # ax[1].set_title("Frame")
-    # fig.tight_layout()
-    # plt.show()
-    # sys.exit(2)
-
-    scalar = np.array(
-        (
-            obs.ego_vehicle_state.speed,
-            obs.ego_vehicle_state.steering,
-        ),
-        dtype=np.float32,
-    )
-
-    return {"image": frame, "scalar": scalar}
-
-
-def get_targets(vehicles, target: str):
-    target_vehicles = [vehicle for vehicle in vehicles if target in vehicle.id]
-    return target_vehicles
-
-
-def distance_to_targets(ego, targets):
-    distances = (
-        [np.linalg.norm(ego.position - target.position) for target in targets],
-    )
-    return distances
-
-
-def inverse(x: float) -> float:
-    return -x + NEIGHBOURHOOD_RADIUS
-
-
-def reward_adapter(obs, env_reward):
-    ego = obs.ego_vehicle_state
-    reward = 0
-
-    # Penalty for driving off road
-    if obs.events.off_road:
-        reward = 0
-        print(f"Vehicle {ego.id} went off road.")
-        return np.float32(reward)
-
-    # Reward for colliding
-    if len(obs.events.collisions) > 0:
-        reward = 0
-        print(f"Vehicle {ego.id} collided.")
-        return np.float32(reward)
-
-    # Distance based reward
-    reward += env_reward
-
-    return np.float32(reward)

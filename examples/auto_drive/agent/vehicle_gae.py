@@ -5,8 +5,8 @@ class VehicleGAE:
     def __init__(self, name, config):
         self.name = name
         self._config = config
-        self._gamma = config["model_para"]["gamma"]
-        self._lam = config["model_para"]["lam"]
+        self._gamma = config["gamma"]
+        self._lam = config["lam"]
         self.reset()
 
     def reset(self):

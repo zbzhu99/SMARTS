@@ -5,8 +5,6 @@ import tensorflow_probability as tfp
 
 from examples.auto_drive.rl import mode, rl
 from examples.auto_drive.nn import cnn
-from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 # Suppress warning
@@ -14,7 +12,7 @@ absl.logging.set_verbosity(absl.logging.ERROR)
 
 
 class PPO(rl.RL):
-    def __init__(self, name, config, seed):
+    def __init__(self, name, config, seed, modeldir, logdir):
         super(PPO, self).__init__()
 
         self._name = name
@@ -38,18 +36,13 @@ class PPO(rl.RL):
             )
 
         # Path for newly trained model
-        time = datetime.now().strftime("%Y_%m_%d_%H_%M")
-        self.path_new_model = Path(config["path_new_model"]).joinpath(
-            f"{name}_{time}"
-        )
+        self.path_new_model = modeldir.joinpath(f"{self._name}")
 
         # Model summary
         self.model.summary()
 
         # Tensorboard
-        path_tensorboard = Path(config["path_tensorboard"]).joinpath(
-            f"{name}_{time}"
-        )
+        path_tensorboard = logdir.joinpath(f"{self._name}")
         self.tb = tf.summary.create_file_writer(str(path_tensorboard))
 
     def close(self):
