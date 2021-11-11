@@ -12,23 +12,13 @@ dreamerv2:
   # action_adapter: "lane"
   # action_adapter: "discrete"
   agent_ids: 
-    - Tigger1
+    - Rabbit1
   scenarios: 
     - loop
-
-  # Observation and action space
-  # observation1_dim: [256, 256, 12] # rgb image * num_stack
-  # observation2_dim: [8] # [steering, speed] * num_stack
-  
-  # Iteration size
-  n_steps: 4000 # Horizon, a.k.a, trajectory length
+  n_steps: 1000 # Horizon, a.k.a, trajectory length
   max_traj: 100000
   num_train_epochs: 3
-
-  # Gradient batch size
   grad_batch: 256
-
-  # Models and logs
   save_interval: 20
   mode: train # train or evaluate
   model_initial: False

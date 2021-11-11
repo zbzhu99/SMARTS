@@ -56,6 +56,7 @@ def make_traffic_env(config: Dict, seed: int):
         visdom=config["visdom"],
         seed=seed,
     )
+    # Wrap env with ActionWrapper
     env = smarts_action.Action(env=env, wrapper=config["action_adapter"])
     # Wrap env with FrameStack to stack multiple observations
     env = smarts_frame_stack.FrameStack(env=env, num_stack=config["num_stack"])

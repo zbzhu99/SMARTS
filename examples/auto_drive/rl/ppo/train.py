@@ -77,7 +77,11 @@ def main(config, modeldir, logdir):
     # Create model
     print("[INFO] Creating model")
     policy = ppo.PPO(
-        behaviour.Behaviour.CRUISER, config, config["seed"] + 1, modeldir, logdir
+        name=behaviour.Behaviour.CRUISER,
+        config=config,
+        seed=config["seed"] + 1,
+        modeldir=modeldir,
+        logdir=logdir,
     )
 
     def interrupt(*args):
