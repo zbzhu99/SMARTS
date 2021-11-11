@@ -41,7 +41,7 @@ def main(config, modeldir, logdir):
 
     # Create env
     print("[INFO] Creating environments")
-    env = single_agent.SingleAgent(config, config["seed"])
+    env = single_agent.make_single_agent_env(config, config["seed"])
 
     config = dv2.defaults.update(
         {
