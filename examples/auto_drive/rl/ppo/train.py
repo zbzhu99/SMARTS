@@ -56,11 +56,23 @@ def main(config, modeldir, logdir):
 
     # Create env
     print("[INFO] Creating environments")
-    env = traffic.Traffic(config, config["seed"])
+    env = traffic.make_traffic_env(config, config["seed"])
+
+    # TODO: Need agent to policy mapping
+    print("------------------------------------------")
+    print("HARDCODE WARNING !!!!!!!!!!")
+    if hasattr(env.action_space, "n"):
+        config["action_dim"] = env.action_space.n
+    config["observation_dim"] = env.observation_space["Bear1"].shape
+    print("observation dim = ", config["observation_dim"])
+    print("action dim =", config["action_dim"])
+    print("------------------------------------------")
 
     # Create agent
     print("[INFO] Creating agents")
-    all_agents = {name: vehicle.Vehicle(name, config) for name in env.agent_ids}
+    all_agents = {
+        name: vehicle.Vehicle(name, config) for name in env.agent_specs.keys()
+    }
 
     # Create model
     print("[INFO] Creating model")
@@ -123,7 +135,7 @@ def main(config, modeldir, logdir):
                 )
                 step = traj_num * n_steps + cur_step
                 policy.save(-1 * step)
-                new_env = traffic.Traffic(config, config["seed"] + step)
+                new_env = traffic.make_traffic_env(config, config["seed"] + step)
                 env = new_env
                 next_states_t = env.reset()
                 states_t = next_states_t

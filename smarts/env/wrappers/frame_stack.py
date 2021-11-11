@@ -59,14 +59,6 @@ class FrameStack(gym.Wrapper):
                 }
             )
 
-        if self.action_space:
-            self.action_space = gym.spaces.Dict(
-                {
-                    agent_id: gym.spaces.Tuple([space] * self._num_stack)
-                    for agent_id, space in self.action_space.items()
-                }
-            )
-
     def _get_observations(
         self, frame: sensors.Observation
     ) -> Dict[str, List[sensors.Observation]]:

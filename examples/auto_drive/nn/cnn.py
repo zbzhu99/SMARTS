@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def NeuralNetwork1(name, num_actions, input1_shape, input2_shape):
+def NeuralNetwork1(name, num_actions, input1_shape):
     filter_num = [32, 32, 64, 64, 128]
     kernel_size = [65, 13, 5, 2, 3]
     pool_size = [4, 2, 2, 2, 1]
@@ -11,7 +11,6 @@ def NeuralNetwork1(name, num_actions, input1_shape, input2_shape):
     # pool_size = [4, 4, 2]
 
     input1 = tf.keras.layers.Input(shape=input1_shape, dtype=tf.uint8)
-    input2 = tf.keras.layers.Input(shape=input2_shape, dtype=tf.float32)
     input1_norm = tf.cast(input1, tf.float32) / 255.0
     x_conv = input1_norm
     for ii in range(len(filter_num)):
@@ -30,21 +29,13 @@ def NeuralNetwork1(name, num_actions, input1_shape, input2_shape):
     flatten_out = tf.keras.layers.Flatten()(x_conv)
 
     dense1_out = tf.keras.layers.Dense(
-        units=16, activation=tf.keras.activations.relu, name="dense_1"
-    )(input2)
+        units=512, activation=tf.keras.activations.relu, name="dense_1"
+    )(flatten_out)
 
-    merged_out = tf.keras.layers.concatenate([flatten_out, dense1_out], axis=1)
+    policy = tf.keras.layers.Dense(units=num_actions, name="dense_policy")(dense1_out)
+    value = tf.keras.layers.Dense(units=1, name="dense_value")(dense1_out)
 
-    dense2_out = tf.keras.layers.Dense(
-        units=512, activation=tf.keras.activations.relu, name="dense_2"
-    )(merged_out)
-
-    policy = tf.keras.layers.Dense(units=num_actions, name="dense_policy")(dense2_out)
-    value = tf.keras.layers.Dense(units=1, name="dense_value")(dense2_out)
-
-    model = tf.keras.Model(
-        inputs=[input1, input2], outputs=[policy, value], name=f"NN1_{name}"
-    )
+    model = tf.keras.Model(inputs=input1, outputs=[policy, value], name=f"NN1_{name}")
 
     return model
 

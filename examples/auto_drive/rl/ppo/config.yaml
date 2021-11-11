@@ -7,7 +7,6 @@ ppo:
   rgb_wh: 110 # Height and width (meter) of RGB image in SMARTS observation
   max_episode_steps: 200 # 20 seconds. Maximum steps per episode.
   num_stack: 4 # Number of frames to stack
-  num_skip: 1 # Frequency of frames to be stacked
   action_space_type: "Continuous"
   # action_space_type: "Lane"
   action_adapter: "discrete"
@@ -16,10 +15,6 @@ ppo:
     - Bear1
   scenarios: 
     - loop
-  observation1_dim: [256, 256, 12] # rgb image * num_stack
-  observation2_dim: [8] # [steering, speed] * num_stack
-  # action_dim: 5 # Discrete    
-  action_dim: 4 # Lane
   initial_lr: 0.0003
   critic_loss_weight: 0.5
   gamma: 0.99 # Reward discount

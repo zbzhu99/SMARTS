@@ -28,10 +28,7 @@ class PPO(rl.RL):
         else:  # Start from new model
             print("[INFO] PPO new model.")
             self.model = getattr(cnn, config["nn"])(
-                self._name,
-                config["action_dim"],
-                config["observation1_dim"],
-                config["observation2_dim"],
+                self._name, config["action_dim"], config["observation_dim"]
             )
 
         # Path for newly trained model
@@ -61,11 +58,8 @@ class PPO(rl.RL):
         ordered_obs = _dict_to_ordered_list(obs)
 
         for vehicle, state in ordered_obs:
-            images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), [state])))
-            stacked_images = tf.stack(images, axis=0)
-            stacked_scalars = tf.stack(scalars, axis=0)
-
-            actions_t, values_t = self.model.predict([stacked_images, stacked_scalars])
+            stacked_image = tf.stack([state], axis=0)
+            actions_t, values_t = self.model.predict(stacked_image)
             actions[vehicle] = tf.squeeze(actions_t, axis=0)
             values[vehicle] = tf.squeeze(values_t)
 
@@ -101,30 +95,25 @@ def train_model(
     model: tf.keras.Model,
     optimizer: tf.keras.optimizers,
     actions: List,
-    old_probs,
-    states: List[Dict[str, np.ndarray]],
+    old_probs: List,
+    states: List[np.ndarray],
     advantages: np.ndarray,
     discounted_rewards: np.ndarray,
     clip_ratio: float,
     critic_loss_weight: float,
     grad_batch=64,
 ):
-    images, scalars = zip(*(map(lambda x: (x["image"], x["scalar"]), states)))
-    stacked_image = tf.stack(images, axis=0)
-    stacked_scalar = tf.stack(scalars, axis=0)
-
+    stacked_image = tf.stack(states, axis=0)
     traj_len = stacked_image.shape[0]
-    assert traj_len == stacked_scalar.shape[0]
     for ind in range(0, traj_len, grad_batch):
         image_chunk = stacked_image[ind : ind + grad_batch]
-        scalar_chunk = stacked_scalar[ind : ind + grad_batch]
         old_probs_chunk = old_probs[ind : ind + grad_batch]
         advantages_chunk = advantages[ind : ind + grad_batch]
         actions_chunk = actions[ind : ind + grad_batch]
         discounted_rewards_chunk = discounted_rewards[ind : ind + grad_batch]
 
         with tf.GradientTape() as tape:
-            policy_logits, values = model([image_chunk, scalar_chunk])
+            policy_logits, values = model(image_chunk)
             act_loss = actor_loss(
                 advantages=advantages_chunk,
                 old_probs=old_probs_chunk,
