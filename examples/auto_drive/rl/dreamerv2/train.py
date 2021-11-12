@@ -46,13 +46,12 @@ def main(config, modeldir, logdir):
     config = dv2.defaults.update(
         {
             "logdir": logdir,
-            "log_every": 3,
-            "train_every": 3,
-            "eval_every": 3,
+            "log_every": 1e4,
+            "train_every": 5,
+            "eval_every": 1e5,
             "task": None,
-            "prefill": 1000,
-            # 'dataset.length':10,
-            "replay.minlen": 10,
+            "prefill": 10000,
+            "replay.minlen": 50,
         }
     ).parse_flags()
 

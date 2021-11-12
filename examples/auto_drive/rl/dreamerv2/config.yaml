@@ -6,10 +6,10 @@ dreamerv2:
   neighborhood_radius: 55 # Radius (meter) for neighborhood vehicles
   rgb_wh: 110 # Height and width (meter) of RGB image in SMARTS observation
   max_episode_steps: 200 # 20 seconds. Maximum steps per episode.
-  action_space_type: "Continuous"
-  # action_space_type: "Lane"
-  action_adapter: "continuous"
-  # action_adapter: "lane"
+  # action_space_type: "Continuous"
+  action_space_type: "Lane"
+  # action_adapter: "continuous"
+  action_adapter: "lane"
   # action_adapter: "discrete"
   agent_ids: 
     - Rabbit1
@@ -17,8 +17,6 @@ dreamerv2:
     - loop
   n_steps: 1000 # Horizon, a.k.a, trajectory length
   max_traj: 100000
-  num_train_epochs: 3
-  grad_batch: 256
   save_interval: 20
   mode: train # train or evaluate
   model_initial: False
