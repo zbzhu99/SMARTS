@@ -40,7 +40,8 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
 ENV VIRTUAL_ENV=/opt/.venv
 RUN python3.7 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip
+RUN pip config set global.trusted-host "pypi.python.org files.pythonhosted.org pypi.org"
+RUN pip install --upgrade pip
 
 # Install requirements.txt
 ARG REQUIREMENTS
