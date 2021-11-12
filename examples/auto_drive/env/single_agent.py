@@ -48,7 +48,7 @@ def make_single_agent_env(config: Dict, seed: int):
     }
 
     base = (Path(__file__).absolute().parents[3]).joinpath("scenarios")
-    scenarios = [base.joinpath(scenario) for scenario in config["scenarios"]]
+    scenarios = [str(base.joinpath(scenario)) for scenario in config["scenarios"]]
     env = smarts_hiway_env.HiWayEnv(
         scenarios=scenarios,
         agent_specs=agent_specs,
