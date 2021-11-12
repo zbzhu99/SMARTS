@@ -15,11 +15,7 @@ dreamerv2:
     - Rabbit1
   scenarios: 
     - loop
-  n_steps: 1000 # Horizon, a.k.a, trajectory length
-  max_traj: 100000
-  save_interval: 20
   mode: train # train or evaluate
-  model_initial: False
 
   # Local
   # path_old_model: "/home/kyber/workspaces/training/cruiser_2021_10_17_02_00/models/dreamerv2/cruiser_2021_10_17_06_03/13056"
