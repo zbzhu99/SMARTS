@@ -12,7 +12,6 @@ from smarts.env.wrappers import single_agent as smarts_single_agent
 
 
 def make_single_agent_env(config: Dict, seed: int):
-    rgb_wh = 256
 
     vehicle_interface = smarts_agent_interface.AgentInterface(
         max_episode_steps=config["max_episode_steps"],
@@ -20,7 +19,7 @@ def make_single_agent_env(config: Dict, seed: int):
             radius=config["neighborhood_radius"]
         ),
         rgb=smarts_agent_interface.RGB(
-            width=rgb_wh, height=rgb_wh, resolution=config["rgb_wh"] / rgb_wh
+            width=config["rgb_pixels"], height=config["rgb_pixels"], resolution=config["rgb_meters"] / config["rgb_pixels"]
         ),
         vehicle_color="BrightRed",
         action=getattr(

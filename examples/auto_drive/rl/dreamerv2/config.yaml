@@ -4,7 +4,8 @@ dreamerv2:
   headless: True
   visdom: False
   neighborhood_radius: 55 # Radius (meter) for neighborhood vehicles
-  rgb_wh: 110 # Height and width (meter) of RGB image in SMARTS observation
+  rgb_meters: 64 # Height and width (meters) of RGB image in SMARTS observation
+  rgb_pixels: 64 # Height and width (pixels) of RGB image in SMARTS observation  
   max_episode_steps: 200 # 20 seconds. Maximum steps per episode.
   # action_space_type: "Continuous"
   action_space_type: "Lane"
