@@ -51,7 +51,8 @@ def main(config, modeldir, logdir):
             "eval_every": 1e5,
             "task": None,
             "prefill": 10000,
-            "replay.minlen": 50,
+            "replay.minlen": 10,
+            "replay.maxlen": 50,
         }
     ).parse_flags()
 
