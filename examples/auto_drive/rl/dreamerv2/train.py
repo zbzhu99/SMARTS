@@ -47,11 +47,10 @@ def main(config, modeldir, logdir):
         {
             "logdir": logdir,
             "log_every": 1e4,
-            "train_every": 5,
-            "eval_every": 1e5,
+            "eval_every": 1e5, # Save interval (steps)
             "task": None,
             "prefill": 10000,
-            "replay.minlen": 10,
+            "replay.minlen": 20,
             "replay.maxlen": 50,
         }
     ).parse_flags()
