@@ -95,8 +95,8 @@ def test_init(num_agent):
     env = SingleAgent(env)
 
     # Test env observation space
-    assert isinstance(env.observation_space, gym.spaces.Box)
     agent_id = next(iter(agent_specs.keys()))
+    assert isinstance(env.observation_space, type(obs_space[agent_id]))
     assert env.observation_space.shape == obs_space[agent_id].shape
     assert env.observation_space.dtype == obs_space[agent_id].dtype
 
@@ -108,13 +108,13 @@ def test_reset_and_step():
     env = make_env(agent_specs, obs_space)
     env = SingleAgent(env)
 
-    # Test reset
+    # Test resetting the env
     obs = env.reset()
     assert isinstance(obs, np.ndarray)
     agent_id = next(iter(agent_specs.keys()))
     assert obs.shape == obs_space[agent_id].shape
 
-    # Test step
+    # Test stepping the env
     obs, reward, done, info = env.step("keep_lane")
     assert isinstance(obs, np.ndarray)
     assert obs.shape == obs_space[agent_id].shape
