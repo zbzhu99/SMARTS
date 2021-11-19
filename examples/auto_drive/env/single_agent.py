@@ -19,7 +19,9 @@ def make_single_agent_env(config: Dict, seed: int):
             radius=config["neighborhood_radius"]
         ),
         rgb=smarts_agent_interface.RGB(
-            width=config["rgb_pixels"], height=config["rgb_pixels"], resolution=config["rgb_meters"] / config["rgb_pixels"]
+            width=config["rgb_pixels"],
+            height=config["rgb_pixels"],
+            resolution=config["rgb_meters"] / config["rgb_pixels"],
         ),
         vehicle_color="BrightRed",
         action=getattr(

@@ -26,7 +26,13 @@ import gym
 
 
 class SingleAgent(gym.Wrapper):
+    """Wrapper makes a single-agent SMARTS environment compliant with gym's observation-space specifications."""
+
     def __init__(self, env: gym.Env):
+        """
+        Args:
+            env (gym.Env): Single-agent SMARTS environment to be wrapped.
+        """
         super(SingleAgent, self).__init__(env)
 
         agent_ids = list(env.agent_specs.keys())
@@ -39,6 +45,14 @@ class SingleAgent(gym.Wrapper):
             self.observation_space = self.observation_space[self._agent_id]
 
     def step(self, action: Any) -> Tuple[Any, float, bool, Any]:
+        """Steps a single-agent SMARTS environment.
+
+        Args:
+            action (Any): Agent's action
+
+        Returns:
+            Tuple[Any, float, bool, Any]: Agent's observation, reward, done, and info
+        """
         obs, reward, done, info = self.env.step({self._agent_id: action})
         return (
             obs[self._agent_id],
@@ -48,5 +62,10 @@ class SingleAgent(gym.Wrapper):
         )
 
     def reset(self) -> Any:
+        """Resets a single-agent SMARTS environment.
+
+        Returns:
+            Any: Agent's observation
+        """
         obs = self.env.reset()
         return obs[self._agent_id]

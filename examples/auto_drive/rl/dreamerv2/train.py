@@ -47,7 +47,7 @@ def main(config, modeldir, logdir):
         {
             "logdir": logdir,
             "log_every": 1e4,
-            "eval_every": 1e5, # Save interval (steps)
+            "eval_every": 1e5,  # Save interval (steps)
             "task": None,
             "prefill": 10000,
             "replay.minlen": 20,

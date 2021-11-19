@@ -33,7 +33,7 @@ class FrameStack(gym.Wrapper):
     """Wrapper stacks num_stack (default=3) consecutive frames, in a moving-window fashion,
     and returns the stacked_frames.
 
-    Note:
+    .. note::
         Wrapper returns a deepcopy of the stacked frames, which may be expensive for large
         frames and large num_stack values.
     """
