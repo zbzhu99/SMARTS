@@ -26,7 +26,8 @@ import gym
 
 
 class SingleAgent(gym.Wrapper):
-    """Wrapper makes a single-agent SMARTS environment compliant with gym's observation-space specifications."""
+    """Converts a single-agent SMARTS environment's step and reset output to be
+    compliant with gym spaces."""
 
     def __init__(self, env: gym.Env):
         """

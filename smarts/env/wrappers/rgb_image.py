@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-
 from typing import Any, Dict
 
 import gym
@@ -30,7 +29,22 @@ from smarts.core import colors as smarts_colors
 
 
 class RGBImage(gym.ObservationWrapper):
+    """Filters SMARTS environment observation and returns only top-down RGB
+    image as observation.
+
+    If the base env's observation space is frame stacked using the FrameStack
+    wrapper, then the returned observation will be a numpy array of stacked
+    images with shape (image_width, image_height, 3*num_stack). Here, num_stack
+    refers to the number of frames stacked in the base env's observation.
+    """
+
     def __init__(self, env: gym.Env, num_stack: int):
+        """
+        Args:
+            env (gym.Env): SMARTS environment to be wrapped.
+            num_stack (int): Use 1 if base env's observation space is not stacked,
+                else use the number of stacked frames in base env's observation.
+        """
         super().__init__(env)
         agent_specs = env.agent_specs
 
