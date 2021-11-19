@@ -30,7 +30,7 @@ from smarts.core.controllers import ActionSpaceType
 from smarts.env.wrappers.single_agent import SingleAgent
 
 
-def make_agent_specs(num_agent):
+def _make_agent_specs(num_agent):
     agent_specs = {
         "AGENT_"
         + str(agent_id): AgentSpec(
@@ -66,7 +66,9 @@ def make_agent_specs(num_agent):
     return agent_specs, obs_space
 
 
-def make_env(agent_specs, obs_space):
+@pytest.fixture
+def base_env(request):
+    agent_specs, obs_space = _make_agent_specs(request.param)
     env = gym.make(
         "smarts.env:hiway-v0",
         scenarios=["scenarios/figure_eight"],
@@ -76,23 +78,24 @@ def make_env(agent_specs, obs_space):
         fixed_timestep_sec=0.01,
     )
     env.observation_space = obs_space
-    return env
+
+    yield env
+    env.close()
 
 
-@pytest.mark.parametrize("num_agent", [1, 2])
-def test_init(num_agent):
-    agent_specs, obs_space = make_agent_specs(num_agent)
-    env = make_env(agent_specs, obs_space)
+@pytest.mark.parametrize("base_env", [1, 2], indirect=True)
+def test_init(base_env):
+    agent_specs = base_env.agent_specs
+    obs_space = base_env.observation_space
 
-    # Test wrapping an env containing more than one agent
-    if num_agent > 1:
+    # Test wrapping an env containing one and more than one agent
+    if len(agent_specs) > 1:
         with pytest.raises(AssertionError):
-            env = SingleAgent(env)
+            env = SingleAgent(base_env)
             env.close()
         return
-
-    # Test wrapping an env containing one agent
-    env = SingleAgent(env)
+    else:
+        env = SingleAgent(base_env)
 
     # Test env observation space
     agent_id = next(iter(agent_specs.keys()))
@@ -103,10 +106,11 @@ def test_init(num_agent):
     env.close()
 
 
-def test_reset_and_step():
-    agent_specs, obs_space = make_agent_specs(1)
-    env = make_env(agent_specs, obs_space)
-    env = SingleAgent(env)
+@pytest.mark.parametrize("base_env", [1], indirect=True)
+def test_reset_and_step(base_env):
+    agent_specs = base_env.agent_specs
+    obs_space = base_env.observation_space
+    env = SingleAgent(base_env)
 
     # Test resetting the env
     obs = env.reset()

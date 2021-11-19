@@ -31,7 +31,7 @@ from smarts.env.wrappers.frame_stack import FrameStack
 from smarts.env.wrappers.rgb_image import RGBImage
 
 
-def _agent_specs(topdown_rgb):
+def _make_agent_specs(topdown_rgb):
     if topdown_rgb == "rgb":
         rgb = RGB()
     elif topdown_rgb == "false":
@@ -55,7 +55,7 @@ def base_env(request):
     env = gym.make(
         "smarts.env:hiway-v0",
         scenarios=["scenarios/figure_eight"],
-        agent_specs=_agent_specs(request.param),
+        agent_specs=_make_agent_specs(request.param),
         headless=True,
         visdom=False,
         fixed_timestep_sec=0.01,
