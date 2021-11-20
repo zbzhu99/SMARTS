@@ -37,7 +37,7 @@ import yaml
 from examples.auto_drive.env import single_agent
 
 
-def main(config, modeldir, logdir):
+def main(config, logdir):
 
     # Create env
     print("[INFO] Creating environments")
@@ -81,7 +81,6 @@ if __name__ == "__main__":
             f"Not configured to use GPU or GPU not available.",
             ResourceWarning,
         )
-        # raise SystemError("GPU device not found")
 
     name = "dreamerv2"
     time = datetime.now().strftime("%Y_%m_%d_%H_%M")
@@ -91,11 +90,5 @@ if __name__ == "__main__":
         .joinpath(name)
         .joinpath(time)
     )
-    modeldir = (
-        (Path(__file__).absolute().parents[2])
-        .joinpath("models")
-        .joinpath(name)
-        .joinpath(time)
-    )
 
-    main(config=config[name], modeldir=modeldir, logdir=logdir)
+    main(config=config[name], logdir=logdir)
