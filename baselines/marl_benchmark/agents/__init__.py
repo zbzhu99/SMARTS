@@ -20,14 +20,15 @@
 import importlib
 import re
 from pathlib import Path
-
 import gym
 import yaml
+
+from baselines.marl_benchmark import common
 from baselines.marl_benchmark.metrics import basic_handler as metrics
 from baselines.marl_benchmark.utils import format
 from baselines.marl_benchmark.wrappers import rllib as rllib_wrappers
 
-from baselines.marl_benchmark import common
+
 from smarts.core.agent_interface import (
     OGM,
     RGB,
