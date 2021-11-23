@@ -76,14 +76,15 @@ def main():
         )
 
     # Create env
-    env = single_agent.make_single_agent_env(config_env, config_env.seed)
+    config_env["scenarios_dir"] = pathlib.Path(__file__).absolute().parents[2] / "scenarios"
+    env = single_agent.make_env(config_env, config_env["seed"])
 
     # Train or evaluate
-    if config_env.mode == "train":
+    if config_env["mode"] == "train":
         # Setup logdir
         time = datetime.now().strftime("%Y_%m_%d_%H_%M")
         logdir = pathlib.Path(__file__).absolute().parents[0] / "logs" / name / time
-        config_dv2.update(
+        config_dv2 = config_dv2.update(
             {
                 "logdir": logdir,
                 "log_every": 1e4,
@@ -94,10 +95,10 @@ def main():
                 "replay.maxlen": 50,
             }
         )
-    elif config_env.mode == "evaluate":
+    elif config_env["mode"] == "evaluate":
         config_dv2.update(
             {
-                "logdir": config_env.logdir_evaluate,
+                "logdir": config_env["logdir_evaluate"],
                 "log_every": 1e8,
                 "eval_every": 1e8,  # Save interval (steps)
                 "task": None,
@@ -107,14 +108,13 @@ def main():
             }
         )
     else:
-        raise KeyError(f"Expected 'train' or 'evaluate', but got {config_env.mode}.")
+        raise KeyError(f'Expected \'train\' or \'evaluate\', but got {config_env["mode"]}.')
 
     # Train or evaluate dreamerv2 with env
-    train(env, config_dv2, config_env.mode)
+    train(env, config_dv2, config_env["mode"])
 
 
 def train(make_env, config, mode):
-
     logdir = pathlib.Path(config.logdir).expanduser()
     logdir.mkdir(parents=True, exist_ok=True)
     config.save(logdir / "config.yaml")
@@ -204,7 +204,7 @@ def train(make_env, config, mode):
     train_dataset = iter(train_replay.dataset(**config.dataset))
     report_dataset = iter(train_replay.dataset(**config.dataset))
     eval_dataset = iter(eval_replay.dataset(**config.dataset))
-    agnt = agent.Agent(config, obs_space, act_space, step)
+    agnt = dv2.agent.Agent(config, obs_space, act_space, step)
     train_agent = dv2.common.CarryOverState(agnt.train)
     train_agent(next(train_dataset))
     if (logdir / "variables.pkl").exists():
