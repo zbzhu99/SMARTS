@@ -10,4 +10,12 @@ class RayException(Exception):
         )
 
 
+from pathlib import Path
+
+from smarts.core.utils import import_utils
+
 from . import argument_parser as argument_parser
+
+import_utils.import_module_from_file(
+    "examples", Path(__file__).parents[1] / "__init__.py"
+)
