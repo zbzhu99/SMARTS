@@ -77,7 +77,7 @@ def main():
 
     # Create env
     config_env["scenarios_dir"] = pathlib.Path(__file__).absolute().parents[2] / "scenarios"
-    env = single_agent.make_env(config_env, config_env["seed"])
+    gen_env = single_agent.gen_env(config_env, config_env["seed"])
 
     # Train or evaluate
     if config_env["mode"] == "train":
@@ -89,6 +89,8 @@ def main():
                 "logdir": logdir,
                 "log_every": 1e4,
                 "eval_every": 1e5,  # Save interval (steps)
+                "eval_eps": 5,
+                "train_every": 5,                
                 "task": None,
                 "prefill": 10000,
                 "replay.minlen": 20,
@@ -100,7 +102,9 @@ def main():
             {
                 "logdir": config_env["logdir_evaluate"],
                 "log_every": 1e8,
-                "eval_every": 1e8,  # Save interval (steps)
+                "eval_every": 0,  # Save interval (steps)
+                "eval_eps": 1e8, # Evaluate forever
+                "train_every": 1e8,            
                 "task": None,
                 "prefill": 10000,
                 "replay.minlen": 20,
@@ -111,10 +115,10 @@ def main():
         raise KeyError(f'Expected \'train\' or \'evaluate\', but got {config_env["mode"]}.')
 
     # Train or evaluate dreamerv2 with env
-    train(env, config_dv2, config_env["mode"])
+    train(config_dv2, gen_env)
 
 
-def train(make_env, config, mode):
+def train(config, gen_env):
     logdir = pathlib.Path(config.logdir).expanduser()
     logdir.mkdir(parents=True, exist_ok=True)
     config.save(logdir / "config.yaml")
@@ -144,10 +148,6 @@ def train(make_env, config, mode):
     should_video_eval = dv2.common.Every(config.eval_every)
     should_expl = dv2.common.Until(config.expl_until)
 
-    def make_env(mode):
-        env = env()
-        return env
-
     def per_episode(ep, mode):
         length = len(ep["reward"]) - 1
         score = float(ep["reward"].astype(np.float64).sum())
@@ -172,14 +172,14 @@ def train(make_env, config, mode):
     print("Create envs.")
     num_eval_envs = min(config.envs, config.eval_eps)
     if config.envs_parallel == "none":
-        train_envs = [make_env("train") for _ in range(config.envs)]
-        eval_envs = [make_env("eval") for _ in range(num_eval_envs)]
-    else:
-        make_async_env = lambda mode: dv2.common.Async(
-            functools.partial(make_env, mode), config.envs_parallel
-        )
-        train_envs = [make_async_env("train") for _ in range(config.envs)]
-        eval_envs = [make_async_env("eval") for _ in range(eval_envs)]
+        train_envs = [next(gen_env) for _ in range(config.envs)]
+        eval_envs = [next(gen_env) for _ in range(num_eval_envs)]
+    # else:
+    #     make_async_env = lambda mode: dv2.common.Async(
+    #         functools.partial(make_env, mode), config.envs_parallel
+    #     )
+    #     train_envs = [make_async_env("train") for _ in range(config.envs)]
+    #     eval_envs = [make_async_env("eval") for _ in range(eval_envs)]
     act_space = train_envs[0].act_space
     obs_space = train_envs[0].obs_space
     train_driver = dv2.common.Driver(train_envs)

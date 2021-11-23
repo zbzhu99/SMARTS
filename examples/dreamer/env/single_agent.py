@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Dict
 
 from smarts.core import agent as smarts_agent
@@ -11,6 +10,11 @@ from smarts.env.wrappers import single_agent as smarts_single_agent
 from . import action as action
 from . import adapter
 
+def gen_env(config: Dict, seed: int):
+    base_seed = seed
+    while True:
+        yield make_env(config, base_seed)
+        base_seed += 1
 
 def make_env(config: Dict, seed: int):
 
