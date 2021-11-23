@@ -34,13 +34,13 @@ import numpy as np
 import rich.traceback
 from ruamel.yaml import YAML
 
-from examples.dreamer.env import single_agent
+from .env import single_agent
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Silence the logs of TF
 logging.getLogger().setLevel("ERROR")
 warnings.filterwarnings("ignore", ".*box bound precision lowered.*")
 rich.traceback.install()
-yaml=YAML(typ='safe')
+yaml = YAML(typ="safe")
 
 
 def main():

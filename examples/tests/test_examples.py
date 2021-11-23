@@ -1,6 +1,13 @@
 import tempfile
+from pathlib import Path
 
 import pytest
+
+from smarts.core.utils import import_utils
+
+import_utils.import_module_from_file(
+    "examples", Path(__file__).parents[1] / "__init__.py"
+)
 
 
 @pytest.mark.parametrize(
