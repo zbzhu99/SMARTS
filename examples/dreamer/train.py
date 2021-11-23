@@ -23,20 +23,16 @@ import logging
 import os
 import pathlib
 import re
-import sys
 import warnings
 from datetime import datetime
 
 import dreamerv2 as dv2
-import dreamerv2.agent as agent
-import dreamerv2.common as common
 import numpy as np
 import rich.traceback
+from env import single_agent
 from ruamel.yaml import YAML
 
-from .env import single_agent
-
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Silence the logs of TF
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Silence the TF logs
 logging.getLogger().setLevel("ERROR")
 warnings.filterwarnings("ignore", ".*box bound precision lowered.*")
 rich.traceback.install()
@@ -46,26 +42,20 @@ yaml = YAML(typ="safe")
 def main():
     # Load env config
     name = "dreamerv2"
+    config_env = yaml.load(
+        (pathlib.Path(__file__).absolute().parent / "config.yaml").read_text()
+    )
+    config_env = config_env[name]
 
     # Load dreamerv2 config
     config_dv2 = dv2.api.defaults
 
-    configs = yaml.safe_load(
-        (pathlib.Path(sys.argv[0]).parent / "configs.yaml").read_text()
-    )
-    parsed, remaining = dv2.common.Flags(configs=["defaults"]).parse(known_only=True)
-    config = dv2.common.Config(configs["defaults"])
-    for name in parsed.configs:
-        config = config.update(configs[name])
-    config = dv2.common.Flags(config).parse(remaining)
-
     # Setup tensorflow
-    tf.config.experimental_run_functions_eagerly(not config.jit)
-    assert config.precision in (16, 32), config.precision
-    if config.precision == 16:
-        from tensorflow.keras.mixed_precision import experimental as prec
-
-        prec.set_policy(prec.Policy("mixed_float16"))
+    # tf.config.experimental_run_functions_eagerly(not config.jit)
+    # assert config.precision in (16, 32), config.precision
+    # if config.precision == 16:
+    #     from tensorflow.keras.mixed_precision import experimental as prec
+    #     prec.set_policy(prec.Policy("mixed_float16"))
 
     # Setup GPU
     gpus = tf.config.list_physical_devices("GPU")
@@ -85,38 +75,45 @@ def main():
             ResourceWarning,
         )
 
-    name = "dreamerv2"
-    time = datetime.now().strftime("%Y_%m_%d_%H_%M")
-    logdir = (
-        (Path(__file__).absolute().parents[2])
-        .joinpath("logs")
-        .joinpath(name)
-        .joinpath(time)
-    )
-
-    main(config=config[name], logdir=logdir)
-
     # Create env
-    print("[INFO] Creating environments")
-    env = single_agent.make_single_agent_env(config, config["seed"])
+    env = single_agent.make_single_agent_env(config_env, config_env.seed)
 
-    config = dv2.defaults.update(
-        {
-            "logdir": logdir,
-            "log_every": 1e4,
-            "eval_every": 1e5,  # Save interval (steps)
-            "task": None,
-            "prefill": 10000,
-            "replay.minlen": 20,
-            "replay.maxlen": 50,
-        }
-    ).parse_flags()
+    # Train or evaluate
+    if config_env.mode == "train":
+        # Setup logdir
+        time = datetime.now().strftime("%Y_%m_%d_%H_%M")
+        logdir = pathlib.Path(__file__).absolute().parents[0] / "logs" / name / time
+        config_dv2.update(
+            {
+                "logdir": logdir,
+                "log_every": 1e4,
+                "eval_every": 1e5,  # Save interval (steps)
+                "task": None,
+                "prefill": 10000,
+                "replay.minlen": 20,
+                "replay.maxlen": 50,
+            }
+        )
+    elif config_env.mode == "evaluate":
+        config_dv2.update(
+            {
+                "logdir": config_env.logdir_evaluate,
+                "log_every": 1e8,
+                "eval_every": 1e8,  # Save interval (steps)
+                "task": None,
+                "prefill": 10000,
+                "replay.minlen": 20,
+                "replay.maxlen": 50,
+            }
+        )
+    else:
+        raise KeyError(f"Expected 'train' or 'evaluate', but got {config_env.mode}.")
 
-    # Train dreamerv2 with env
-    dv2.train(env, config)
+    # Train or evaluate dreamerv2 with env
+    train(env, config_dv2, config_env.mode)
 
 
-def train(make_env, config):
+def train(make_env, config, mode):
 
     logdir = pathlib.Path(config.logdir).expanduser()
     logdir.mkdir(parents=True, exist_ok=True)

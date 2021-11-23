@@ -17,9 +17,4 @@ dreamerv2:
   scenarios: 
     - loop
   mode: train # train or evaluate
-
-  # Local
-  # path_old_model: "/home/kyber/workspaces/training/cruiser_2021_10_17_02_00/models/dreamerv2/cruiser_2021_10_17_06_03/13056"
-
-  # Docker
-  # path_old_model: "/src/training/cruiser_2021_10_17_02_00/models/dreamerv2/cruiser_2021_10_17_06_03/13056"
+  logdir_evaluate: "/home/kyber/workspaces/SMARTS/examples/dreamer/logs/dreamerv2/dreamerv2_2021_10_17_06_03"
