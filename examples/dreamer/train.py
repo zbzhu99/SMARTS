@@ -9,7 +9,7 @@ import random as python_random
 python_random.seed(123)
 
 # set_seed() will make random number generation in the TensorFlow backend have
-# a well-defined initial state. For further details, see:
+# a well-defined initial state.
 # https://www.tensorflow.org/api_docs/python/tf/random/set_seed
 import tensorflow as tf
 
@@ -26,15 +26,13 @@ import re
 import sys
 import warnings
 from datetime import datetime
-from pathlib import Path
 
 import dreamerv2 as dv2
 import dreamerv2.agent as agent
 import dreamerv2.common as common
 import numpy as np
 import rich.traceback
-import ruamel.yaml as yaml
-import yaml
+from ruamel.yaml import YAML
 
 from examples.dreamer.env import single_agent
 
@@ -42,13 +40,12 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Silence the logs of TF
 logging.getLogger().setLevel("ERROR")
 warnings.filterwarnings("ignore", ".*box bound precision lowered.*")
 rich.traceback.install()
+yaml=YAML(typ='safe')
 
 
 def main():
     # Load env config
-    config_env = Path(__file__).absolute().parent / "config.yaml"
-    with open(config_env, "r") as file:
-        config = yaml.load(file, Loader=yaml.FullLoader)
+    name = "dreamerv2"
 
     # Load dreamerv2 config
     config_dv2 = dv2.api.defaults

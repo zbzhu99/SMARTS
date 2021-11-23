@@ -9,7 +9,7 @@ setuptools.setup(
     url="http://github.com/danijar/dreamerv2",
     long_description=pathlib.Path("README.md").read_text(),
     long_description_content_type="text/markdown",
-    packages=["dreamerv2", "dreamerv2.common"],
+    packages=["dreamerv2"],
     package_data={"dreamerv2": ["configs.yaml"]},
     entry_points={"console_scripts": ["dreamerv2=dreamerv2.train:main"]},
     install_requires=[

@@ -67,6 +67,7 @@ RUN scl scenario build-all --clean ./scenarios/loop ./scenarios/cloverleaf ./sce
 EXPOSE 8081
 
 # Tensorflow: Optimizing compiler for machine learning
+# https://www.tensorflow.org/xla
 ENV TF_XLA_FLAGS --tf_xla_auto_jit=2
 
 # Suppress message of missing /dev/input folder and copy smarts.egg-info if not there
