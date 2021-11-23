@@ -1,11 +1,9 @@
-# Necessary for starting Numpy generated random numbers in a well-defined
-# initial state.
+# To start Numpy generated random numbers in a well-defined initial state.
 import numpy as np
 
 np.random.seed(123)
 
-# Necessary for starting core Python generated random numbers in a well-defined
-# state.
+# To start core Python generated random numbers in a well-defined state.
 import random as python_random
 
 python_random.seed(123)
@@ -31,6 +29,8 @@ from datetime import datetime
 from pathlib import Path
 
 import dreamerv2 as dv2
+import dreamerv2.agent as agent
+import dreamerv2.common as common
 import numpy as np
 import rich.traceback
 import ruamel.yaml as yaml
@@ -42,10 +42,6 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Silence the logs of TF
 logging.getLogger().setLevel("ERROR")
 warnings.filterwarnings("ignore", ".*box bound precision lowered.*")
 rich.traceback.install()
-
-
-import dreamerv2.agent as agent
-import dreamerv2.common as common
 
 
 def main():
