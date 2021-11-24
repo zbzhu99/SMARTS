@@ -51,8 +51,8 @@ RUN pip install --upgrade pip
 
 # Install requirements.txt
 ARG REQUIREMENTS
-COPY ${REQUIREMENTS} /tmp/auto_drive/requirements.txt
-RUN pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --trusted-host pypi.org --no-cache-dir -r /tmp/auto_drive/requirements.txt
+COPY ${REQUIREMENTS} /tmp/requirements.txt
+RUN pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --trusted-host pypi.org --no-cache-dir -r /tmp/requirements.txt
 
 # Copy source files and install SMARTS
 COPY . /src

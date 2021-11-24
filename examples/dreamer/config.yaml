@@ -13,7 +13,7 @@ dreamerv2:
   # action_adapter: "lane"
   # action_adapter: "discrete"
   agent_ids: 
-    - Rabbit1
+    - Tiger1
   scenarios: 
     - loop
   mode: train # train or evaluate

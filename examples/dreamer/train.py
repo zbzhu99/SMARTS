@@ -18,7 +18,6 @@ tf.random.set_seed(123)
 # -----------------------------------------------------------------------------
 
 import collections
-import functools
 import logging
 import os
 import pathlib
@@ -29,7 +28,7 @@ from datetime import datetime
 import dreamerv2 as dv2
 import dreamerv2.api as dv2_api
 import dreamerv2.agent as dv2_agent
-import dreamerv2.common as dv2common
+import dreamerv2.common as dv2_common
 import numpy as np
 import rich.traceback
 from env import single_agent
@@ -92,7 +91,7 @@ def main():
                 "logdir": logdir,
                 "log_every": 1e4,
                 "eval_every": 1e5,  # Save interval (steps)
-                "eval_eps": 5,
+                "eval_eps": 1,
                 "train_every": 5,                
                 "task": None,
                 "prefill": 10000,
@@ -104,10 +103,10 @@ def main():
         config_dv2.update(
             {
                 "logdir": config_env["logdir_evaluate"],
-                "log_every": 1e8,
+                "log_every": 1e8, # No logging needed
                 "eval_every": 0,  # Save interval (steps)
                 "eval_eps": 1e8, # Evaluate forever
-                "train_every": 1e8,            
+                "train_every": 1e8, # No training needed            
                 "task": None,
                 "prefill": 10000,
                 "replay.minlen": 20,
@@ -142,7 +141,7 @@ def train(config, gen_env):
         logdir / "eval_episodes",
         **dict(
             capacity=config.replay.capacity // 10,
-            minlen=config.dataset.length,
+            minlen=1,
             maxlen=config.dataset.length,
         ),
     )
@@ -185,12 +184,6 @@ def train(config, gen_env):
     if config.envs_parallel == "none":
         train_envs = [wrap_env(next(gen_env), config)]
         eval_envs = [wrap_env(next(gen_env), config)]
-    # else:
-    #     make_async_env = lambda mode: dv2.common.Async(
-    #         functools.partial(make_env, mode), config.envs_parallel
-    #     )
-    #     train_envs = [make_async_env("train") for _ in range(config.envs)]
-    #     eval_envs = [make_async_env("eval") for _ in range(eval_envs)]
     act_space = train_envs[0].act_space
     obs_space = train_envs[0].obs_space
     train_driver = dv2.common.Driver(train_envs)
