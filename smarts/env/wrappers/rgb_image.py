@@ -38,15 +38,13 @@ class RGBImage(gym.ObservationWrapper):
     refers to the number of frames stacked in the base env's observation.
     """
 
-    def __init__(self, env: gym.Env, num_stack: int):
+    def __init__(self, env: gym.Env):
         """
         Args:
             env (gym.Env): SMARTS environment to be wrapped.
-            num_stack (int): Use 1 if base env's observation space is not stacked,
-                else use the number of stacked frames in base env's observation.
         """
         super().__init__(env)
-        agent_specs = env.agent_specs
+        agent_specs = self.env.agent_specs
 
         for agent_id in agent_specs.keys():
             assert agent_specs[agent_id].interface.rgb, (
@@ -54,8 +52,12 @@ class RGBImage(gym.ObservationWrapper):
                 f"functionality in {agent_id}'s AgentInterface."
             )
 
-        self._num_stack = num_stack
-        assert self._num_stack > 0
+        base_obs_space = next(iter(self.env.observation_space.spaces.values()))
+        if isinstance(base_obs_space, gym.spaces.Tuple):
+            self._num_stack = len(base_obs_space)
+        else:
+            self._num_stack = 1     
+
         self.observation_space = gym.spaces.Dict(
             {
                 agent_id: gym.spaces.Box(

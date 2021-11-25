@@ -85,7 +85,7 @@ def main():
     if config_env["mode"] == "train":
         # Setup logdir
         time = datetime.now().strftime("%Y_%m_%d_%H_%M")
-        logdir = pathlib.Path(__file__).absolute().parents[0] / "logs" / name / time
+        logdir = pathlib.Path(__file__).absolute().parents[0] / "logs" / time
         config_dv2 = config_dv2.update(
             {
                 "logdir": logdir,
