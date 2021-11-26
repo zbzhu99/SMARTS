@@ -145,14 +145,6 @@ class HiWayEnv(gym.Env):
             zoo_addrs=zoo_addrs,
         )
 
-        # TODO: See issue https://github.com/huawei-noah/SMARTS/issues/548
-        self.observation_space = gym.spaces.Dict(
-            {
-                agent_id: gym.Space()
-                for agent_id in self._agent_specs.keys()
-            }
-        )
-
     @property
     def agent_specs(self):
         return self._agent_specs
