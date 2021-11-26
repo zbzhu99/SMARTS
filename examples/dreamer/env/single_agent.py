@@ -10,11 +10,13 @@ from smarts.env.wrappers import single_agent as smarts_single_agent
 from . import action as action
 from . import adapter
 
+
 def gen_env(config: Dict, seed: int):
     base_seed = seed
     while True:
         yield make_env(config, base_seed)
         base_seed += 1
+
 
 def make_env(config: Dict, seed: int):
 
@@ -53,7 +55,10 @@ def make_env(config: Dict, seed: int):
         for agent_id in config["agent_ids"]
     }
 
-    scenarios = [str(config["scenarios_dir"].joinpath(scenario)) for scenario in config["scenarios"]]
+    scenarios = [
+        str(config["scenarios_dir"].joinpath(scenario))
+        for scenario in config["scenarios"]
+    ]
     env = smarts_hiway_env.HiWayEnv(
         scenarios=scenarios,
         agent_specs=agent_specs,

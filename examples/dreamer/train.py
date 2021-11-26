@@ -26,8 +26,8 @@ import warnings
 from datetime import datetime
 
 import dreamerv2 as dv2
-import dreamerv2.api as dv2_api
 import dreamerv2.agent as dv2_agent
+import dreamerv2.api as dv2_api
 import dreamerv2.common as dv2_common
 import numpy as np
 import rich.traceback
@@ -78,7 +78,9 @@ def main():
         )
 
     # Create env
-    config_env["scenarios_dir"] = pathlib.Path(__file__).absolute().parents[2] / "scenarios"
+    config_env["scenarios_dir"] = (
+        pathlib.Path(__file__).absolute().parents[2] / "scenarios"
+    )
     gen_env = single_agent.gen_env(config_env, config_env["seed"])
 
     # Train or evaluate
@@ -92,7 +94,7 @@ def main():
                 "log_every": 1e4,
                 "eval_every": 1e5,  # Save interval (steps)
                 "eval_eps": 1,
-                "train_every": 5,                
+                "train_every": 5,
                 "task": None,
                 "prefill": 10000,
                 "replay.minlen": 20,
@@ -103,10 +105,10 @@ def main():
         config_dv2.update(
             {
                 "logdir": config_env["logdir_evaluate"],
-                "log_every": 1e8, # No logging needed
+                "log_every": 1e8,  # No logging needed
                 "eval_every": 0,  # Save interval (steps)
-                "eval_eps": 1e8, # Evaluate forever
-                "train_every": 1e8, # No training needed            
+                "eval_eps": 1e8,  # Evaluate forever
+                "train_every": 1e8,  # No training needed
                 "task": None,
                 "prefill": 10000,
                 "replay.minlen": 20,
@@ -114,10 +116,13 @@ def main():
             }
         )
     else:
-        raise KeyError(f'Expected \'train\' or \'evaluate\', but got {config_env["mode"]}.')
+        raise KeyError(
+            f'Expected \'train\' or \'evaluate\', but got {config_env["mode"]}.'
+        )
 
     # Train or evaluate dreamerv2 with env
     train(config_dv2, gen_env)
+
 
 def wrap_env(env, config):
     env = dv2.common.GymWrapper(env)
@@ -128,6 +133,7 @@ def wrap_env(env, config):
         env = dv2.common.NormalizeAction(env)
     env = dv2.common.TimeLimit(env, config.time_limit)
     return env
+
 
 def train(config, gen_env):
     logdir = pathlib.Path(config.logdir).expanduser()
