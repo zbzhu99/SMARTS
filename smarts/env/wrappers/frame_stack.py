@@ -55,14 +55,7 @@ class FrameStack(gym.Wrapper):
             self.observation_space = gym.spaces.Dict(
                 {
                     agent_id: gym.spaces.Tuple([space] * self._num_stack)
-                    for agent_id, space in self.observation_space.items()
-                }
-            )
-        else:
-            self.observation_space = gym.spaces.Dict(
-                {
-                    agent_id: gym.spaces.Tuple([gym.spaces.Space()] * self._num_stack)
-                    for agent_id in self.agent_specs.keys()
+                    for agent_id, space in self.observation_space.spaces.items()
                 }
             )
 

@@ -108,12 +108,12 @@ class HiWayEnv(gym.Env):
 
         self._scenarios_iterator = Scenario.scenario_variations(
             scenarios,
-            list(self._agent_specs.keys()),
+            list(agent_specs.keys()),
             shuffle_scenarios,
         )
 
         agent_interfaces = {
-            agent_id: agent.interface for agent_id, agent in self._agent_specs.items()
+            agent_id: agent.interface for agent_id, agent in agent_specs.items()
         }
 
         envision_client = None

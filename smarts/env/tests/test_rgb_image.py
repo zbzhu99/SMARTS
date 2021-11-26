@@ -80,11 +80,11 @@ def test_init(base_env, num_stack):
     agent_id = next(iter(base_env.agent_specs.keys()))
     if base_env.agent_specs[agent_id].interface.rgb == False:
         with pytest.raises(AssertionError):
-            env = RGBImage(base_env)
+            env = RGBImage(base_env, num_stack)
             env.close()
         return
     else:
-        env = RGBImage(base_env)
+        env = RGBImage(base_env, num_stack)
 
     # Test wrapped env observation space
     assert isinstance(env.observation_space, gym.spaces.Dict)
@@ -111,7 +111,7 @@ def _check_observation(base_env, obs, num_stack):
 @pytest.mark.parametrize("base_env", ["rgb"], indirect=True)
 def test_observation(base_env, num_stack):
     base_env = _frame_stack(base_env, num_stack)
-    env = RGBImage(base_env)
+    env = RGBImage(base_env, num_stack)
 
     # Test resetting the env
     obs = env.reset()

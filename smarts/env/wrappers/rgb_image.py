@@ -20,7 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from typing import Any, Dict
+
+from typing import Any, Dict, Sequence
 
 import gym
 import numpy as np
@@ -38,13 +39,15 @@ class RGBImage(gym.ObservationWrapper):
     refers to the number of frames stacked in the base env's observation.
     """
 
-    def __init__(self, env: gym.Env):
+    def __init__(self, env: gym.Env, num_stack: int):
         """
         Args:
             env (gym.Env): SMARTS environment to be wrapped.
+            num_stack (int): Use 1 if base env's observation space is not stacked,
+                else use the number of stacked frames in base env's observation.
         """
         super().__init__(env)
-        agent_specs = self.env.agent_specs
+        agent_specs = env.agent_specs
 
         for agent_id in agent_specs.keys():
             assert agent_specs[agent_id].interface.rgb, (
@@ -52,12 +55,8 @@ class RGBImage(gym.ObservationWrapper):
                 f"functionality in {agent_id}'s AgentInterface."
             )
 
-        base_obs_space = next(iter(self.env.observation_space.spaces.values()))
-        if isinstance(base_obs_space, gym.spaces.Tuple):
-            self._num_stack = len(base_obs_space)
-        else:
-            self._num_stack = 1     
-
+        self._num_stack = num_stack
+        assert self._num_stack > 0
         self.observation_space = gym.spaces.Dict(
             {
                 agent_id: gym.spaces.Box(
@@ -77,8 +76,17 @@ class RGBImage(gym.ObservationWrapper):
     def observation(self, obs: Dict[str, Any]) -> Dict[str, np.ndarray]:
         wrapped_obs = {}
         for agent_id, agent_obs in obs.items():
-            if self._num_stack == 1:
+            if isinstance(agent_obs, Sequence):
+                true_num_stack = len(agent_obs)
+            else:
+                true_num_stack = 1
                 agent_obs = [agent_obs]
+
+            assert self._num_stack == true_num_stack, (
+                f"User supplied `num_stack` (={self._num_stack}) argument to "
+                f"`RGBImage` wrapper does not match the number of frames "
+                f"stacked (={true_num_stack}) in the underlying base env."
+            )
 
             images = []
             for agent_ob in agent_obs:
