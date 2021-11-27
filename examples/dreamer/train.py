@@ -26,9 +26,8 @@ import warnings
 from datetime import datetime
 
 import dreamerv2 as dv2
-import dreamerv2.agent as dv2_agent
-import dreamerv2.api as dv2_api
-import dreamerv2.common as dv2_common
+import dreamerv2.api
+import dreamerv2.common
 import numpy as np
 import rich.traceback
 from env import single_agent
@@ -42,7 +41,7 @@ yaml = YAML(typ="safe")
 
 
 def main():
-    # Load env config
+    # Load SMARTS env config
     name = "dreamerv2"
     config_env = yaml.load(
         (pathlib.Path(__file__).absolute().parent / "config.yaml").read_text()
@@ -53,11 +52,11 @@ def main():
     config_dv2 = dv2.api.defaults
 
     # Setup tensorflow
-    # tf.config.experimental_run_functions_eagerly(not config.jit)
-    # assert config.precision in (16, 32), config.precision
-    # if config.precision == 16:
-    #     from tensorflow.keras.mixed_precision import experimental as prec
-    #     prec.set_policy(prec.Policy("mixed_float16"))
+    tf.config.run_functions_eagerly(not config_dv2.jit)
+    assert config_dv2.precision in (16, 32), config_dv2.precision
+    if config_dv2.precision == 16:
+        from tensorflow.keras.mixed_precision import experimental as prec
+        prec.set_policy(prec.Policy("mixed_float16"))
 
     # Setup GPU
     gpus = tf.config.list_physical_devices("GPU")
@@ -91,28 +90,60 @@ def main():
         config_dv2 = config_dv2.update(
             {
                 "logdir": logdir,
+                "task": None,
                 "log_every": 1e4,
                 "eval_every": 1e5,  # Save interval (steps)
                 "eval_eps": 1,
-                "train_every": 5,
-                "task": None,
-                "prefill": 10000,
-                "replay.minlen": 20,
-                "replay.maxlen": 50,
+                
+                "replay.minlen": 25,
+                "replay.maxlen": 25,
+                "dataset.length": 25,
+                
+                "dataset.batch": 8,
+
+                # From atari
+                "encoder": {"mlp_keys": '$^', "cnn_keys": 'image'},
+                "decoder": {"mlp_keys": '$^', "cnn_keys": 'image'},
+                "prefill": 50000,
+                "train_every": 16,
+                "rssm": {"hidden": 600, "deter": 600},
+                "model_opt.lr": 2e-4,
+                "actor_opt.lr": 4e-5,
+                "critic_opt.lr": 1e-4,
+                "actor_ent": 1e-3,
+                "discount": 0.999,
+                "loss_scales.kl": 0.1,
+                "loss_scales.discount": 5.0,
             }
         )
     elif config_env["mode"] == "evaluate":
         config_dv2.update(
             {
                 "logdir": config_env["logdir_evaluate"],
+                "task": None,
                 "log_every": 1e8,  # No logging needed
                 "eval_every": 0,  # Save interval (steps)
                 "eval_eps": 1e8,  # Evaluate forever
                 "train_every": 1e8,  # No training needed
-                "task": None,
-                "prefill": 10000,
-                "replay.minlen": 20,
-                "replay.maxlen": 50,
+
+                "replay.minlen": 25,
+                "replay.maxlen": 25,
+                "dataset.length": 25,
+                
+                "dataset.batch": 8,
+
+                # From atari
+                "encoder": {"mlp_keys": '$^', "cnn_keys": 'image'},
+                "decoder": {"mlp_keys": '$^', "cnn_keys": 'image'},
+                "prefill": 50000,
+                "rssm": {"hidden": 600, "deter": 600},
+                "model_opt.lr": 2e-4,
+                "actor_opt.lr": 4e-5,
+                "critic_opt.lr": 1e-4,
+                "actor_ent": 1e-3,
+                "discount": 0.999,
+                "loss_scales.kl": 0.1,
+                "loss_scales.discount": 5.0,
             }
         )
     else:
@@ -190,6 +221,8 @@ def train(config, gen_env):
     if config.envs_parallel == "none":
         train_envs = [wrap_env(next(gen_env), config)]
         eval_envs = [wrap_env(next(gen_env), config)]
+    else:
+        raise KeyError("Unsupported config.envs_parallel.")
     act_space = train_envs[0].act_space
     obs_space = train_envs[0].obs_space
     train_driver = dv2.common.Driver(train_envs)
