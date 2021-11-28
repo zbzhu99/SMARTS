@@ -61,15 +61,14 @@ RUN pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted
 RUN scl scenario build-all --clean \
     ./scenarios/loop \
     ./scenarios/cloverleaf \
-    ./scenarios/figure_eight \
-    ./scenarios/game_of_tag_demo_map
+    ./scenarios/figure_eight
 
 # For Envision
 EXPOSE 8081
 
 # Tensorflow: Optimizing compiler for machine learning
 # https://www.tensorflow.org/xla
-# ENV TF_XLA_FLAGS --tf_xla_auto_jit=2
+ENV TF_XLA_FLAGS="--tf_xla_enable_xla_devices --tf_xla_auto_jit=2"
 
 # Suppress message of missing /dev/input folder and copy smarts.egg-info if not there
 RUN echo "mkdir -p /dev/input\n" \
