@@ -26,7 +26,7 @@ import warnings
 from datetime import datetime
 
 import dreamerv2 as dv2
-import dreamerv2.agent 
+import dreamerv2.agent
 import dreamerv2.api
 import dreamerv2.common
 import numpy as np
