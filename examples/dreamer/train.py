@@ -26,9 +26,9 @@ import warnings
 from datetime import datetime
 
 import dreamerv2 as dv2
-import dreamerv2.agent
 import dreamerv2.api
 import dreamerv2.common
+import dreamerv2.agent
 import numpy as np
 import rich.traceback
 from env import single_agent
