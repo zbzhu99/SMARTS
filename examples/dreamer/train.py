@@ -26,6 +26,7 @@ import warnings
 from datetime import datetime
 
 import dreamerv2 as dv2
+import dreamerv2.agent 
 import dreamerv2.api
 import dreamerv2.common
 import numpy as np
@@ -95,9 +96,9 @@ def main():
                 "log_every": 1e4,
                 "eval_every": 1e5,  # Save interval (steps)
                 "eval_eps": 1,
-                "replay.minlen": 25,
-                "replay.maxlen": 25,
-                "dataset.length": 25,
+                "replay.minlen": 20,
+                "replay.maxlen": 20,
+                "dataset.length": 20,
                 "dataset.batch": 8,
                 # From atari
                 "encoder": {"mlp_keys": "$^", "cnn_keys": "image"},
@@ -123,9 +124,9 @@ def main():
                 "eval_every": 0,  # Save interval (steps)
                 "eval_eps": 1e8,  # Evaluate forever
                 "train_every": 1e8,  # No training needed
-                "replay.minlen": 25,
-                "replay.maxlen": 25,
-                "dataset.length": 25,
+                "replay.minlen": 20,
+                "replay.maxlen": 20,
+                "dataset.length": 20,
                 "dataset.batch": 8,
                 # From atari
                 "encoder": {"mlp_keys": "$^", "cnn_keys": "image"},
