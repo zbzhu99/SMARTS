@@ -96,13 +96,20 @@ class RGBImage(gym.ObservationWrapper):
                 # image[123:132, 126:130, 1] = smarts_colors.Colors.Lime.value[1] * 255
                 # image[123:132, 126:130, 2] = smarts_colors.Colors.Lime.value[2] * 255
                 images.append(image.astype(np.uint8))
-
             stacked_images = np.dstack(images)
+
+            # Crop image to match Atari game view
+            center = (stacked_images.shape)[0]//2
+            y_low = 16
+            y_up = 48
+            x_left = 32
+            x_right = 32 
+            stacked_images = stacked_images[center-y_up:center+y_low, center-x_left:center+x_right, :]
             wrapped_obs.update({agent_id: stacked_images})
 
         # Plot for debugging purposes
         # import matplotlib.pyplot as plt
-        # fig=plt.figure(figsize=(10,10))
+        # fig=plt.figure(figsize=(5,5))
         # columns = self._num_stack # number of stacked images
         # rgb_gray = 3 # 3 for rgb and 1 for grayscale
         # rows = len(wrapped_obs.keys())
@@ -112,6 +119,15 @@ class RGBImage(gym.ObservationWrapper):
         #         fig.add_subplot(rows, columns, row*columns + col + 1)
         #         plt.title(f"agent_id {col}")
         #         plt.imshow(img)
+        # plt.show(block=False)
+        # plt.pause(3)
+        # plt.close()
+
+        # # Plot for debugging purposes
+        # import matplotlib.pyplot as plt
+        # fig=plt.figure(figsize=(5,5))
+        # plt.title(f"Agent obs RESIZED by dreamer")
+        # plt.imshow(image)
         # plt.show()
 
         return wrapped_obs
