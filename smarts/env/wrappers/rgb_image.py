@@ -99,12 +99,14 @@ class RGBImage(gym.ObservationWrapper):
             stacked_images = np.dstack(images)
 
             # Crop image to match Atari game view
-            center = (stacked_images.shape)[0]//2
+            center = (stacked_images.shape)[0] // 2
             y_low = 16
             y_up = 48
             x_left = 32
-            x_right = 32 
-            stacked_images = stacked_images[center-y_up:center+y_low, center-x_left:center+x_right, :]
+            x_right = 32
+            stacked_images = stacked_images[
+                center - y_up : center + y_low, center - x_left : center + x_right, :
+            ]
             wrapped_obs.update({agent_id: stacked_images})
 
         # Plot for debugging purposes

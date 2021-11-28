@@ -56,6 +56,7 @@ def main():
     assert config_dv2.precision in (16, 32), config_dv2.precision
     if config_dv2.precision == 16:
         from tensorflow.keras.mixed_precision import experimental as prec
+
         prec.set_policy(prec.Policy("mixed_float16"))
 
     # Setup GPU
@@ -94,16 +95,13 @@ def main():
                 "log_every": 1e4,
                 "eval_every": 1e5,  # Save interval (steps)
                 "eval_eps": 1,
-                
                 "replay.minlen": 25,
                 "replay.maxlen": 25,
                 "dataset.length": 25,
-                
                 "dataset.batch": 8,
-
                 # From atari
-                "encoder": {"mlp_keys": '$^', "cnn_keys": 'image'},
-                "decoder": {"mlp_keys": '$^', "cnn_keys": 'image'},
+                "encoder": {"mlp_keys": "$^", "cnn_keys": "image"},
+                "decoder": {"mlp_keys": "$^", "cnn_keys": "image"},
                 "prefill": 50000,
                 "train_every": 16,
                 "rssm": {"hidden": 600, "deter": 600},
@@ -125,16 +123,13 @@ def main():
                 "eval_every": 0,  # Save interval (steps)
                 "eval_eps": 1e8,  # Evaluate forever
                 "train_every": 1e8,  # No training needed
-
                 "replay.minlen": 25,
                 "replay.maxlen": 25,
                 "dataset.length": 25,
-                
                 "dataset.batch": 8,
-
                 # From atari
-                "encoder": {"mlp_keys": '$^', "cnn_keys": 'image'},
-                "decoder": {"mlp_keys": '$^', "cnn_keys": 'image'},
+                "encoder": {"mlp_keys": "$^", "cnn_keys": "image"},
+                "decoder": {"mlp_keys": "$^", "cnn_keys": "image"},
                 "prefill": 50000,
                 "rssm": {"hidden": 600, "deter": 600},
                 "model_opt.lr": 2e-4,
