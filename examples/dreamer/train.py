@@ -116,7 +116,7 @@ def main():
             }
         )
     elif config_env["mode"] == "evaluate":
-        config_dv2.update(
+        config_dv2 = config_dv2.update(
             {
                 "logdir": config_env["logdir_evaluate"],
                 "task": None,
