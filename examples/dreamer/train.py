@@ -54,11 +54,11 @@ def main():
 
     # Setup tensorflow
     tf.config.run_functions_eagerly(not config_dv2.jit)
-    assert config_dv2.precision in (16, 32), config_dv2.precision
-    if config_dv2.precision == 16:
-        from tensorflow.keras.mixed_precision import experimental as prec
+    # assert config_dv2.precision in (16, 32), config_dv2.precision
+    # if config_dv2.precision == 16:
+    #     from tensorflow.keras.mixed_precision import experimental as prec
 
-        prec.set_policy(prec.Policy("mixed_float16"))
+    #     prec.set_policy(prec.Policy("mixed_float16"))
 
     # Setup GPU
     gpus = tf.config.list_physical_devices("GPU")
