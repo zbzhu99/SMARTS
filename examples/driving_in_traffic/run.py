@@ -68,7 +68,7 @@ def main():
 
     # Create SMARTS env
     config_env["scenarios_dir"] = (
-        pathlib.Path(__file__).absolute().parents[2] / "scenarios"
+        pathlib.Path(__file__).absolute().parents[0] / "scenarios"
     )
     gen_env = single_agent.gen_env(config_env, config_env["seed"])
 
@@ -95,9 +95,8 @@ def main():
     elif config_env["mode"] == "evaluate":
         config_dv2 = config_dv2.update(
             {
-                "logdir": config_env["logdir_evaluate"],
-                "eval_every": 0,  # Save interval (steps)
-                "eval_eps": 1e8,  # Evaluate forever
+                "logdir": config_env["logdir"],
+                "eval_eps": 1e8,
             }
         )
     else:
@@ -163,10 +162,10 @@ def run(config, gen_env, mode):
                 logger.scalar(f"mean_{mode}_{key}", ep[key].mean())
             if re.match(config.log_keys_max, key):
                 logger.scalar(f"max_{mode}_{key}", ep[key].max(0).mean())
-        should = {"train": should_video_train, "eval": should_video_eval}[mode]
-        if should(step):
-            for key in config.log_keys_video:
-                logger.video(f"{mode}_policy_{key}", ep[key])
+        # should = {"train": should_video_train, "eval": should_video_eval}[mode]
+        # if should(step):
+        #     for key in config.log_keys_video:
+        #         logger.video(f"{mode}_policy_{key}", ep[key])
         replay = dict(train=train_replay, eval=eval_replay)[mode]
         logger.add(replay.stats, prefix=mode)
         logger.write()

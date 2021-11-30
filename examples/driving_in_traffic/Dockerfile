@@ -33,12 +33,6 @@ ENV SUMO_HOME /usr/share/sumo
 # Update default python version
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
 
-# Install ffmpeg
-RUN apt-get update && \
-    apt-get install -y ffmpeg && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
-
 # Setup virtual environment and install pip
 ENV VIRTUAL_ENV=/opt/.venv
 RUN python3.7 -m venv $VIRTUAL_ENV
@@ -58,7 +52,7 @@ RUN pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted
     cp -r /src/smarts.egg-info /media/smarts.egg-info
 
 # Build scenarios and maps
-RUN scl scenario build-all --clean ./scenarios/loop
+RUN scl scenario build-all --clean ./examples/driving_in_traffic/scenarios/loop
 
 # For Envision
 EXPOSE 8081
