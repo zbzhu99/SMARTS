@@ -90,19 +90,14 @@ def main():
         config_dv2 = config_dv2.update(
             {
                 "logdir": logdir,
-                "log_every": 1e4,
-                "eval_every": 1e5,  # Save interval (steps)
-                "train_every": 16,
             }
         )
     elif config_env["mode"] == "evaluate":
         config_dv2 = config_dv2.update(
             {
                 "logdir": config_env["logdir_evaluate"],
-                "log_every": 1e8,  # No logging needed
                 "eval_every": 0,  # Save interval (steps)
                 "eval_eps": 1e8,  # Evaluate forever
-                "train_every": 1e8,  # No training needed
             }
         )
     else:
