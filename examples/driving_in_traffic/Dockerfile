@@ -71,10 +71,6 @@ EXPOSE 8081
 ENV TF_XLA_FLAGS="--tf_xla_enable_xla_devices --tf_xla_auto_jit=2"
 
 # Suppress message of missing /dev/input folder and copy smarts.egg-info if not there
-RUN echo "mkdir -p /dev/input\n" \
-         "if [[ ! -d /src/smarts.egg-info ]]; then" \
-         "   cp -r /media/smarts.egg-info /src/smarts.egg-info;" \
-         "   chmod -R 777 /src/smarts.egg-info;" \
-         "fi" >> ~/.bashrc
+RUN echo "mkdir -p /dev/input\n" >> ~/.bashrc
 
 SHELL ["/bin/bash", "-c", "-l"]

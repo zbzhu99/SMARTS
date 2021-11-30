@@ -43,7 +43,7 @@ yaml = YAML(typ="safe")
 
 def main():
     # Load SMARTS env config
-    name = "dreamerv2"
+    name = "smarts"
     config_env = yaml.load(
         (pathlib.Path(__file__).absolute().parent / "config.yaml").read_text()
     )
@@ -148,7 +148,7 @@ def main():
         )
 
     # Train or evaluate dreamerv2 with env
-    train(config_dv2, gen_env)
+    run(config_dv2, gen_env)
 
 
 def wrap_env(env, config):
@@ -162,7 +162,7 @@ def wrap_env(env, config):
     return env
 
 
-def train(config, gen_env):
+def run(config, gen_env):
     logdir = pathlib.Path(config.logdir).expanduser()
     logdir.mkdir(parents=True, exist_ok=True)
     config.save(logdir / "config.yaml")

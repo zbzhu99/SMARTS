@@ -1,4 +1,4 @@
-dreamerv2:
+smarts:
   env_name: smarts
   seed: 42
   headless: True
@@ -13,7 +13,7 @@ dreamerv2:
   # action_adapter: "lane"
   # action_adapter: "discrete"
   agent_ids: 
-    - Donkey1
+    - Tiger1
   scenarios: 
     - loop
   mode: train # train or evaluate
