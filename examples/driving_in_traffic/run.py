@@ -1,37 +1,19 @@
-# To start Numpy generated random numbers in a well-defined initial state.
-import numpy as np
-
-np.random.seed(123)
-
-# To start core Python generated random numbers in a well-defined state.
-import random as python_random
-
-python_random.seed(123)
-
-# set_seed() will make random number generation in the TensorFlow backend have
-# a well-defined initial state.
-# https://www.tensorflow.org/api_docs/python/tf/random/set_seed
-import tensorflow as tf
-
-tf.random.set_seed(123)
-
-# -----------------------------------------------------------------------------
-
 import collections
 import logging
 import os
 import pathlib
 import re
 import warnings
+import tensorflow as tf
 from datetime import datetime
 
 import dreamerv2 as dv2
-import dreamerv2.api as dv2_api
-import dreamerv2.agent as dv2_agent
-import dreamerv2.common as dv2_common
+import dreamerv2.api as dv2_api # isort:skip
+import dreamerv2.agent as dv2_agent  # isort:skip
+import dreamerv2.common as dv2_common  # isort:skip
 import numpy as np
 import rich.traceback
-from env import single_agent
+from driving_in_traffic.env import single_agent
 from ruamel.yaml import YAML
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Silence the TF logs
