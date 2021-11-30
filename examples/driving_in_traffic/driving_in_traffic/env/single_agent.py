@@ -1,5 +1,6 @@
 from functools import partial
 from typing import Dict
+from driving_in_traffic.env import action, adapter
 
 from smarts.core import agent as smarts_agent
 from smarts.core import agent_interface as smarts_agent_interface
@@ -7,9 +8,6 @@ from smarts.core import controllers as smarts_controllers
 from smarts.env import hiway_env as smarts_hiway_env
 from smarts.env.wrappers import rgb_image as smarts_rgb_image
 from smarts.env.wrappers import single_agent as smarts_single_agent
-
-from . import action
-from . import adapter
 
 
 def gen_env(config: Dict, seed: int):

@@ -45,6 +45,12 @@ ARG REQUIREMENTS
 COPY ${REQUIREMENTS} /tmp/requirements.txt
 RUN pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --trusted-host pypi.org --no-cache-dir -r /tmp/requirements.txt
 
+RUN apt-get update && \
+    apt-get install -y git && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+RUN git config --global http.sslVerify false
+
 # Copy source files and install SMARTS
 COPY . /src
 WORKDIR /src
