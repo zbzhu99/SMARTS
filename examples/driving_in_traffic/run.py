@@ -1,26 +1,32 @@
+# This reinforcement learning example uses code from DreamerV2 (https://github.com/danijar/dreamerv2) .
+
+import argparse
 import collections
 import logging
 import os
 import pathlib
 import re
 import warnings
-import tensorflow as tf
 from datetime import datetime
 
-import dreamerv2 as dv2
-import dreamerv2.api as dv2_api # isort:skip
-import dreamerv2.agent as dv2_agent  # isort:skip
-import dreamerv2.common as dv2_common  # isort:skip
 import numpy as np
 import rich.traceback
+import tensorflow as tf
+from driving_in_traffic import seed
 from driving_in_traffic.env import single_agent
 from ruamel.yaml import YAML
+
+import dreamerv2 as dv2  # isort: skip
+import dreamerv2.api as api  # isort:skip
+import dreamerv2.agent as agent  # isort:skip
+import dreamerv2.common as common  # isort:skip
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Silence the TF logs
 logging.getLogger().setLevel("ERROR")
 warnings.filterwarnings("ignore", ".*box bound precision lowered.*")
 rich.traceback.install()
 yaml = YAML(typ="safe")
+seed(42)
 
 
 def main():
@@ -60,13 +66,23 @@ def main():
             ResourceWarning,
         )
 
-    # Create env
+    # Create SMARTS env
     config_env["scenarios_dir"] = (
         pathlib.Path(__file__).absolute().parents[2] / "scenarios"
     )
     gen_env = single_agent.gen_env(config_env, config_env["seed"])
 
     # Train or evaluate
+    config_dv2 = config_dv2.update(
+        {
+            "log_every": 1e4,
+            "eval_every": 1e5,
+            "prefill": 10000,
+            "replay.minlen": 20,
+            "replay.maxlen": 20,
+            "dataset.length": 20,
+        }
+    )
     if config_env["mode"] == "train":
         # Setup logdir
         time = datetime.now().strftime("%Y_%m_%d_%H_%M")
@@ -77,12 +93,7 @@ def main():
                 "log_every": 1e4,
                 "eval_every": 1e5,  # Save interval (steps)
                 "eval_eps": 1,
-                "replay.minlen": 20,
-                "replay.maxlen": 20,
-                "dataset.length": 20,
                 "dataset.batch": 8,
-                # From atari
-                "prefill": 10000,
                 "train_every": 16,
             }
         )
@@ -94,12 +105,7 @@ def main():
                 "eval_every": 0,  # Save interval (steps)
                 "eval_eps": 1e8,  # Evaluate forever
                 "train_every": 1e8,  # No training needed
-                "replay.minlen": 20,
-                "replay.maxlen": 20,
-                "dataset.length": 20,
                 "dataset.batch": 8,
-                # From atari
-                "prefill": 10000,
             }
         )
     else:
