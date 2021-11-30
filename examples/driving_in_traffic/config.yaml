@@ -14,5 +14,3 @@ smarts:
     - Tiger1
   scenarios: 
     - loop
-  mode: train # train or evaluate
-  logdir_evaluate: "/home/kyber/workspaces/SMARTS/examples/dreamer/logs/dreamerv2/dreamerv2_2021_10_17_06_03"

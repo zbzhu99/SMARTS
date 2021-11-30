@@ -48,8 +48,7 @@ RUN pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted
 # Copy source files and install SMARTS
 COPY . /src
 WORKDIR /src
-RUN pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --trusted-host pypi.org --no-cache-dir -e . && \
-    cp -r /src/smarts.egg-info /media/smarts.egg-info
+RUN pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --trusted-host pypi.org --no-cache-dir -e ./examples/driving_in_traffic
 
 # Build scenarios and maps
 RUN scl scenario build-all --clean ./examples/driving_in_traffic/scenarios/loop
