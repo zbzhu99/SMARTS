@@ -58,10 +58,7 @@ RUN pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted
     cp -r /src/smarts.egg-info /media/smarts.egg-info
 
 # Build scenarios and maps
-RUN scl scenario build-all --clean \
-    ./scenarios/loop \
-    ./scenarios/cloverleaf \
-    ./scenarios/figure_eight
+RUN scl scenario build-all --clean ./scenarios/loop
 
 # For Envision
 EXPOSE 8081

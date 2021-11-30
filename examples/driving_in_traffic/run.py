@@ -92,7 +92,6 @@ def main():
         config_dv2 = config_dv2.update(
             {
                 "logdir": logdir,
-                "task": None,
                 "log_every": 1e4,
                 "eval_every": 1e5,  # Save interval (steps)
                 "eval_eps": 1,
@@ -101,25 +100,14 @@ def main():
                 "dataset.length": 20,
                 "dataset.batch": 8,
                 # From atari
-                "encoder": {"mlp_keys": "$^", "cnn_keys": "image"},
-                "decoder": {"mlp_keys": "$^", "cnn_keys": "image"},
-                "prefill": 50000,
+                "prefill": 10000,
                 "train_every": 16,
-                "rssm": {"hidden": 600, "deter": 600},
-                "model_opt.lr": 2e-4,
-                "actor_opt.lr": 4e-5,
-                "critic_opt.lr": 1e-4,
-                "actor_ent": 1e-3,
-                "discount": 0.999,
-                "loss_scales.kl": 0.1,
-                "loss_scales.discount": 5.0,
             }
         )
     elif config_env["mode"] == "evaluate":
         config_dv2 = config_dv2.update(
             {
                 "logdir": config_env["logdir_evaluate"],
-                "task": None,
                 "log_every": 1e8,  # No logging needed
                 "eval_every": 0,  # Save interval (steps)
                 "eval_eps": 1e8,  # Evaluate forever
@@ -129,17 +117,7 @@ def main():
                 "dataset.length": 20,
                 "dataset.batch": 8,
                 # From atari
-                "encoder": {"mlp_keys": "$^", "cnn_keys": "image"},
-                "decoder": {"mlp_keys": "$^", "cnn_keys": "image"},
-                "prefill": 50000,
-                "rssm": {"hidden": 600, "deter": 600},
-                "model_opt.lr": 2e-4,
-                "actor_opt.lr": 4e-5,
-                "critic_opt.lr": 1e-4,
-                "actor_ent": 1e-3,
-                "discount": 0.999,
-                "loss_scales.kl": 0.1,
-                "loss_scales.discount": 5.0,
+                "prefill": 10000,
             }
         )
     else:
