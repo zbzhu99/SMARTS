@@ -92,8 +92,6 @@ def main():
                 "logdir": logdir,
                 "log_every": 1e4,
                 "eval_every": 1e5,  # Save interval (steps)
-                "eval_eps": 1,
-                "dataset.batch": 8,
                 "train_every": 16,
             }
         )
@@ -105,7 +103,6 @@ def main():
                 "eval_every": 0,  # Save interval (steps)
                 "eval_eps": 1e8,  # Evaluate forever
                 "train_every": 1e8,  # No training needed
-                "dataset.batch": 8,
             }
         )
     else:
@@ -114,7 +111,7 @@ def main():
         )
 
     # Train or evaluate dreamerv2 with env
-    run(config_dv2, gen_env)
+    run(config_dv2, gen_env, config_env["mode"])
 
 
 def wrap_env(env, config):
@@ -128,7 +125,7 @@ def wrap_env(env, config):
     return env
 
 
-def run(config, gen_env):
+def run(config, gen_env, mode):
     logdir = pathlib.Path(config.logdir).expanduser()
     logdir.mkdir(parents=True, exist_ok=True)
     config.save(logdir / "config.yaml")
@@ -180,24 +177,23 @@ def run(config, gen_env):
         logger.write()
 
     print("Create envs.")
-    if config.envs_parallel == "none":
-        train_envs = [wrap_env(next(gen_env), config)]
-        eval_envs = [wrap_env(next(gen_env), config)]
-    else:
-        raise KeyError("Unsupported config.envs_parallel.")
-    act_space = train_envs[0].act_space
-    obs_space = train_envs[0].obs_space
-    train_driver = dv2.common.Driver(train_envs)
-    train_driver.on_episode(lambda ep: per_episode(ep, mode="train"))
-    train_driver.on_step(lambda tran, worker: step.increment())
-    train_driver.on_step(train_replay.add_step)
-    train_driver.on_reset(train_replay.add_step)
+    train_envs = []
+    if mode == "train":
+        train_envs = [wrap_env(next(gen_env)(env_name="train"), config)]
+        train_driver = dv2.common.Driver(train_envs)
+        train_driver.on_episode(lambda ep: per_episode(ep, mode="train"))
+        train_driver.on_step(lambda tran, worker: step.increment())
+        train_driver.on_step(train_replay.add_step)
+        train_driver.on_reset(train_replay.add_step)
+    eval_envs = [wrap_env(next(gen_env)(env_name="eval"), config)]
+    act_space = eval_envs[0].act_space
+    obs_space = eval_envs[0].obs_space
     eval_driver = dv2.common.Driver(eval_envs)
     eval_driver.on_episode(lambda ep: per_episode(ep, mode="eval"))
     eval_driver.on_episode(eval_replay.add_episode)
 
     prefill = max(0, config.prefill - train_replay.stats["total_steps"])
-    if prefill:
+    if prefill and mode == "train":
         print(f"Prefill dataset ({prefill} steps).")
         random_agent = dv2.common.RandomAgent(act_space)
         train_driver(random_agent, steps=prefill, episodes=1)
@@ -235,16 +231,18 @@ def run(config, gen_env):
             logger.add(agnt.report(next(report_dataset)), prefix="train")
             logger.write(fps=True)
 
-    train_driver.on_step(train_step)
+    if mode == "train":
+        train_driver.on_step(train_step)
 
     while step < config.steps:
         logger.write()
         print("Start evaluation.")
         logger.add(agnt.report(next(eval_dataset)), prefix="eval")
         eval_driver(eval_policy, episodes=config.eval_eps)
-        print("Start training.")
-        train_driver(train_policy, steps=config.eval_every)
-        agnt.save(logdir / "variables.pkl")
+        if mode == "train":
+            print("Start training.")
+            train_driver(train_policy, steps=config.eval_every)
+            agnt.save(logdir / "variables.pkl")
     for env in train_envs + eval_envs:
         try:
             env.close()

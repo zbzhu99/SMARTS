@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Dict
 
 from smarts.core import agent as smarts_agent
@@ -7,30 +8,26 @@ from smarts.env import hiway_env as smarts_hiway_env
 from smarts.env.wrappers import rgb_image as smarts_rgb_image
 from smarts.env.wrappers import single_agent as smarts_single_agent
 
-from . import action as action
+from . import action
 from . import adapter
 
 
 def gen_env(config: Dict, seed: int):
     base_seed = seed
     while True:
-        yield make_env(config, base_seed)
+        yield partial(make_env, config=config, seed=base_seed)
         base_seed += 1
 
 
-def make_env(config: Dict, seed: int):
+def make_env(config: Dict, seed: int, env_name: str = None):
 
     vehicle_interface = smarts_agent_interface.AgentInterface(
         max_episode_steps=config["max_episode_steps"],
-        neighborhood_vehicles=smarts_agent_interface.NeighborhoodVehicles(
-            radius=config["neighborhood_radius"]
-        ),
         rgb=smarts_agent_interface.RGB(
             width=config["rgb_pixels"],
             height=config["rgb_pixels"],
             resolution=config["rgb_meters"] / config["rgb_pixels"],
         ),
-        vehicle_color="BrightRed",
         action=getattr(
             smarts_controllers.ActionSpaceType,
             config["action_space_type"],
@@ -59,13 +56,16 @@ def make_env(config: Dict, seed: int):
         str(config["scenarios_dir"].joinpath(scenario))
         for scenario in config["scenarios"]
     ]
+
     env = smarts_hiway_env.HiWayEnv(
         scenarios=scenarios,
         agent_specs=agent_specs,
         headless=config["headless"],
         visdom=config["visdom"],
         seed=seed,
+        sim_name=env_name,
     )
+
     # Wrap env with ActionWrapper
     env = action.Action(env=env, wrapper=config["action_adapter"])
     # Wrap env with RGBImage wrapper to only get rgb images in observation
