@@ -29,13 +29,16 @@ yaml = YAML(typ="safe")
 seed(42)
 
 
-def main():
+def main(args):
     # Load SMARTS env config
     name = "smarts"
     config_env = yaml.load(
         (pathlib.Path(__file__).absolute().parent / "config.yaml").read_text()
     )
     config_env = config_env[name]
+    config_env["mode"] = args.mode
+    config_env["logdir"] = args.logdir
+    config_env["headless"] = not args.head
 
     # Load dreamerv2 config
     config_dv2 = dv2.api.defaults
@@ -245,4 +248,22 @@ def run(config, gen_env, mode):
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser("driving_in_traffic")
+    parser.add_argument(
+        "--mode",
+        help="`train` or `evauate`. Default is `train`.",
+        type=str,
+        default="train",
+    )
+    parser.add_argument(
+        "--logdir",
+        help="Directory path to saved RL model. Required if `--mode=evaluate`, else optional.",
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        "--head", help="Run the simulation with display.", action="store_true"
+    )
+    args = parser.parse_args()
+
+    main(args)
