@@ -1,5 +1,6 @@
 from functools import partial
 from typing import Dict
+
 from driving_in_traffic.env import action, adapter
 
 from smarts.core import agent as smarts_agent
