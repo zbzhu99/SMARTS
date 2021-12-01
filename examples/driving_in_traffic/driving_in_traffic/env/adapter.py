@@ -31,7 +31,7 @@ def reward_adapter(obs, env_reward):
         print(f"----- Vehicle {ego.id} went off road.")
         return np.float32(reward)
 
-    # Reward for colliding
+    # Penalty for colliding
     if len(obs.events.collisions) > 0:
         reward -= 200
         print(f"----- Vehicle {ego.id} collided.")
