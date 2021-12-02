@@ -25,7 +25,7 @@ setup(
         "cached-property",
         "click",  # used in scl
         "gym==0.18.3",
-        "numpy",
+        "numpy==0.19.5",
         "pandas",
         "psutil",
         "pybullet==3.0.6",
@@ -66,13 +66,13 @@ setup(
             "pytest-notebook",
             "pytest-xdist",
             "ray[rllib]==1.0.1.post1",  # We use Ray for our multiprocessing needs
-            "tensorflow==2.2.1",  # For rllib tests
+            "tensorflow==2.4.0",  # For rllib tests
         ],
         "train": [
             "ray[rllib]==1.0.1.post1",  # We use Ray for our multiprocessing needs
             # XXX: TF requires specific version of scipy
             "scipy==1.4.1",
-            "tensorflow==2.2.1",
+            "tensorflow==2.4.0",
             "torch==1.4.0",
             "torchvision==0.5.0",
         ],
