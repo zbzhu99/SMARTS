@@ -96,17 +96,8 @@ class RGBImage(gym.ObservationWrapper):
                 # image[123:132, 126:130, 1] = smarts_colors.Colors.Lime.value[1] * 255
                 # image[123:132, 126:130, 2] = smarts_colors.Colors.Lime.value[2] * 255
                 images.append(image.astype(np.uint8))
-            stacked_images = np.dstack(images)
 
-            # Crop image to match Atari game view
-            center = (stacked_images.shape)[0] // 2
-            y_low = 16
-            y_up = 48
-            x_left = 32
-            x_right = 32
-            stacked_images = stacked_images[
-                center - y_up : center + y_low, center - x_left : center + x_right, :
-            ]
+            stacked_images = np.dstack(images)
             wrapped_obs.update({agent_id: stacked_images})
 
         # Plot for debugging purposes
