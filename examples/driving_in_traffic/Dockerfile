@@ -12,23 +12,18 @@ RUN apt-get update --fix-missing && \
     apt-get install -y \
         software-properties-common && \
     add-apt-repository -y ppa:deadsnakes/ppa && \
-    add-apt-repository -y ppa:sumo/stable && \
     apt-get update && \
     apt-get install -y \
+        ffmpeg \
+        git \
         libspatialindex-dev \
         python3.7 \
         python3.7-dev \
         python3.7-venv \
-        sumo \
-        sumo-doc \
-        sumo-tools \
         wget \
         xorg && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
-
-# Setup SUMO
-ENV SUMO_HOME /usr/share/sumo
 
 # Update default python version
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
@@ -37,8 +32,11 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
 ENV VIRTUAL_ENV=/opt/.venv
 RUN python3.7 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN pip config set global.trusted-host "pypi.python.org files.pythonhosted.org pypi.org"
-RUN pip install --upgrade pip
+RUN pip install --upgrade pip wheel
+
+# Setup SUMO
+RUN pip install eclipse-sumo==1.10.0
+ENV SUMO_HOME $VIRTUAL_ENV/lib64/python3.7/site-packages/sumo
 
 # Install requirements.txt
 ARG REQUIREMENTS
