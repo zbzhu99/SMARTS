@@ -11,15 +11,24 @@ def reward_adapter(obs, env_reward):
 
     # Penalty for driving off road
     if obs.events.off_road:
-        reward -= 200
+        reward -= 10
         return np.float32(reward)
 
     # Penalty for colliding
     if len(obs.events.collisions) > 0:
-        reward -= 200
+        reward -= 10
         return np.float32(reward)
 
-    # Distance based reward
-    reward += env_reward
+    if obs.events.wrong_way:
+        reward -= 0.5
+
+    if obs.events.off_route:
+        reward -= 0.5
+    else:
+        # Distance based reward
+        reward += env_reward
+
+    if obs.events.reached_goal:
+        reward += 10
 
     return np.float32(reward)

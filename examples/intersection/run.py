@@ -12,8 +12,8 @@ from datetime import datetime
 import numpy as np
 import rich.traceback
 import tensorflow as tf
-from driving_in_traffic import seed
-from driving_in_traffic.env import single_agent
+from intersection import seed
+from intersection.env import single_agent
 from ruamel.yaml import YAML
 
 import dreamerv2 as dv2  # isort: skip
@@ -243,7 +243,7 @@ def run(config, gen_env, mode):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("driving_in_traffic")
+    parser = argparse.ArgumentParser("intersection")
     parser.add_argument(
         "--mode",
         help="`train` or `evauate`. Default is `train`.",
