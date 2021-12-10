@@ -1,17 +1,20 @@
-import os
+from pathlib import Path
 
 from smarts.sstudio import gen_traffic
+from smarts.sstudio.genscenario import gen_scenario
 from smarts.sstudio.types import (
     Distribution,
     Flow,
     JunctionModel,
     LaneChangingModel,
+    Mission,
     Route,
+    Scenario,
     Traffic,
     TrafficActor,
 )
 
-scenario_path = os.path.dirname(os.path.realpath(__file__))
+scnr_path = str(Path(__file__).parent)
 
 impatient_car = TrafficActor(
     name="car",
@@ -74,19 +77,8 @@ for name, routes in {
         ]
     )
 
-    gen_traffic(scenario_path, traffic, name=name)
+    gen_traffic(scnr_path, traffic, name=name)
 
-
-from smarts.sstudio.genscenario import gen_scenario
-from smarts.sstudio.types import (
-    Flow,
-    Mission,
-    Route,
-    Scenario,
-    Traffic,
-    TrafficActor,
-)
-from pathlib import Path
 
 ego_missions = [
     Mission(
@@ -100,5 +92,5 @@ scenario = Scenario(
 
 gen_scenario(
     scenario=scenario,
-    output_dir=scenario_path,
+    output_dir=scnr_path,
 )
