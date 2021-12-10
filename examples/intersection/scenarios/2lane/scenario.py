@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from smarts.sstudio import gen_traffic
 from smarts.sstudio.genscenario import gen_scenario
 from smarts.sstudio.types import (
     Distribution,
@@ -13,8 +12,6 @@ from smarts.sstudio.types import (
     Traffic,
     TrafficActor,
 )
-
-scnr_path = str(Path(__file__).parent)
 
 impatient_car = TrafficActor(
     name="car",
@@ -56,14 +53,9 @@ turn_right_routes = [
     ("east-EW", "north-SN"),
 ]
 
-for name, routes in {
-    "vertical": vertical_routes,
-    "horizontal": horizontal_routes,
-    "unprotected_left": turn_left_routes,
-    "turns": turn_left_routes + turn_right_routes,
-    "all": vertical_routes + horizontal_routes + turn_left_routes + turn_right_routes,
-}.items():
-    traffic = Traffic(
+
+traffic = {
+    name: Traffic(
         flows=[
             Flow(
                 route=Route(
@@ -71,14 +63,23 @@ for name, routes in {
                     end=(f"edge-{r[1]}", 0, "random"),
                 ),
                 rate=60 * 60,
+                end=1e8 * 60 * 60,
                 actors={impatient_car: 0.5, patient_car: 0.5},
             )
             for r in routes
         ]
     )
-
-    gen_traffic(scnr_path, traffic, name=name)
-
+    for name, routes in {
+        "vertical": vertical_routes,
+        "horizontal": horizontal_routes,
+        "unprotected_left": turn_left_routes,
+        "turns": turn_left_routes + turn_right_routes,
+        "all": vertical_routes
+        + horizontal_routes
+        + turn_left_routes
+        + turn_right_routes,
+    }.items()
+}
 
 ego_missions = [
     Mission(
@@ -86,11 +87,6 @@ ego_missions = [
     ),
 ]
 
-scenario = Scenario(
-    ego_missions=ego_missions,
-)
-
-gen_scenario(
-    scenario=scenario,
-    output_dir=scnr_path,
-)
+scnr_path = str(Path(__file__).parent)
+scnr = Scenario(traffic=traffic, ego_missions=ego_missions)
+gen_scenario(scenario=scnr, output_dir=scnr_path, seed=42, overwrite=True)
