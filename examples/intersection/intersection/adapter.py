@@ -19,16 +19,17 @@ def reward_adapter(obs, env_reward):
         reward -= 10
         return np.float32(reward)
 
+    if obs.events.off_route:
+        reward -= 10
+        return np.float32(reward)
+
     if obs.events.wrong_way:
         reward -= 0.5
 
-    if obs.events.off_route:
-        reward -= 0.5
-    else:
-        # Distance based reward
-        reward += env_reward
+    # Distance based reward
+    reward += env_reward
 
     if obs.events.reached_goal:
-        reward += 10
+        reward += 20
 
     return np.float32(reward)

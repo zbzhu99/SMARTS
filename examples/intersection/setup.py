@@ -8,7 +8,7 @@ with open(path.join(this_dir, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="intersection",
-    description="Intersection",
+    description="Left turn in intersection",
     long_description=long_description,
     long_description_content_type="text/markdown",
     version="0.1.0",
