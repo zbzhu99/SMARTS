@@ -1,17 +1,20 @@
 from pathlib import Path
 
-from smarts.sstudio.genscenario import gen_scenario
+from smarts.sstudio.genscenario import gen_missions, gen_traffic
 from smarts.sstudio.types import (
     Distribution,
     Flow,
     JunctionModel,
     LaneChangingModel,
     Mission,
+    RandomRoute,
     Route,
     Scenario,
     Traffic,
     TrafficActor,
 )
+
+scnr_path = str(Path(__file__).parent)
 
 impatient_car = TrafficActor(
     name="car",
@@ -53,40 +56,34 @@ turn_right_routes = [
     ("east-EW", "north-SN"),
 ]
 
-
-traffic = {
-    name: Traffic(
+for name, routes in {
+    "vertical": vertical_routes,
+    "horizontal": horizontal_routes,
+    "unprotected_left": turn_left_routes,
+    "turns": turn_left_routes + turn_right_routes,
+    "all": vertical_routes + horizontal_routes + turn_left_routes + turn_right_routes,
+}.items():
+    traffic = Traffic(
         flows=[
             Flow(
                 route=Route(
                     begin=(f"edge-{r[0]}", 0, "random"),
-                    end=(f"edge-{r[1]}", 0, "random"),
+                    end=(f"edge-{r[1]}", 0, "max"),
                 ),
+                # route=RandomRoute(),
                 rate=60 * 60,
-                end=1e8 * 60 * 60,
+                # actors={TrafficActor(name="car"): 1.0},
                 actors={impatient_car: 0.5, patient_car: 0.5},
             )
-            for r in routes
+            for r in routes * 2
         ]
     )
-    for name, routes in {
-        "vertical": vertical_routes,
-        "horizontal": horizontal_routes,
-        "unprotected_left": turn_left_routes,
-        "turns": turn_left_routes + turn_right_routes,
-        "all": vertical_routes
-        + horizontal_routes
-        + turn_left_routes
-        + turn_right_routes,
-    }.items()
-}
+    gen_traffic(scenario=scnr_path, traffic=traffic, name=name)
 
 ego_missions = [
     Mission(
-        route=Route(begin=("edge-south-SN", 0, 10), end=("edge-west-EW", 0, "max")),
+        route=Route(begin=("edge-west-WE", 0, 5), end=("edge-north-SN", 0, "max")),
     ),
 ]
 
-scnr_path = str(Path(__file__).parent)
-scnr = Scenario(traffic=traffic, ego_missions=ego_missions)
-gen_scenario(scenario=scnr, output_dir=scnr_path, seed=42, overwrite=True)
+gen_missions(missions=ego_missions, scenario=scnr_path)
