@@ -76,9 +76,9 @@ def main(args):
             "log_every": 1e4,
             "eval_every": 1e5,
             "prefill": 10000,
-            "replay.minlen": 20,
-            "replay.maxlen": 20,
-            "dataset.length": 20,
+            "replay.minlen": 10,
+            "replay.maxlen": 10,
+            "dataset.length": 10,
         }
     )
     if config_env["mode"] == "train":
