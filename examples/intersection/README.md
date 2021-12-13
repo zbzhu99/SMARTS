@@ -1,7 +1,7 @@
 # Left Turn in Intersection
-This example illustrates the training of an ego agent to make an uprotected left turn in an intersection in traffic using DreamerV2 (https://github.com/danijar/dreamerv2) reinforcement-learning algorithm.
+This example illustrates the training of an ego agent to make an unprotected left turn in an intersection in traffic using [DreamerV2](https://github.com/danijar/dreamerv2) reinforcement-learning algorithm.
 
-Ego agent earns rewards based on the distance travelled and on succesfully turning left in the intersection. It is penalised for colliding with other vehicles, for going off-road, and for going off-route.
+Ego agent earns rewards based on the distance travelled and on successfully turning left in the intersection. It is penalised for colliding with other vehicles, for going off-road, and for going off-route.
 
 ## Trained agent navigating intersection
 ![](./docs/_static/intersection.gif)

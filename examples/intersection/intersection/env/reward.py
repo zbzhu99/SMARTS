@@ -5,7 +5,7 @@ import numpy as np
 class Reward(gym.Wrapper):
     def __init__(self, env):
         super().__init__(env)
-    
+
     def reset(self, **kwargs):
         return self.env.reset(**kwargs)
 
@@ -13,7 +13,8 @@ class Reward(gym.Wrapper):
         obs, env_reward, done, info = self.env.step(action)
 
         wrapped_reward = {
-            agent_id: self._reward(obs[agent_id], agent_reward) for agent_id, agent_reward in env_reward.items()
+            agent_id: self._reward(obs[agent_id], agent_reward)
+            for agent_id, agent_reward in env_reward.items()
         }
 
         return obs, wrapped_reward, done, info
