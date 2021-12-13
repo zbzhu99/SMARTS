@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from smarts.sstudio.genscenario import gen_scenario
+from smarts.sstudio.genscenario import gen_missions, gen_traffic
 from smarts.sstudio.types import (
-    Distribution,    
+    Distribution,
     Flow,
-    JunctionModel,    
+    JunctionModel,
     LaneChangingModel,
     Mission,
     RandomRoute,
@@ -56,7 +56,6 @@ turn_right_routes = [
     ("east-EW", "north-SN"),
 ]
 
-traffic = {}
 for name, routes in {
     "vertical": vertical_routes,
     "horizontal": horizontal_routes,
@@ -64,7 +63,7 @@ for name, routes in {
     "turns": turn_left_routes + turn_right_routes,
     "all": vertical_routes + horizontal_routes + turn_left_routes + turn_right_routes,
 }.items():
-    traffic[name] = Traffic(
+    traffic = Traffic(
         flows=[
             Flow(
                 route=Route(
@@ -76,39 +75,15 @@ for name, routes in {
                 # actors={TrafficActor(name="car"): 1.0},
                 actors={impatient_car: 0.5, patient_car: 0.5},
             )
-            for r in routes
+            for r in routes * 2
         ]
     )
-
+    gen_traffic(scenario=scnr_path, traffic=traffic, name=name)
 
 ego_missions = [
-    # Mission(
-    #     route=Route(begin=("edge-south-SN", 1, 10), end=("edge-west-EW", 1, "max")),
-    # ),
     Mission(
-        route=Route(begin=("edge-west-WE", 0, 10), end=("edge-north-SN", 0, "max")),
+        route=Route(begin=("edge-west-WE", 0, 5), end=("edge-north-SN", 0, "max")),
     ),
 ]
 
-scenario = Scenario(
-    # traffic={
-    #     "basic": Traffic(
-    #         flows=[
-    #             Flow(
-    #                 route=RandomRoute(),
-    #                 rate=60*60,
-    #                 actors={TrafficActor(name="car"): 1.0},
-    #             )
-    #         ]
-    #     )
-    # },
-    traffic = traffic,
-    ego_missions=ego_missions,
-)
-
-
-gen_scenario(
-    scenario=scenario,
-    output_dir=scnr_path,
-)
-
+gen_missions(missions=ego_missions, scenario=scnr_path)
