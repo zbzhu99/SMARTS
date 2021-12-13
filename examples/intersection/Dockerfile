@@ -32,6 +32,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
 ENV VIRTUAL_ENV=/opt/.venv
 RUN python3.7 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN pip config set global.trusted-host "pypi.org files.pythonhosted.org pypi.python.org"
 RUN pip install --upgrade pip wheel
 
 # Setup SUMO
@@ -46,6 +47,7 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 # Copy source files and install
 COPY . /src
 WORKDIR /src
+RUN git config --global http.sslverify false
 RUN pip install --no-cache-dir -e ./examples/${EXAMPLE}
 
 # Build scenarios and maps
