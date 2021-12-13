@@ -8,4 +8,4 @@ smarts:
   agent_ids: 
     - Pig1
   scenarios: 
-    - loop
+    - 2lane

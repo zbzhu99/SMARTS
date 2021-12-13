@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Dict
 
-from driving_in_traffic.env import action, adapter
+from intersection.env import action, reward
 
 from smarts.core import agent as smarts_agent
 from smarts.core import agent_interface as smarts_agent_interface
@@ -45,8 +45,6 @@ def make_env(config: Dict, seed: int, env_name: str = None):
         agent_id: smarts_agent.AgentSpec(
             interface=vehicle_interface,
             agent_builder=None,
-            reward_adapter=adapter.reward_adapter,
-            info_adapter=adapter.info_adapter,
         )
         for agent_id in config["agent_ids"]
     }
@@ -65,8 +63,8 @@ def make_env(config: Dict, seed: int, env_name: str = None):
         sim_name=env_name,
     )
 
-    # Wrap env with ActionWrapper
     env = action.Action(env=env)
+    env = reward.Reward(env=env)
     # Wrap env with RGBImage wrapper to only get rgb images in observation
     env = smarts_rgb_image.RGBImage(env=env, num_stack=1)
     # Wrap env with SingleAgent wrapper to be Gym compliant
