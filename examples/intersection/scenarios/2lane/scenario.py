@@ -2,9 +2,9 @@ from pathlib import Path
 
 from smarts.sstudio.genscenario import gen_scenario
 from smarts.sstudio.types import (
-    Distribution,    
+    Distribution,
     Flow,
-    JunctionModel,    
+    JunctionModel,
     LaneChangingModel,
     Mission,
     RandomRoute,
@@ -72,7 +72,7 @@ for name, routes in {
                     end=(f"edge-{r[1]}", 0, "max"),
                 ),
                 # route=RandomRoute(),
-                rate=60 * 60,
+                rate=60 * 2,
                 # actors={TrafficActor(name="car"): 1.0},
                 actors={impatient_car: 0.5, patient_car: 0.5},
             )
@@ -82,15 +82,15 @@ for name, routes in {
 
 ego_missions = [
     # Mission(
-    #     route=Route(begin=("edge-south-SN", 0, 5), end=("edge-west-EW", 0, "max")),
+    #     route=Route(begin=("edge-south-SN", 0, 10), end=("edge-west-EW", 0, "max")),
     # ),
     Mission(
-        route=Route(begin=("edge-west-WE", 0, 5), end=("edge-north-SN", 0, "max")),
+        route=Route(begin=("edge-west-WE", 0, 10), end=("edge-north-SN", 0, "max")),
     ),
 ]
 
 scenario = Scenario(
-    traffic = traffic,
+    traffic=traffic,
     ego_missions=ego_missions,
 )
 
@@ -98,4 +98,3 @@ gen_scenario(
     scenario=scenario,
     output_dir=scnr_path,
 )
-
