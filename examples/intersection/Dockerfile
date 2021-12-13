@@ -40,7 +40,7 @@ RUN pip install eclipse-sumo==1.10.0
 ENV SUMO_HOME $VIRTUAL_ENV/lib64/python3.7/site-packages/sumo
 
 # Install requirements.txt
-ARG EXAMPLE=intersection
+ARG EXAMPLE
 COPY ./examples/${EXAMPLE}/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
