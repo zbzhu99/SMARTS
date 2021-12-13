@@ -89,12 +89,10 @@ ego_missions = [
     ),
 ]
 
-scenario = Scenario(
-    traffic=traffic,
-    ego_missions=ego_missions,
-)
-
 gen_scenario(
-    scenario=scenario,
+    scenario=Scenario(
+        traffic=traffic,
+        ego_missions=ego_missions,
+    ),
     output_dir=scnr_path,
 )
