@@ -91,17 +91,6 @@ ego_missions = [
 ]
 
 scenario = Scenario(
-    # traffic={
-    #     "basic": Traffic(
-    #         flows=[
-    #             Flow(
-    #                 route=RandomRoute(),
-    #                 rate=60*60,
-    #                 actors={TrafficActor(name="car"): 1.0},
-    #             )
-    #         ]
-    #     )
-    # },
     traffic = traffic,
     ego_missions=ego_missions,
 )
