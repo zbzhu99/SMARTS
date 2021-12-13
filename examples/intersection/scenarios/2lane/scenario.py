@@ -80,13 +80,12 @@ for name, routes in {
         ]
     )
 
-
 ego_missions = [
     # Mission(
-    #     route=Route(begin=("edge-south-SN", 1, 10), end=("edge-west-EW", 1, "max")),
+    #     route=Route(begin=("edge-south-SN", 0, 5), end=("edge-west-EW", 0, "max")),
     # ),
     Mission(
-        route=Route(begin=("edge-west-WE", 0, 10), end=("edge-north-SN", 0, "max")),
+        route=Route(begin=("edge-west-WE", 0, 5), end=("edge-north-SN", 0, "max")),
     ),
 ]
 
@@ -94,7 +93,6 @@ scenario = Scenario(
     traffic = traffic,
     ego_missions=ego_missions,
 )
-
 
 gen_scenario(
     scenario=scenario,
