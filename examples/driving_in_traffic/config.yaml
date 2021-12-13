@@ -5,10 +5,6 @@ smarts:
   rgb_pixels: 64 # Height and width (pixels) of RGB image in SMARTS observation  
   max_episode_steps: 300 # 30 seconds. Maximum steps per episode.
   action_space_type: "Continuous"
-  # action_space_type: "Lane"
-  action_adapter: "continuous"
-  # action_adapter: "lane"
-  # action_adapter: "discrete"
   agent_ids: 
     - Tiger1
   scenarios: 

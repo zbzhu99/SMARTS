@@ -60,11 +60,10 @@ RUN scl scenario build-all --clean ./examples/driving_in_traffic/scenarios/loop
 # For Envision
 EXPOSE 8081
 
-# Tensorflow: Optimizing compiler for machine learning
-# https://www.tensorflow.org/xla
+# Optimizing compiler for machine learning. See https://www.tensorflow.org/xla .
 ENV TF_XLA_FLAGS="--tf_xla_enable_xla_devices --tf_xla_auto_jit=2"
 
-# Suppress message of missing /dev/input folder and copy smarts.egg-info if not there
+# Suppress message of missing /dev/input folder
 RUN echo "mkdir -p /dev/input\n" >> ~/.bashrc
 
 SHELL ["/bin/bash", "-c", "-l"]

@@ -1,5 +1,5 @@
 # Driving in Traffic
-This example illustrates the training of an ego agent to drive in traffic using DreamerV2 (https://github.com/danijar/dreamerv2) reinforcement-learning algorithm.
+This example illustrates the training of an ego agent to drive, as fast and as far as possible, in traffic using DreamerV2 (https://github.com/danijar/dreamerv2) reinforcement-learning algorithm.
 
 Ego agent earns rewards based on the distance travelled and is penalised for colliding with other vehicles and for going off-road.
 
@@ -39,13 +39,7 @@ $ scl scenario build-all --clean ./scenarios/loop
     ```bash
     $ cd <path>/SMARTS
     $ docker build --file=<path>/SMARTS/examples/driving_in_traffic/Dockerfile --network=host --tag=driving_in_traffic <path>/SMARTS
-    $ docker run --rm -it --network=host driving_in_traffic
+    $ docker run --rm -it --network=host --gpus=all driving_in_traffic
     (container) $ cd /src/examples/driving_in_traffic
     (container) $ python3.7 run.py
     ```
-
-docker build --file=/home/adai/workspaces/SMARTS/examples/driving_in_traffic/Dockerfile --network=host --tag=driving_in_traffic /home/adai/workspaces/SMARTS
-
-docker run --rm -it --network=host driving_in_traffic
-
-python3.7 ./examples/driving_in_traffic/run.py
