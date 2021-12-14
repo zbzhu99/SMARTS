@@ -16,6 +16,7 @@
 **/.eggs/
 **/*.egg
 **/*.egg-info
+**/examples/**/logs
 **/*flamegraph-perf.log
 **/*flamegraph.svg
 **/*flamegraph.html

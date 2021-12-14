@@ -261,4 +261,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # args.head = "True"
+    # args.mode = "evaluate"
+    # args.logdir = "/home/kyber/workspaces/training/intersection_2021_12_13_16_19/logs/2021_12_13_21_20"
+
+    if args.mode == "evaluate" and args.logdir is None:
+        raise Exception("When --mode=evaluate, --logdir option must be specified.")
+
     main(args)
