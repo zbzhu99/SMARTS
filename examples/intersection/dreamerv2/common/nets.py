@@ -6,7 +6,7 @@ from tensorflow.keras import layers as tfkl
 from tensorflow_probability import distributions as tfd
 from tensorflow.keras.mixed_precision import experimental as prec
 
-import common
+import dreamerv2.common as common
 
 
 class EnsembleRSSM(common.Module):

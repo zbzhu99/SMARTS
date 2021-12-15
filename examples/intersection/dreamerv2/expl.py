@@ -1,8 +1,8 @@
 import tensorflow as tf
 from tensorflow_probability import distributions as tfd
 
-import agent
-import common
+import dreamerv2.agent as dv2_agent
+import dreamerv2.common as common
 
 
 class Random(common.Module):
@@ -29,7 +29,7 @@ class Plan2Explore(common.Module):
     self.config = config
     self.reward = reward
     self.wm = wm
-    self.ac = agent.ActorCritic(config, act_space, tfstep)
+    self.ac = dv2_agent.ActorCritic(config, act_space, tfstep)
     self.actor = self.ac.actor
     stoch_size = config.rssm.stoch
     if config.rssm.discrete:
@@ -102,7 +102,7 @@ class ModelLoss(common.Module):
     self.config = config
     self.reward = reward
     self.wm = wm
-    self.ac = agent.ActorCritic(config, act_space, tfstep)
+    self.ac = dv2_agent.ActorCritic(config, act_space, tfstep)
     self.actor = self.ac.actor
     self.head = common.MLP([], **self.config.expl_head)
     self.opt = common.Optimizer('expl', **self.config.expl_opt)

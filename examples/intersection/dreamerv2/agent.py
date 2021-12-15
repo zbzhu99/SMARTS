@@ -1,8 +1,8 @@
 import tensorflow as tf
 from tensorflow.keras import mixed_precision as prec
 
-import common
-import expl
+import dreamerv2.common as common
+import dreamerv2.expl as expl
 
 
 class Agent(common.Module):
