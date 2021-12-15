@@ -113,6 +113,7 @@ class RGBImage(gym.ObservationWrapper):
                 plt.title(f"agent_id {col}")
                 plt.imshow(img)
         plt.show()
+        print("------------------------------------")
         # plt.pause(3)
         # plt.close()
 
