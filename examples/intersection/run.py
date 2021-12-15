@@ -16,10 +16,8 @@ from intersection import seed
 from intersection.env import single_agent
 from ruamel.yaml import YAML
 
-import dreamerv2 as dv2  # isort: skip
-import dreamerv2.api as api  # isort:skip
-import dreamerv2.agent as agent  # isort:skip
-import dreamerv2.common as common  # isort:skip
+import dreamerv2.agent as dv2_agent
+import dreamerv2.common as common
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Silence the TF logs
 logging.getLogger().setLevel("ERROR")
@@ -41,7 +39,8 @@ def main(args):
     config_env["headless"] = not args.head
 
     # Load dreamerv2 config
-    config_dv2 = dv2.api.defaults
+    configs = yaml.load((pathlib.Path(__file__).absolute().parent / 'dreamerv2' / 'configs.yaml').read_text())
+    config_dv2 = common.Config(configs.pop('defaults'))
 
     # Setup tensorflow
     tf.config.run_functions_eagerly(not config_dv2.jit)
@@ -75,7 +74,7 @@ def main(args):
         {
             "log_every": 1e4,
             "eval_every": 1e5,
-            "prefill": 10000,
+            "prefill": 100,
             "replay.minlen": 10,
             "replay.maxlen": 10,
             "dataset.length": 10,
@@ -107,13 +106,13 @@ def main(args):
 
 
 def wrap_env(env, config):
-    env = dv2.common.GymWrapper(env)
-    env = dv2.common.ResizeImage(env)
+    env = common.GymWrapper(env)
+    env = common.ResizeImage(env)
     if hasattr(env.act_space["action"], "n"):
-        env = dv2.common.OneHotAction(env)
+        env = common.OneHotAction(env)
     else:
-        env = dv2.common.NormalizeAction(env)
-    env = dv2.common.TimeLimit(env, config.time_limit)
+        env = common.NormalizeAction(env)
+    env = common.TimeLimit(env, config.time_limit)
     return env
 
 
@@ -124,8 +123,8 @@ def run(config, gen_env, mode):
     print(config, "\n")
     print("Logdir", logdir)
 
-    train_replay = dv2.common.Replay(logdir / "train_episodes", **config.replay)
-    eval_replay = dv2.common.Replay(
+    train_replay = common.Replay(logdir / "train_episodes", **config.replay)
+    eval_replay = common.Replay(
         logdir / "eval_episodes",
         **dict(
             capacity=config.replay.capacity // 10,
@@ -133,19 +132,19 @@ def run(config, gen_env, mode):
             maxlen=config.dataset.length,
         ),
     )
-    step = dv2.common.Counter(train_replay.stats["total_steps"])
+    step = common.Counter(train_replay.stats["total_steps"])
     outputs = [
-        dv2.common.TerminalOutput(),
-        dv2.common.TensorBoardOutput(logdir),
+        common.TerminalOutput(),
+        common.TensorBoardOutput(logdir),
     ]
-    logger = dv2.common.Logger(step, outputs, multiplier=config.action_repeat)
+    logger = common.Logger(step, outputs, multiplier=config.action_repeat)
     metrics = collections.defaultdict(list)
 
-    should_train = dv2.common.Every(config.train_every)
-    should_log = dv2.common.Every(config.log_every)
-    should_video_train = dv2.common.Every(config.eval_every)
-    should_video_eval = dv2.common.Every(config.eval_every)
-    should_expl = dv2.common.Until(config.expl_until)
+    should_train = common.Every(config.train_every)
+    should_log = common.Every(config.log_every)
+    should_video_train = common.Every(config.eval_every)
+    should_video_eval = common.Every(config.eval_every)
+    should_expl = common.Until(config.expl_until)
 
     def per_episode(ep, mode):
         length = len(ep["reward"]) - 1
@@ -172,7 +171,7 @@ def run(config, gen_env, mode):
     train_envs = []
     if mode == "train":
         train_envs = [wrap_env(next(gen_env)(env_name="train"), config)]
-        train_driver = dv2.common.Driver(train_envs)
+        train_driver = common.Driver(train_envs)
         train_driver.on_episode(lambda ep: per_episode(ep, mode="train"))
         train_driver.on_step(lambda tran, worker: step.increment())
         train_driver.on_step(train_replay.add_step)
@@ -180,14 +179,14 @@ def run(config, gen_env, mode):
     eval_envs = [wrap_env(next(gen_env)(env_name="eval"), config)]
     act_space = eval_envs[0].act_space
     obs_space = eval_envs[0].obs_space
-    eval_driver = dv2.common.Driver(eval_envs)
+    eval_driver = common.Driver(eval_envs)
     eval_driver.on_episode(lambda ep: per_episode(ep, mode="eval"))
     eval_driver.on_episode(eval_replay.add_episode)
 
     prefill = max(0, config.prefill - train_replay.stats["total_steps"])
     if prefill and mode == "train":
         print(f"Prefill dataset ({prefill} steps).")
-        random_agent = dv2.common.RandomAgent(act_space)
+        random_agent = common.RandomAgent(act_space)
         train_driver(random_agent, steps=prefill, episodes=1)
         eval_driver(random_agent, episodes=1)
         train_driver.reset()
@@ -197,8 +196,8 @@ def run(config, gen_env, mode):
     train_dataset = iter(train_replay.dataset(**config.dataset))
     report_dataset = iter(train_replay.dataset(**config.dataset))
     eval_dataset = iter(eval_replay.dataset(**config.dataset))
-    agnt = dv2.agent.Agent(config, obs_space, act_space, step)
-    train_agent = dv2.common.CarryOverState(agnt.train)
+    agnt = dv2_agent.Agent(config, obs_space, act_space, step)
+    train_agent = common.CarryOverState(agnt.train)
     train_agent(next(train_dataset))
     if (logdir / "variables.pkl").exists():
         agnt.load(logdir / "variables.pkl")

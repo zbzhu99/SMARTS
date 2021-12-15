@@ -19,7 +19,8 @@ setup(
     install_requires=[
         "setuptools>=41.0.0,!=50.0",
         "smarts[camera-obs] @ git+https://git@github.com/huawei-noah/SMARTS@example-ultra",
-        "dreamerv2==2.1.1",
+        # "dreamerv2==2.1.1",
+        "ruamel.yaml",
         "tensorflow==2.4.0",
         "tensorflow-probability==0.12.2",
     ],
