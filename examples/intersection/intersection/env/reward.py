@@ -25,18 +25,22 @@ class Reward(gym.Wrapper):
         # Penalty for driving off road
         if obs.events.off_road:
             reward -= 20
+            print("----- Off road")
             return np.float32(reward)
 
         # Penalty for colliding
         if len(obs.events.collisions) > 0:
             reward -= 20
+            print("----- Collided")
             return np.float32(reward)
 
         if obs.events.off_route:
             reward -= 20
+            print("----- Off route")
             return np.float32(reward)
 
         if obs.events.wrong_way:
+            print("----- Wrong Way")
             reward -= 0.5
 
         # Distance based reward
