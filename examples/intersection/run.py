@@ -107,7 +107,8 @@ def main(args):
 
 def wrap_env(env, config):
     env = common.GymWrapper(env)
-    env = common.ResizeImage(env)
+    env = common.ResizeImage(env=env,size=(256,256))
+    # env = common.ResizeImage(env=env)
     if hasattr(env.act_space["action"], "n"):
         env = common.OneHotAction(env)
     else:
@@ -120,8 +121,8 @@ def run(config, gen_env, mode):
     logdir = pathlib.Path(config.logdir).expanduser()
     logdir.mkdir(parents=True, exist_ok=True)
     config.save(logdir / "config.yaml")
-    print(config, "\n")
-    print("Logdir", logdir)
+    # print(config, "\n")
+    # print("Logdir", logdir)
 
     train_replay = common.Replay(logdir / "train_episodes", **config.replay)
     eval_replay = common.Replay(
