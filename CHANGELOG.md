@@ -37,6 +37,7 @@ Copy and pasting the git commit messages is __NOT__ enough.
     - Removed the `AgentBehavior` class and the `agent_behavior` parameter to `AgentInterface`.
     - Moved the definition of `Waypoint` from `smarts.core.mission_planner` to `smarts.core.road_map`.
     - Moved the definition of `Mission` and `Goal` classes from `smarts.core.scenario` to `smarts.core.plan`.
+    - Added `MapSpec` to the SStudio DSL types and introduced a simple builder pattern for creating `RoadMap` objects.
 - Changed the type hint for `EgoVehicleObservation`: it returns a numpy array (and always has).
 - Raised a warning message for building scenarios without `map.net.xml` file. See PR #1161.
 ### Fixed
@@ -55,6 +56,7 @@ Copy and pasting the git commit messages is __NOT__ enough.
 - The `timestep_sec` property of SMARTS is being deprecated in favor of `fixed_timesep_sec`
   for clarity since we are adding the ability to have variable time steps.
 ### Removed
+- Remove `ray_multi_instance` example when running `make sanity-test`
 
 ## [0.4.18] - 2021-07-22
 ### Added 
