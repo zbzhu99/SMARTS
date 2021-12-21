@@ -209,11 +209,13 @@ class Client:
                     ws.close()
                     break
 
+                print("sending data from inside on_open -------------------")
                 optionally_serialize_and_write(state, ws)
 
         def run_socket(endpoint, wait_between_retries):
             nonlocal connection_established
             tries = 1
+            print(endpoint, "endpoint inside run_socker -----------------")
             while True:
                 # TODO: use a real network socket instead (probably UDP)
                 ws = websocket.WebSocketApp(
@@ -245,6 +247,7 @@ class Client:
 
     def send(self, state: types.State):
         if not self._headless and self._process.is_alive():
+            print("Received state in send()")
             self._state_queue.put(state)
         if self._logging_process:
             self._logging_queue.put(state)
