@@ -400,6 +400,7 @@ class MainHandler(tornado.web.RequestHandler):
 
 
 def make_app(scenario_dirs: Sequence, max_capacity_mb: float):
+    print(scenario_dirs, "------------------------------------------------------------")
     with pkg_resources.path(web_dist, ".") as dist_path:
         return tornado.web.Application(
             [
