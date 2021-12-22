@@ -433,7 +433,7 @@ def on_shutdown():
 
 def run(scenario_dirs, max_capacity_mb=500, port=8081):
     app = make_app(scenario_dirs, max_capacity_mb)
-    app.listen(port)
+    app.listen(port=port,address="0.0.0.0")
     logging.debug(f"Envision listening on port={port}")
 
     ioloop = tornado.ioloop.IOLoop.current()
