@@ -92,6 +92,8 @@ class Client:
         if endpoint is None:
             endpoint = "ws://localhost:8081"
 
+        endpoint = "ws://127.0.0.1:8087"
+
         self._logging_process = None
         if output_dir:
             output_dir = Path(f"{output_dir}/{int(time.time())}")
@@ -146,6 +148,7 @@ class Client:
         fixed_timestep_sec: float = 0.1,
         wait_between_retries: float = 0.5,
     ):
+        endpoint = "ws://127.0.0.1:8087"
         client = Client(
             endpoint=endpoint,
             wait_between_retries=wait_between_retries,
@@ -215,7 +218,7 @@ class Client:
         def run_socket(endpoint, wait_between_retries):
             nonlocal connection_established
             tries = 1
-            # print(endpoint, "endpoint inside run_socket -----------------")
+            print(endpoint, "endpoint inside run_socket -----------------")
             while True:
                 # TODO: use a real network socket instead (probably UDP)
                 ws = websocket.WebSocketApp(
