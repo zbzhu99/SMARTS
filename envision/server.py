@@ -253,6 +253,7 @@ class BroadcastWebSocket(tornado.websocket.WebSocketHandler):
     """
 
     def initialize(self, max_capacity_mb):
+        print("INSIDE BORADCAST WEBSCOKET--------------")
         self._logger = logging.getLogger(self.__class__.__name__)
         self._max_capacity_mb = max_capacity_mb
 
@@ -277,6 +278,7 @@ class BroadcastWebSocket(tornado.websocket.WebSocketHandler):
 
 class StateWebSocket(tornado.websocket.WebSocketHandler):
     def initialize(self):
+        print("INSIDE STATE WEBS OCKET --------------------")
         self._logger = logging.getLogger(self.__class__.__name__)
 
     def check_origin(self, origin):
@@ -348,6 +350,7 @@ class FileHandler(AllowCORSMixin, tornado.web.RequestHandler):
 
 class MapFileHandler(FileHandler):
     def initialize(self, scenario_dirs: Sequence):
+        print("INSIDE MAPFILE HANDLER ----------------------")
         path_map = {}
         for dir_ in scenario_dirs:
             path_map.update(
@@ -361,6 +364,7 @@ class MapFileHandler(FileHandler):
 
 
 class SimulationListHandler(AllowCORSMixin, tornado.web.RequestHandler):
+    print("INSIDE SIMULATION LIST HANDLER _____________________")
     async def get(self):
         response = json.dumps({"simulations": list(WEB_CLIENT_RUN_LOOPS.keys())})
         self.write(response)
@@ -368,6 +372,7 @@ class SimulationListHandler(AllowCORSMixin, tornado.web.RequestHandler):
 
 class ModelFileHandler(FileHandler):
     def initialize(self):
+        print("Inside model file handler ---------------------")
         # We store the resource filenames as values in `path_map` and route them
         # through `importlib.resources` for resolution.
         super().initialize(
@@ -395,6 +400,7 @@ class ModelFileHandler(FileHandler):
 
 
 class MainHandler(tornado.web.RequestHandler):
+    print("INSIDE MAIN HANDLED_________________________")
     def get(self):
         with pkg_resources.path(web_dist, "index.html") as index_path:
             self.render(str(index_path))
@@ -402,6 +408,7 @@ class MainHandler(tornado.web.RequestHandler):
 
 def make_app(scenario_dirs: Sequence, max_capacity_mb: float):
     with pkg_resources.path(web_dist, ".") as dist_path:
+        print(dist_path, "dist_path---------------")
         return tornado.web.Application(
             [
                 (r"/", MainHandler),
@@ -430,7 +437,6 @@ def on_shutdown():
 
 def run(scenario_dirs, max_capacity_mb=500, port=8081):
     app = make_app(scenario_dirs, max_capacity_mb)
-    # app.listen(port=port, address="0.0.0.0")
     app.listen(port)
     logging.debug(f"Envision listening on port={port}")
 
