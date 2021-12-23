@@ -131,6 +131,7 @@ class HiWayEnv(gym.Env):
 
         self._smarts = SMARTS(
             agent_interfaces=agent_interfaces,
+            traffic_sim=None,
             # traffic_sim=SumoTrafficSimulation(
             #     headless=sumo_headless,
             #     time_resolution=fixed_timestep_sec,
