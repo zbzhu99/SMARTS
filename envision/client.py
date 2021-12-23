@@ -92,8 +92,6 @@ class Client:
         if endpoint is None:
             endpoint = "ws://localhost:8081"
 
-        # endpoint = "ws://127.0.0.1:8087"
-
         self._logging_process = None
         if output_dir:
             output_dir = Path(f"{output_dir}/{int(time.time())}")
@@ -148,7 +146,6 @@ class Client:
         fixed_timestep_sec: float = 0.1,
         wait_between_retries: float = 0.5,
     ):
-        # endpoint = "ws://127.0.0.1:8087"
         client = Client(
             endpoint=endpoint,
             wait_between_retries=wait_between_retries,
@@ -212,13 +209,11 @@ class Client:
                     ws.close()
                     break
 
-                # print("sending data from inside on_open -------------------")
                 optionally_serialize_and_write(state, ws)
 
         def run_socket(endpoint, wait_between_retries):
             nonlocal connection_established
             tries = 1
-            print(endpoint, "endpoint inside run_socket -----------------")
             while True:
                 # TODO: use a real network socket instead (probably UDP)
                 ws = websocket.WebSocketApp(
@@ -250,7 +245,6 @@ class Client:
 
     def send(self, state: types.State):
         if not self._headless and self._process.is_alive():
-            # print("Received state in send()")
             self._state_queue.put(state)
         if self._logging_process:
             self._logging_queue.put(state)
