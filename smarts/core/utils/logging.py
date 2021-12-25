@@ -24,6 +24,7 @@ import sys
 from contextlib import contextmanager
 from io import UnsupportedOperation
 from time import time
+from IPython import get_ipython
 
 
 @contextmanager
@@ -39,7 +40,7 @@ def isnotebook():
     try:
         shell = get_ipython().__class__.__name__
         if shell == "ZMQInteractiveShell" or 'google.colab' in sys.modules:
-            return True  # Jupyter notebook or qtconsole
+            return True  # Jupyter notebook or qtconsole or Google Colab
     except NameError:
         pass
 
