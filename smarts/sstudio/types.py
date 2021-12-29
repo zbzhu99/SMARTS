@@ -25,7 +25,7 @@ import random
 from ctypes import c_int64
 from dataclasses import dataclass, field
 from sys import maxsize
-from typing import Any, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, NewType, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from shapely.geometry import (
@@ -39,6 +39,7 @@ from shapely.ops import split, unary_union
 
 from smarts.core import gen_id
 from smarts.core.coordinates import RefLinePoint
+from smarts.core.default_map_builder import get_road_map
 from smarts.core.road_map import RoadMap
 from smarts.core.utils.id import SocialAgentId
 from smarts.core.utils.math import rotate_around_point
@@ -240,6 +241,33 @@ class BoidAgentActor(SocialAgentActor):
     """The capacity of the boid agent to take over vehicles."""
 
 
+# A MapBuilder should return an object derived from the RoadMap base class
+# and a hash that uniquely identifies it (changes to the hash should signify
+# that the map is different enough that map-related caches should be reloaded).
+#
+# This function should be re-callable (although caching is up to the implementation).
+# The idea here is that anything in SMARTS that needs to use a RoadMap
+# can call this builder to get or create one as necessary.
+MapBuilder = NewType("MapBuilder", Callable[[Any], Tuple[RoadMap, str]])
+
+
+@dataclass(frozen=True)
+class MapSpec:
+    source: str
+    """A path or URL or name uniquely designating the map source."""
+    lanepoint_spacing: Optional[float] = None
+    """If specified, the default distance between pre-generated Lane Points (Waypoints)."""
+    default_lane_width: Optional[float] = None
+    """If specified, the default width (in meters) of lanes on this map."""
+    builder_fn: MapBuilder = get_road_map
+    """If specified, this should return an object derived from the RoadMap base class
+    and a hash that uniquely identifies it (changes to the hash should signify
+    that the map is different enough that map-related caches should be reloaded).
+    The parameter is this MapSpec object itself.
+    If not specified, this currently defaults to a function that creates
+    SUMO road networks (get_road_map()) in smarts.core.default_map_builder."""
+
+
 @dataclass(frozen=True)
 class Route:
     """A route is represented by begin and end road IDs, with an optional list of
@@ -274,6 +302,10 @@ class Route:
     via: Tuple[str, ...] = field(default_factory=tuple)
     """The ids of roads that must be included in the route between `begin` and `end`."""
 
+    map_spec: Optional[MapSpec] = None
+    """All routes are relative to a road map.  If not specified here,
+    the default map_spec for the scenario is used."""
+
     @property
     def id(self) -> str:
         return "route-{}-{}-{}-".format(
@@ -295,12 +327,16 @@ class RandomRoute:
 
     id: str = field(default_factory=lambda: f"random-route-{gen_id()}")
 
+    map_spec: Optional[MapSpec] = None
+    """All routes are relative to a road map.  If not specified here,
+    the default map_spec for the scenario is used."""
+
 
 @dataclass(frozen=True)
 class Flow:
     """A route with an actor type emitted at a given rate."""
 
-    route: Route
+    route: Union[RandomRoute, Route]
     """The route for the actor to attempt to follow."""
     rate: float
     """Vehicles per hour."""
@@ -399,7 +435,7 @@ class TrapEntryTactic(EntryTactic):
 class Mission:
     """The descriptor for an actor's mission."""
 
-    route: Route
+    route: Union[RandomRoute, Route]
     """The route for the actor to attempt to follow."""
 
     via: Tuple[Via, ...] = ()
@@ -622,7 +658,7 @@ class PositionalZone(Zone):
     size: Tuple[float, float]
     """The (length, width) dimensions of the zone."""
 
-    def to_geometry(self, road_map: RoadMap = None) -> Polygon:
+    def to_geometry(self, road_map: Optional[RoadMap] = None) -> Polygon:
         w, h = self.size
         p0 = (self.pos[0] - w / 2, self.pos[1] - h / 2)  # min
         p1 = (self.pos[0] + w / 2, self.pos[1] + h / 2)  # max
@@ -656,17 +692,17 @@ class Bubble:
     # If limit != None it will only allow that specified number of vehicles to be
     # hijacked. N.B. when actor = BoidAgentActor the lesser of the actor capacity
     # and bubble limit will be used.
-    limit: BubbleLimits = None
+    limit: Optional[BubbleLimits] = None
     """The maximum number of actors that could be captured."""
     exclusion_prefixes: Tuple[str, ...] = field(default_factory=tuple)
     """Used to exclude social actors from capture."""
     id: str = field(default_factory=lambda: f"bubble-{gen_id()}")
-    follow_actor_id: str = None
+    follow_actor_id: Optional[str] = None
     """Actor ID of agent we want to pin to. Doing so makes this a "travelling bubble"
     which means it moves to follow the `follow_actor_id`'s vehicle. Offset is from the
     vehicle's center position to the bubble's center position.
     """
-    follow_offset: Tuple[float, float] = None
+    follow_offset: Optional[Tuple[float, float]] = None
     """Maintained offset to place the travelling bubble relative to the follow
     vehicle if it were facing north.
     """
@@ -722,6 +758,7 @@ class _ActorAndMission:
 
 @dataclass(frozen=True)
 class Scenario:
+    map_spec: Optional[MapSpec] = None
     traffic: Optional[Dict[str, Traffic]] = None
     ego_missions: Optional[Sequence[Mission]] = None
     # e.g. { "turning_agents": ([actors], [missions]), ... }

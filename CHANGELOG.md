@@ -10,6 +10,7 @@ Copy and pasting the git commit messages is __NOT__ enough.
 
 ## [Unreleased]
 ### Added
+- Added Minimum FrameRate tests to measure the fps for `smart.step()` method. See Issue #455.
 - Added a ROS wrapper/driver example to wrap SMARTS in a ROS (v1) node.
 - Added the ability to pass an optional `time_delta_since_last_step` to SMARTS' `step()` function
   to support variable timesteps for co-simulation.
@@ -20,6 +21,7 @@ Copy and pasting the git commit messages is __NOT__ enough.
 - Added Base CI and dependencies requirement tests for the "darwin" platform (MacOS).
 - Extended Imitation Learning codebase to allow importing traffic histories from the Waymo motion dataset and replay in a SMARTS simulation. See PR #1060.
 - Added `ros` extension rule to `setup.py`.
+- Added a script to allow users to hijack history vehicles dynamically through a trigger event. See PR #1088.
 - Added a `-y` option to `utils/setup/install_deps.sh` to accept installation by default. See issue #1081.
 - Added `ParallelEnv` class and a corresponding example to simulate multiple SMARTS environments in parallel, with synchronous or asynchronous episodes.
 - Added `smarts.core.utils.import_utils` to help with the dynamic import of modules.
@@ -37,6 +39,7 @@ Copy and pasting the git commit messages is __NOT__ enough.
     - Removed the `AgentBehavior` class and the `agent_behavior` parameter to `AgentInterface`.
     - Moved the definition of `Waypoint` from `smarts.core.mission_planner` to `smarts.core.road_map`.
     - Moved the definition of `Mission` and `Goal` classes from `smarts.core.scenario` to `smarts.core.plan`.
+    - Added `MapSpec` to the SStudio DSL types and introduced a simple builder pattern for creating `RoadMap` objects.
 - Changed the type hint for `EgoVehicleObservation`: it returns a numpy array (and always has).
 - Raised a warning message for building scenarios without `map.net.xml` file. See PR #1161.
 ### Fixed
@@ -55,6 +58,7 @@ Copy and pasting the git commit messages is __NOT__ enough.
 - The `timestep_sec` property of SMARTS is being deprecated in favor of `fixed_timesep_sec`
   for clarity since we are adding the ability to have variable time steps.
 ### Removed
+- Remove `ray_multi_instance` example when running `make sanity-test`
 
 ## [0.4.18] - 2021-07-22
 ### Added 

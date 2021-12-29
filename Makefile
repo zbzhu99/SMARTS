@@ -11,6 +11,7 @@ test: build-all-scenarios
 		--nb-exec-timeout -1 \
 		./envision ./smarts/contrib ./smarts/core ./smarts/env ./smarts/sstudio ./tests ./examples/tests \
 		--ignore=./smarts/core/tests/test_smarts_memory_growth.py \
+		--ignore=./smarts/core/tests/test_env_frame_rate.py \
 		--ignore=./smarts/env/tests/test_benchmark.py \
 		--ignore=./examples/tests/test_learning.py \
 		-k 'not test_long_determinism'
@@ -32,7 +33,6 @@ sanity-test: build-all-scenarios
 		./smarts/core/tests/test_sensors.py::test_waypoints_sensor \
 		./smarts/core/tests/test_smarts.py::test_smarts_doesnt_leak_tasks_after_reset \
 		./examples/tests/test_examples.py::test_examples[multi_agent] \
-		./examples/tests/test_examples.py::test_ray_multi_instance_example \
 		./smarts/env/tests/test_social_agent.py::test_social_agents
 
 .PHONY: test-learning
