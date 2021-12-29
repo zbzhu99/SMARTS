@@ -99,19 +99,19 @@ class RGBImage(gym.ObservationWrapper):
             wrapped_obs.update({agent_id: stacked_images})
 
         # Plot for debugging purposes
-        import matplotlib.pyplot as plt
-        fig=plt.figure(figsize=(5,5))
-        columns = self._num_stack # number of stacked images
-        rgb_gray = 3 # 3 for rgb and 1 for grayscale
-        rows = len(wrapped_obs.keys())
-        for row, (agent_id, state) in enumerate(wrapped_obs.items()):
-            for col in range(0, columns):
-                img = wrapped_obs[agent_id][:,:,col*rgb_gray:col*rgb_gray+rgb_gray]
-                fig.add_subplot(rows, columns, row*columns + col + 1)
-                plt.title(f"agent_id {col}")
-                plt.imshow(img)
-        plt.show()
-        print("------------------------------------")
+        # import matplotlib.pyplot as plt
+        # fig=plt.figure(figsize=(5,5))
+        # columns = self._num_stack # number of stacked images
+        # rgb_gray = 3 # 3 for rgb and 1 for grayscale
+        # rows = len(wrapped_obs.keys())
+        # for row, (agent_id, state) in enumerate(wrapped_obs.items()):
+        #     for col in range(0, columns):
+        #         img = wrapped_obs[agent_id][:,:,col*rgb_gray:col*rgb_gray+rgb_gray]
+        #         fig.add_subplot(rows, columns, row*columns + col + 1)
+        #         plt.title(f"agent_id {col}")
+        #         plt.imshow(img)
+        # plt.show()
+        # print("------------------------------------")
         # plt.pause(3)
         # plt.close()
 
