@@ -23,7 +23,7 @@ import math
 import os
 import warnings
 from collections import defaultdict
-from typing import List, Sequence
+from typing import Iterable, List, Optional
 
 import numpy as np
 
@@ -37,6 +37,7 @@ with warnings.catch_warnings():
 
 from smarts import VERSION
 from smarts.core.chassis import AckermannChassis, BoxChassis
+from smarts.core.plan import Plan
 
 from . import models
 from .agent_interface import AgentInterface
@@ -59,7 +60,7 @@ from .utils.id import Id
 from .utils.math import rounder_for_dt
 from .utils.pybullet import bullet_client as bc
 from .utils.visdom_client import VisdomClient
-from .vehicle import VehicleState
+from .vehicle import Vehicle, VehicleState
 from .vehicle_index import VehicleIndex
 
 logging.basicConfig(
@@ -80,8 +81,8 @@ class SMARTS:
         self,
         agent_interfaces,
         traffic_sim,  # SumoTrafficSimulation
-        envision: EnvisionClient = None,
-        visdom: VisdomClient = None,
+        envision: Optional[EnvisionClient] = None,
+        visdom: Optional[VisdomClient] = None,
         fixed_timestep_sec: float = 0.1,
         reset_agents_only: bool = False,
         zoo_addrs=None,
@@ -90,10 +91,10 @@ class SMARTS:
         self._log = logging.getLogger(self.__class__.__name__)
         self._sim_id = Id.new("smarts")
         self._is_setup = False
-        self._scenario: Scenario = None
+        self._scenario: Optional[Scenario] = None
         self._renderer = None
-        self._envision: EnvisionClient = envision
-        self._visdom: VisdomClient = visdom
+        self._envision: Optional[EnvisionClient] = envision
+        self._visdom: Optional[VisdomClient] = visdom
         self._traffic_sim = traffic_sim
         self._external_provider = None
 
@@ -147,12 +148,12 @@ class SMARTS:
         self._vehicle_states = []
 
         self._bubble_manager = None
-        self._trap_manager: TrapManager = None
+        self._trap_manager: Optional[TrapManager] = None
 
         self._ground_bullet_id = None
         self._map_bb = None
 
-    def step(self, agent_actions, time_delta_since_last_step: float = None):
+    def step(self, agent_actions, time_delta_since_last_step: Optional[float] = None):
         """Note the time_delta_since_last_step param is in (nominal) seconds."""
         if not self._is_setup:
             raise SMARTSNotSetupError("Must call reset() or setup() before stepping.")
@@ -182,7 +183,7 @@ class SMARTS:
                     f"Attempted to perform actions on non-existing agent, {agent_id} "
                 )
 
-    def _step(self, agent_actions, time_delta_since_last_step: float = None):
+    def _step(self, agent_actions, time_delta_since_last_step: Optional[float] = None):
         """Steps through the simulation while applying the given agent actions.
         Returns the observations, rewards, and done signals.
         """
@@ -319,6 +320,7 @@ class SMARTS:
                 ids = self._vehicle_index.vehicle_ids_by_actor_id(agent_id)
                 vehicle_ids_to_teardown.extend(ids)
             self._teardown_vehicles(set(vehicle_ids_to_teardown))
+            assert self._trap_manager
             self._trap_manager.init_traps(scenario.road_map, scenario.missions)
             self._agent_manager.init_ego_agents(self)
             if self._renderer:
@@ -391,6 +393,79 @@ class SMARTS:
             self._log.warning(
                 f"Unable to add entry trap for new agent '{agent_id}' with mission."
             )
+
+    def add_agent_and_switch_control(
+        self,
+        vehicle_id: str,
+        agent_id: str,
+        agent_interface: AgentInterface,
+        mission: Mission,
+    ):
+        self.agent_manager.add_ego_agent(agent_id, agent_interface, for_trap=False)
+        vehicle = self.switch_control_to_agent(
+            vehicle_id, agent_id, mission, recreate=False, is_hijacked=True
+        )
+        self.create_vehicle_in_providers(vehicle, agent_id)
+
+    def switch_control_to_agent(
+        self,
+        vehicle_id: str,
+        agent_id: str,
+        mission: Mission,
+        recreate: bool,
+        is_hijacked: bool,
+    ) -> Vehicle:
+        # Check if this is a history vehicle
+        history_veh_id = self._traffic_history_provider.get_history_id(vehicle_id)
+        canonical_veh_id = history_veh_id if history_veh_id else vehicle_id
+
+        assert not self.vehicle_index.vehicle_is_hijacked(
+            canonical_veh_id
+        ), f"Vehicle has already been hijacked: {canonical_veh_id}"
+        assert (
+            not canonical_veh_id in self.vehicle_index.agent_vehicle_ids()
+        ), f"Can't hijack vehicle that is already controlled by an agent: {canonical_veh_id}"
+
+        # Remove vehicle from traffic history provider
+        if history_veh_id:
+            self._traffic_history_provider.set_replaced_ids([vehicle_id])
+
+        # Switch control to agent
+        plan = Plan(self.road_map, mission)
+        interface = self.agent_manager.agent_interface_for_agent_id(agent_id)
+        self.vehicle_index.start_agent_observation(
+            self, canonical_veh_id, agent_id, interface, plan
+        )
+        vehicle = self.vehicle_index.switch_control_to_agent(
+            self,
+            canonical_veh_id,
+            agent_id,
+            boid=False,
+            recreate=recreate,
+            hijacking=is_hijacked,
+            agent_interface=interface,
+        )
+
+        return vehicle
+
+    def create_vehicle_in_providers(
+        self,
+        vehicle: Vehicle,
+        agent_id: str,
+    ):
+        interface = self.agent_manager.agent_interface_for_agent_id(agent_id)
+        for provider in self.providers:
+            if interface.action_space in provider.action_spaces:
+                provider.create_vehicle(
+                    VehicleState(
+                        vehicle_id=vehicle.id,
+                        vehicle_config_type="passenger",
+                        pose=vehicle.pose,
+                        dimensions=vehicle.chassis.dimensions,
+                        speed=vehicle.speed,
+                        source="HIJACK",
+                    )
+                )
 
     def _setup_bullet_client(self, client: bc.BulletClient):
         client.resetSimulation()
@@ -577,7 +652,7 @@ class SMARTS:
     def version(self) -> str:
         return VERSION
 
-    def teardown_agents_without_vehicles(self, agent_ids: Sequence):
+    def teardown_agents_without_vehicles(self, agent_ids: Iterable[str]):
         """
         Teardown agents in the given list that have no vehicles registered as
         controlled-by or shadowed-by
@@ -742,7 +817,7 @@ class SMARTS:
         for provider in self.providers:
             provider.reset()
 
-    def _step_providers(self, actions) -> List[VehicleState]:
+    def _step_providers(self, actions) -> ProviderState:
         accumulated_provider_state = ProviderState()
 
         def agent_controls_vehicles(agent_id):
@@ -999,7 +1074,7 @@ class SMARTS:
             )
             self._setup_pybullet_ground_plane(self._bullet_client)
 
-    def _try_emit_envision_state(self, provider_state, obs, scores):
+    def _try_emit_envision_state(self, provider_state: ProviderState, obs, scores):
         if not self._envision:
             return
 
