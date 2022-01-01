@@ -74,10 +74,12 @@ def main(args):
         {
             "log_every": 1e4,
             "eval_every": 1e5,
-            "prefill": 100,
-            "replay.minlen": 10,
-            "replay.maxlen": 10,
-            "dataset.length": 10,
+            "prefill": 1e5,
+            "replay.minlen": 20,
+            "replay.maxlen": 20,
+            "dataset.length": 20,
+            "encoder.cnn_kernels": [4, 4, 4, 4, 4, 4],
+            "decoder.cnn_kernels": [5, 5, 5, 5, 6, 6], 
         }
     )
     if config_env["mode"] == "train":
