@@ -125,7 +125,7 @@ def run(config, gen_env, mode):
         logdir / "eval_episodes",
         **dict(
             capacity=config.replay.capacity // 10,
-            minlen=config.dataset.length,
+            minlen=1,
             maxlen=config.dataset.length,
         ),
     )
