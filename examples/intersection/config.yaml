@@ -1,11 +1,21 @@
 smarts:
   seed: 42
   visdom: False
-  rgb_meters: 64 # Height and width (meters) of RGB image in SMARTS observation
-  rgb_pixels: 64 # Height and width (pixels) of RGB image in SMARTS observation  
+  rgb_meters: 96 # Height and width (meters) of RGB image in SMARTS observation
+  rgb_pixels: 256 # Height and width (pixels) of RGB image in SMARTS observation  
   max_episode_steps: 600 # 600 seconds. Maximum steps per episode.
   action_space_type: "Continuous"
   agent_ids: 
-    - Pig1
+    - Mouse
   scenarios: 
     - 2lane
+
+dreamerv2:
+  image: {height: 256, width: 256}
+  log_every: 1e4
+  eval_every: 1e5
+  prefill: 1e5
+  replay: {minlen: 20, maxlen: 20}
+  dataset: {length: 20}
+  encoder: {cnn_kernels: [4, 4, 4, 4, 4, 4]}
+  decoder: {cnn_kernels: [5, 5, 5, 5, 6, 6]}

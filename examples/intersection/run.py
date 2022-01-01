@@ -30,18 +30,23 @@ seed(42)
 
 
 def main(args):
-    # Load SMARTS env config
-    name = "smarts"
-    config_env = yaml.load(
+    # Load config file
+    config_file = yaml.load(
         (pathlib.Path(__file__).absolute().parent / "config.yaml").read_text()
     )
-    config_env = config_env[name]
+
+    # Load SMARTS env config
+    config_env = config_file["smarts"]
     config_env["mode"] = args.mode
     config_env["logdir"] = args.logdir
     config_env["headless"] = not args.head
+    config_env["scenarios_dir"] = (
+        pathlib.Path(__file__).absolute().parents[0] / "scenarios"
+    )
 
     # Load dreamerv2 config
     config_dv2 = dv2.api.defaults
+    config_dv2 = config_dv2.update(config_file["dreamerv2"])
 
     # Setup tensorflow
     tf.config.run_functions_eagerly(not config_dv2.jit)
@@ -64,23 +69,7 @@ def main(args):
             ResourceWarning,
         )
 
-    # Create SMARTS env
-    config_env["scenarios_dir"] = (
-        pathlib.Path(__file__).absolute().parents[0] / "scenarios"
-    )
-    gen_env = single_agent.gen_env(config_env, config_env["seed"])
-
     # Train or evaluate
-    config_dv2 = config_dv2.update(
-        {
-            "log_every": 1e4,
-            "eval_every": 1e5,
-            "prefill": 10000,
-            "replay.minlen": 10,
-            "replay.maxlen": 10,
-            "dataset.length": 10,
-        }
-    )
     if config_env["mode"] == "train":
         # Setup logdir
         time = datetime.now().strftime("%Y_%m_%d_%H_%M")
@@ -102,13 +91,16 @@ def main(args):
             f'Expected \'train\' or \'evaluate\', but got {config_env["mode"]}.'
         )
 
-    # Train or evaluate dreamerv2 with env
+    # Create SMARTS env
+    gen_env = single_agent.gen_env(config_env, config_env["seed"])
+
+    # Run training or evaluation
     run(config_dv2, gen_env, config_env["mode"])
 
 
 def wrap_env(env, config):
     env = dv2.common.GymWrapper(env)
-    env = dv2.common.ResizeImage(env)
+    env = common.ResizeImage(env=env, size=(config.image.height, config.image.width))
     if hasattr(env.act_space["action"], "n"):
         env = dv2.common.OneHotAction(env)
     else:
@@ -129,7 +121,7 @@ def run(config, gen_env, mode):
         logdir / "eval_episodes",
         **dict(
             capacity=config.replay.capacity // 10,
-            minlen=1,
+            minlen=config.dataset.length,
             maxlen=config.dataset.length,
         ),
     )
