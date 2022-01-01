@@ -1,8 +1,8 @@
 smarts:
   seed: 42
   visdom: False
-  rgb_meters: 96 # Height and width (meters) of RGB image in SMARTS observation.
-  rgb_pixels: 256 # Height and width (pixels) of RGB image in SMARTS observation.  
+  rgb_meters: 64 # Height and width (meters) of RGB image in SMARTS observation.
+  rgb_pixels: 128 # Height and width (pixels) of RGB image in SMARTS observation.  
   max_episode_steps: 600 # 600 seconds. Maximum steps per episode.
   action_space_type: "Continuous"
   agent_ids: 
@@ -11,11 +11,18 @@ smarts:
     - 2lane
 
 dreamerv2:
-  render_size: [256, 256] # Size of image input to Variational Auto Encoder.
+  render_size: [128, 128] # Size of image input to Variational Auto Encoder.
   log_every: 1e4
   eval_every: 1e5
-  prefill: 1e5
+  prefill: 1e4
   replay: {minlen: 20, maxlen: 20}
   dataset: {length: 20}
-  encoder: {cnn_kernels: [4, 4, 4, 4, 4, 4]}
-  decoder: {cnn_kernels: [5, 5, 5, 5, 6, 6]}
+  # For 256x256 input to VAE
+  # encoder: {cnn_kernels: [4, 4, 4, 4, 4, 4]}
+  # decoder: {cnn_kernels: [5, 5, 5, 5, 6, 6]}
+  # For 128x128 input to VAE
+  encoder: {cnn_kernels: [4, 4, 4, 4, 4]}
+  decoder: {cnn_kernels: [5, 5, 5, 6, 6]}  
+  # For 64x64 input to VAE
+  # encoder: {cnn_kernels: [4, 4, 4, 4]}
+  # decoder: {cnn_kernels: [5, 5, 6, 6]}  
