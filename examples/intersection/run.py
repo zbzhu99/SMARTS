@@ -1,9 +1,12 @@
 # This reinforcement learning example uses code from DreamerV2 (https://github.com/danijar/dreamerv2) .
 
+import os
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Silence the TF logs
+
 import argparse
 import collections
 import logging
-import os
 import pathlib
 import re
 import warnings
@@ -16,12 +19,13 @@ from intersection import seed
 from intersection.env import single_agent
 from ruamel.yaml import YAML
 
+warnings.simplefilter("ignore", category=DeprecationWarning)
+warnings.simplefilter("ignore", category=PendingDeprecationWarning)
 import dreamerv2 as dv2  # isort: skip
 import dreamerv2.api as api  # isort:skip
 import dreamerv2.agent as agent  # isort:skip
 import dreamerv2.common as common  # isort:skip
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Silence the TF logs
 logging.getLogger().setLevel("ERROR")
 warnings.filterwarnings("ignore", ".*box bound precision lowered.*")
 rich.traceback.install()
@@ -100,7 +104,7 @@ def main(args):
 
 def wrap_env(env, config):
     env = dv2.common.GymWrapper(env)
-    env = common.ResizeImage(env=env, size=(config.image.height, config.image.width))
+    env = common.ResizeImage(env=env, size=config.render_size)
     if hasattr(env.act_space["action"], "n"):
         env = dv2.common.OneHotAction(env)
     else:

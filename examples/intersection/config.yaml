@@ -1,8 +1,8 @@
 smarts:
   seed: 42
-  visdom: True
-  rgb_meters: 96 # Height and width (meters) of RGB image in SMARTS observation
-  rgb_pixels: 256 # Height and width (pixels) of RGB image in SMARTS observation  
+  visdom: False
+  rgb_meters: 96 # Height and width (meters) of RGB image in SMARTS observation.
+  rgb_pixels: 256 # Height and width (pixels) of RGB image in SMARTS observation.  
   max_episode_steps: 600 # 600 seconds. Maximum steps per episode.
   action_space_type: "Continuous"
   agent_ids: 
@@ -11,7 +11,7 @@ smarts:
     - 2lane
 
 dreamerv2:
-  image: {height: 256, width: 256}
+  render_size: [256, 256] # Size of image input to Variational Auto Encoder.
   log_every: 1e4
   eval_every: 1e5
   prefill: 1e5

@@ -40,8 +40,7 @@ class Reward(gym.Wrapper):
             return np.float32(reward)
 
         if obs.events.wrong_way:
-            print("----- Wrong Way")
-            reward -= 0.1
+            reward -= 0.2
 
         # Distance based reward
         reward += env_reward
