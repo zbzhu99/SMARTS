@@ -35,7 +35,7 @@ def make_env(config: Dict, seed: int, env_name: str = None):
             collision=True,
             off_road=True,
             off_route=True,
-            on_shoulder=True,
+            on_shoulder=False,
             wrong_way=False,
             not_moving=False,
         ),

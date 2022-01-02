@@ -41,7 +41,6 @@ class Reward(gym.Wrapper):
 
         if obs.events.on_shoulder:
             reward -= 100
-            print("----- On shoulder")
             return np.float32(reward)
 
         if obs.events.wrong_way:
