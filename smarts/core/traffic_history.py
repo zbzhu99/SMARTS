@@ -27,7 +27,7 @@ import random
 import sqlite3
 from contextlib import closing, nullcontext
 from functools import lru_cache
-from typing import Dict, Generator, NamedTuple, Set, Tuple, Type, TypeVar
+from typing import Dict, Generator, NamedTuple, Optional, Set, Tuple, Type, TypeVar
 
 from cached_property import cached_property
 
@@ -57,7 +57,9 @@ class TrafficHistory:
             self._db_cnxn.close()
             self._db_cnxn = None
 
-    def _query_val(self, result_type: Type[T], query: str, params: Tuple = ()) -> T:
+    def _query_val(
+        self, result_type: Type[T], query: str, params: Tuple = ()
+    ) -> Optional[T]:
         with nullcontext(self._db_cnxn) if self._db_cnxn else closing(
             sqlite3.connect(self._db)
         ) as dbcnxn:
@@ -94,6 +96,10 @@ class TrafficHistory:
     def target_speed(self) -> float:
         query = "SELECT value FROM Spec where key='speed_limit_mps'"
         return self._query_val(float, query)
+
+    def all_vehicle_ids(self) -> Generator[int, None, None]:
+        query = "SELECT id FROM Vehicle"
+        return (row[0] for row in self._query_list(query))
 
     @cached_property
     def ego_vehicle_id(self) -> int:
@@ -156,7 +162,7 @@ class TrafficHistory:
 
     def vehicle_pose_at_time(
         self, vehicle_id: str, sim_time: float
-    ) -> Tuple[float, float, float]:
+    ) -> Tuple[float, float, float, float]:
         query = """SELECT position_x, position_y, heading_rad, speed
                    FROM Trajectory
                    WHERE vehicle_id = ? and sim_time = ?"""
@@ -192,6 +198,21 @@ class TrafficHistory:
                    ORDER BY T.sim_time DESC"""
         rows = self._query_list(query, (start_time, end_time))
         return (TrafficHistory.VehicleRow(*row) for row in rows)
+
+    class TrajectoryRow(NamedTuple):
+        position_x: float
+        position_y: float
+        heading_rad: float
+        speed: float
+
+    def vehicle_trajectory(
+        self, vehicle_id: str
+    ) -> Generator[TrafficHistory.TrajectoryRow, None, None]:
+        query = """SELECT T.position_x, T.position_y, T.heading_rad, T.speed
+                   FROM Trajectory AS T
+                   WHERE T.vehicle_id = ?"""
+        rows = self._query_list(query, (vehicle_id,))
+        return (TrafficHistory.TrajectoryRow(*row) for row in rows)
 
     def random_overlapping_sample(
         self, vehicle_start_times: Dict[str, float], k: int

@@ -65,8 +65,18 @@ def _build_single_scenario(clean, allow_offset_map, scenario):
 
     scenario_root = Path(scenario)
     map_net = str(scenario_root / "map.net.xml")
+    if not os.path.isfile(map_net):
+        click.echo(
+            "FILENOTFOUND: no reference to map.net.xml was found in {}.  "
+            "Please make sure the path passed is a valid SUMO scenario with SUMO network file (map.net.xml) required "
+            "for scenario building.".format(str(scenario_root))
+        )
+        return
     if not allow_offset_map or scenario.traffic_histories:
-        SumoRoadNetwork.from_file(map_net, shift_to_origin=True)
+        from smarts.sstudio.types import MapSpec
+
+        map_spec = MapSpec(map_net)
+        SumoRoadNetwork.from_spec(map_spec, shift_to_origin=True)
     elif os.path.isfile(SumoRoadNetwork.shifted_net_file_path(map_net)):
         click.echo(
             "WARNING: {} already exists.  Remove it if you want to use unshifted/offset map.net.xml instead.".format(
@@ -141,7 +151,9 @@ def build_all_scenarios(clean, allow_offset_maps, scenarios):
     builder_threads = {}
     for scenarios_path in scenarios:
         path = Path(scenarios_path)
-        for p in path.rglob("*.net.xml"):
+        # We search along directories having reference to file map.net.xml and not .net.xml to prevent calling build
+        # command on files having the offset-map network file but not the original file
+        for p in path.rglob("*map.net.xml"):
             scenario = f"{scenarios_path}/{p.parent.relative_to(scenarios_path)}"
             if scenario == f"{scenarios_path}/waymo":
                 continue
@@ -177,6 +189,7 @@ def _clean(scenario):
         "traffic/*",
         "history_mission.pkl",
         "*.shf",
+        "*-AUTOGEN.net.xml",
     ]
     p = Path(scenario)
     for file_name in to_be_removed:
