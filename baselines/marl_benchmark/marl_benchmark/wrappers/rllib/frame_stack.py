@@ -76,7 +76,7 @@ class TupleStackingPreprocessor(Preprocessor):
 
 
 class FrameStack(Wrapper):
-    """ By default, this wrapper will stack 3 consecutive frames as an agent observation"""
+    """By default, this wrapper will stack 3 consecutive frames as an agent observation"""
 
     def __init__(self, config):
         super(FrameStack, self).__init__(config)
@@ -248,7 +248,9 @@ class FrameStack(Wrapper):
                 old_goal_position = old_goal.position
             else:
                 old_goal_position = old_ego_2d_position
-            old_goal_dist = distance.euclidean(old_ego_2d_position, old_goal_position[:2])
+            old_goal_dist = distance.euclidean(
+                old_ego_2d_position, old_goal_position[:2]
+            )
             penalty += 0.1 * (old_goal_dist - goal_dist)  # 0.05
 
             # ======== Penalty: distance to the center
