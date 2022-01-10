@@ -47,6 +47,7 @@ def main(args):
     config_env["scenarios_dir"] = (
         pathlib.Path(__file__).absolute().parents[0] / "scenarios"
     )
+    _build_scenario()
 
     # Load dreamerv2 config
     config_dv2 = dv2.api.defaults
@@ -102,7 +103,13 @@ def main(args):
     run(config_dv2, gen_env, config_env["mode"])
 
 
-def wrap_env(env, config):
+def _build_scenario():
+    scenario = str(pathlib.Path(__file__).absolute().parent / "scenarios")
+    build_scenario = f"scl scenario build-all --clean {scenario}"
+    os.system(build_scenario)
+
+
+def _wrap_env(env, config):
     env = dv2.common.GymWrapper(env)
     env = common.ResizeImage(env=env, size=config.render_size)
     if hasattr(env.act_space["action"], "n"):
@@ -167,13 +174,13 @@ def run(config, gen_env, mode):
     print("Create envs.")
     train_envs = []
     if mode == "train":
-        train_envs = [wrap_env(next(gen_env)(env_name="train"), config)]
+        train_envs = [_wrap_env(next(gen_env)(env_name="train"), config)]
         train_driver = dv2.common.Driver(train_envs)
         train_driver.on_episode(lambda ep: per_episode(ep, mode="train"))
         train_driver.on_step(lambda tran, worker: step.increment())
         train_driver.on_step(train_replay.add_step)
         train_driver.on_reset(train_replay.add_step)
-    eval_envs = [wrap_env(next(gen_env)(env_name="eval"), config)]
+    eval_envs = [_wrap_env(next(gen_env)(env_name="eval"), config)]
     act_space = eval_envs[0].act_space
     obs_space = eval_envs[0].obs_space
     eval_driver = dv2.common.Driver(eval_envs)
