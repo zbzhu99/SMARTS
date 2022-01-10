@@ -238,7 +238,7 @@ class FrameStack(Wrapper):
                 goal_position = goal.position
             else:
                 goal_position = ego_2d_position
-            goal_dist = distance.euclidean(ego_2d_position, goal_position)
+            goal_dist = distance.euclidean(ego_2d_position, goal_position[:2])
             penalty += -0.01 * goal_dist
 
             old_obs = env_obs_seq[-2]
@@ -248,7 +248,7 @@ class FrameStack(Wrapper):
                 old_goal_position = old_goal.position
             else:
                 old_goal_position = old_ego_2d_position
-            old_goal_dist = distance.euclidean(old_ego_2d_position, old_goal_position)
+            old_goal_dist = distance.euclidean(old_ego_2d_position, old_goal_position[:2])
             penalty += 0.1 * (old_goal_dist - goal_dist)  # 0.05
 
             # ======== Penalty: distance to the center
