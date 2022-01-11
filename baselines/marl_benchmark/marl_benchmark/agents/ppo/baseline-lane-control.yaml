@@ -41,7 +41,7 @@ policy:
 run:
   checkpoint_freq: 2
   checkpoint_at_end: True
-  max_failures: 1000
+  max_failures: 1
   resume: False
   export_formats: [model, checkpoint]
   stop:
