@@ -26,7 +26,7 @@ agent:
 
 # for agent interface
 interface:
-  max_episode_steps: 1000
+  max_episode_steps: 25 # Earlier: 1000
   neighborhood_vehicles:
     radius: 50
   waypoints:
@@ -45,7 +45,7 @@ run:
   resume: False
   export_formats: [model, checkpoint]
   stop:
-    time_total_s: 14400
+    time_total_s: 400 # Earlier 14400
   config:
     log_level: WARN
     num_workers: 1
