@@ -10,9 +10,11 @@ Copy and pasting the git commit messages is __NOT__ enough.
 
 ## [Unreleased]
 ### Added
+- Added `get_vehicle_start_time()` method for scenarios with traffic history data.  See Issue #1210.
 ### Changed
 ### Deprecated
 ### Fixed
+- Fixed a secondary exception that the `SumoTrafficSimulation` will throw when attempting to close a TraCI connection that is closed by an error. 
 ### Removed
 ### Security
 
