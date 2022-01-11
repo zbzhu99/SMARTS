@@ -26,8 +26,8 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
-from marl_benchmark.metrics import MetricHandler
-from marl_benchmark.utils.episode_log import BasicEpisodeLog
+from baselines.marl_benchmark.marl_benchmark.metrics import MetricHandler
+from baselines.marl_benchmark.marl_benchmark.utils.episode_log import BasicEpisodeLog
 
 
 @dataclass
