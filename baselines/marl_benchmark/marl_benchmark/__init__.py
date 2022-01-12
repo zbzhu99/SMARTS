@@ -60,19 +60,19 @@ def gen_config(**kwargs):
             }
         )
         tune_config.update({"model": config["policy"][-1]})
-
-    policies = {}
-    for k in agents:
-        policies[k] = config["policy"][:-1] + (
-            {**config["policy"][-1], "agent_id": k},
-        )
-    tune_config.update(
-        {
-            "multiagent": {
-                "policies": policies,
-                "policy_mapping_fn": lambda agent_id: agent_id,
+    else:
+        policies = {}
+        for k in agents:
+            policies[k] = config["policy"][:-1] + (
+                {**config["policy"][-1], "agent_id": k},
+            )
+        tune_config.update(
+            {
+                "multiagent": {
+                    "policies": policies,
+                    "policy_mapping_fn": lambda agent_id: agent_id,
+                }
             }
-        }
-    )
+        )
 
     return config
