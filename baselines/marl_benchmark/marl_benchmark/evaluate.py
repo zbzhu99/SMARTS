@@ -89,7 +89,7 @@ def main(
         if paradigm != "centralized":
             trainer_config.update({"multiagent": tune_config["multiagent"]})
         else:
-            trainer_config.update({"model": tune_config["model"]})
+            trainer_config.update({"model": config["policy"][-1]})
 
         trainer = trainer_cls(env=tune_config["env"], config=trainer_config)
         trainer_config["evaluation_interval"] = True
