@@ -57,9 +57,9 @@ def gen_config(**kwargs):
                 "obs_space": gym.spaces.Tuple([obs_space] * agent_missions_count),
                 "act_space": gym.spaces.Tuple([act_space] * agent_missions_count),
                 "groups": {"group": agent_ids},
+                "model": config["policy"][-1],
             }
         )
-        tune_config["model"].update(config["policy"][-1])
     else:
         policies = {}
         for k in agents:
