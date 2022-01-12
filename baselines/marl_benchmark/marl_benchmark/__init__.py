@@ -59,7 +59,7 @@ def gen_config(**kwargs):
                 "groups": {"group": agent_ids},
             }
         )
-        tune_config.update(config["policy"][-1])
+        tune_config.update({"model": config["policy"][-1]})
     else:
         policies = {}
         for k in agents:
