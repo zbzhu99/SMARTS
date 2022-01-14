@@ -11,7 +11,6 @@ import xml.etree.ElementTree as ET
 from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
-import tensorflow as tf
 from matplotlib.animation import FuncAnimation
 from waymo_open_dataset.protos import scenario_pb2
 
