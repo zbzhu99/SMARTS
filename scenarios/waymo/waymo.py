@@ -6,14 +6,15 @@ import argparse
 import io
 import os
 import subprocess
-from typing import List, Tuple
 import xml.dom.minidom
 import xml.etree.ElementTree as ET
+from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 import tensorflow as tf
+from matplotlib.animation import FuncAnimation
 from waymo_open_dataset.protos import scenario_pb2
+
 from smarts.sstudio.genhistories import Waymo
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -25,8 +26,8 @@ def convert_polyline(polyline) -> Tuple[List[float], List[float]]:
     return xs, ys
 
 
-def read_trajectory_data(path, scenario_index):
-    dataset_spec = {"input_path": path, "scenario_index": scenario_index}
+def read_trajectory_data(path, scenario_id):
+    dataset_spec = {"input_path": path, "scenario_id": scenario_id}
     dataset = Waymo(dataset_spec, None)
 
     trajectories = {}
@@ -43,27 +44,51 @@ def read_trajectory_data(path, scenario_index):
     return trajectories, ego_id
 
 
-def read_map_data(path, scenario_index):
-    dataset = tf.data.TFRecordDataset(path, compression_type="")
-    scenario_list = list(dataset.as_numpy_iterator())
-    scenario_data = scenario_list[scenario_index]
-    scenario = scenario_pb2.Scenario()
-    scenario.ParseFromString(bytearray(scenario_data))
-    return scenario
-    # map_features = {}
-    # map_features["lane"] = []
-    # map_features["road_line"] = []
-    # map_features["road_edge"] = []
-    # map_features["stop_sign"] = []
-    # map_features["crosswalk"] = []
-    # map_features["speed_bump"] = []
-    # for i in range(len(scenario.map_features)):
-    #     map_feature = scenario.map_features[i]
-    #     key = map_feature.WhichOneof("feature_data")
-    #     if key is not None:
-    #         map_features[key].append(getattr(map_feature, key))
-    #
-    # return scenario.scenario_id, map_features
+def get_map_features(scenario) -> Dict:
+    map_features = {}
+    map_features["lane"] = []
+    map_features["road_line"] = []
+    map_features["road_edge"] = []
+    map_features["stop_sign"] = []
+    map_features["crosswalk"] = []
+    map_features["speed_bump"] = []
+    for i in range(len(scenario.map_features)):
+        map_feature = scenario.map_features[i]
+        key = map_feature.WhichOneof("feature_data")
+        if key is not None:
+            map_features[key].append(getattr(map_feature, key))
+
+    return map_features
+
+
+def read_map_data(path, scenario_id):
+    scenario = None
+    dataset = Waymo.read_dataset(path)
+    for record in dataset:
+        parsed_scenario = scenario_pb2.Scenario()
+        parsed_scenario.ParseFromString(bytearray(record))
+        if parsed_scenario.scenario_id == scenario_id:
+            scenario = parsed_scenario
+            break
+
+    if scenario == None:
+        errmsg = f"Dataset file does not contain scenario with id: {scenario_id}"
+        raise ValueError(errmsg)
+
+    map_features = {}
+    map_features["lane"] = []
+    map_features["road_line"] = []
+    map_features["road_edge"] = []
+    map_features["stop_sign"] = []
+    map_features["crosswalk"] = []
+    map_features["speed_bump"] = []
+    for i in range(len(scenario.map_features)):
+        map_feature = scenario.map_features[i]
+        key = map_feature.WhichOneof("feature_data")
+        if key is not None:
+            map_features[key].append(getattr(map_feature, key))
+
+    return scenario.scenario_id, map_features
 
 
 def shape_str(xs, ys):
@@ -73,7 +98,7 @@ def shape_str(xs, ys):
     return result[:-1]
 
 
-def generate_sumo_map(path, scenario_index):
+def generate_sumo_map(path, scenario_id):
     def make_counter():
         i = 0
 
@@ -119,7 +144,7 @@ def generate_sumo_map(path, scenario_index):
         lane.set("width", str(4))
         lane.set("shape", shape_str(xs, ys))
 
-    scenario_id, map_features = read_map_data(path, scenario_index)
+    scenario_id, map_features = read_map_data(path, scenario_id)
     nodes_path = f"nodes-{scenario_id}.nod.xml"
     edges_path = f"edges-{scenario_id}.edg.xml"
     net_path = f"net-{scenario_id}.net.xml"
@@ -188,10 +213,10 @@ def plot_map(map_features):
         )
 
 
-def plot(path, scenario_index):
+def plot(path, scenario_id):
     # Get data
-    trajectories, ego_id = read_trajectory_data(path, scenario_index)
-    scenario_id, map_features = read_map_data(path, scenario_index)
+    trajectories, ego_id = read_trajectory_data(path, scenario_id)
+    scenario_id, map_features = read_map_data(path, scenario_id)
 
     # Plot map and trajectories
     fig, ax = plt.subplots()
@@ -207,10 +232,41 @@ def plot(path, scenario_index):
     plt.show()
 
 
-def animate(path, scenario_index, screenshot=False, outdir=None):
+def dump_plots(outdir, path):
+    dataset = Waymo.read_dataset(path)
+    scenario = None
+    for record in dataset:
+        scenario = scenario_pb2.Scenario()
+        scenario.ParseFromString(bytearray(record))
+
+        scenario_id = scenario.scenario_id
+        map_features = get_map_features(scenario)
+
+        fig, ax = plt.subplots()
+        ax.set_title(f"Scenario {scenario_id}")
+        plot_map(map_features)
+        mng = plt.get_current_fig_manager()
+        # mng.resize(*mng.window.maxsize())
+        w = 1000
+        h = 1000
+        mng.resize(w, h)
+        # plt.show()
+
+        filename = f"scenario-{scenario_id}.png"
+        outpath = os.path.join(outdir, filename)
+        fig = plt.gcf()
+        # w, h = mng.window.maxsize()
+        dpi = 100
+        fig.set_size_inches(w / dpi, h / dpi)
+        print(f"Saving {outpath}")
+        fig.savefig(outpath, dpi=100)
+        plt.close("all")
+
+
+def animate(path, scenario_id, screenshot=False, outdir=None):
     # Get data
-    trajectories, ego_id = read_trajectory_data(path, scenario_index)
-    scenario_id, map_features = read_map_data(path, scenario_index)
+    trajectories, ego_id = read_trajectory_data(path, scenario_id)
+    scenario_id, map_features = read_map_data(path, scenario_id)
 
     # Plot map and trajectories
     fig, ax = plt.subplots()
@@ -245,7 +301,7 @@ def animate(path, scenario_index, screenshot=False, outdir=None):
         anim = FuncAnimation(fig, update, frames=max_len, blit=True, interval=100)
         plt.show()
     else:
-        filename = f"scenario-{scenario_index}-{scenario_id}.png"
+        filename = f"scenario-{scenario_id}.png"
         outpath = os.path.join(outdir, filename)
         fig = plt.gcf()
         w, h = mng.window.maxsize()
@@ -258,48 +314,44 @@ def animate(path, scenario_index, screenshot=False, outdir=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog="convert_waymo_map.py",
+        prog="waymo.py",
         description="Extract map data from Waymo dataset and convert to SUMO.",
     )
     parser.add_argument("file", help="TFRecord file")
     parser.add_argument(
-        "--outdir", help="output directory for screenshots", type=str, nargs="?"
+        "--outdir", help="output directory for screenshots", type=str
     )
     parser.add_argument(
         "--gen",
         help="generate sumo map",
-        type=int,
-        default=0,
-        nargs="?",
-        metavar="SCENARIO_INDEX",
+        type=str,
+        nargs=1,
+        metavar="SCENARIO_ID",
     )
     parser.add_argument(
         "--plot",
         help="plot scenario map",
-        type=int,
-        default=0,
-        nargs="?",
-        metavar="SCENARIO_IND1EX",
+        type=str,
+        nargs=1,
+        metavar="SCENARIO_ID",
     )
     parser.add_argument(
         "--animate",
         help="plot scenario map and animate trajectories",
-        type=int,
-        default=0,
-        nargs="?",
-        metavar="SCENARIO_INDEX",
+        type=str,
+        nargs=1,
+        metavar="SCENARIO_ID",
     )
     args = parser.parse_args()
 
-    print(read_map_data(args.file, args.gen))
-    print(type(read_map_data(args.file, args.gen)))
-    # if args.outdir:
-    #     for i in range(79):
-    #         animate(args.file, i, screenshot=True, outdir=args.outdir)
-    # else:
-    #     if args.gen:
-    #         generate_sumo_map(args.file, args.gen)
-    #     elif args.plot:
-    #         plot(args.file, args.plot)
-    #     elif args.animate:
-    #         animate(args.file, args.animate)
+    if args.outdir:
+        dump_plots(args.outdir, args.file)
+        # for i in range(79):
+        #     animate(args.file, i, screenshot=True, outdir=args.outdir)
+    else:
+        if args.gen:
+            generate_sumo_map(args.file, args.gen[0])
+        elif args.plot:
+            plot(args.file, args.plot[0])
+        elif args.animate:
+            animate(args.file, args.animate[0])
