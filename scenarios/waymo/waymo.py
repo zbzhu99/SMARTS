@@ -134,7 +134,7 @@ def create_polygons(features, lanes):
     q.put(lanes[3])
     while not q.empty():
         lane, lane_id = q.get()
-        if lane_id in seen:
+        if lane_id in seen or lane_id == 86:
             continue
         seen.add(lane_id)
         max_ray_dist = 10
