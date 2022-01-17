@@ -3,47 +3,27 @@ Visualization and prototyping script for the Waymo motion dataset.
 """
 
 import argparse
-import io
+import math
 import os
-import subprocess
-import xml.dom.minidom
-import xml.etree.ElementTree as ET
-from typing import Dict, List, Tuple
+import queue
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+import numpy as np
 from waymo_open_dataset.protos import scenario_pb2
 
 from smarts.sstudio.genhistories import Waymo
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-
 
 def convert_polyline(polyline) -> Tuple[List[float], List[float]]:
-    tuples = [(p.x, p.y) for p in polyline]
-    xs, ys = zip(*tuples)
+    xs, ys = [], []
+    for p in polyline:
+        xs.append(p.x)
+        ys.append(p.y)
     return xs, ys
 
 
-def read_trajectory_data(path, scenario_id):
-    dataset_spec = {"input_path": path, "scenario_id": scenario_id}
-    dataset = Waymo(dataset_spec, None)
-
-    trajectories = {}
-    agent_id = None
-    ego_id = None
-    for row in dataset.rows:
-        if agent_id != row["vehicle_id"]:
-            agent_id = row["vehicle_id"]
-            trajectories[agent_id] = ([], [])
-            if row["is_ego_vehicle"] == 1:
-                ego_id = agent_id
-        trajectories[agent_id][0].append(row["position_x"])
-        trajectories[agent_id][1].append(row["position_y"])
-    return trajectories, ego_id
-
-
-def get_map_features(scenario) -> Dict:
+def get_map_features_for_scenario(scenario) -> Dict:
     map_features = {}
     map_features["lane"] = []
     map_features["road_line"] = []
@@ -90,106 +70,38 @@ def read_map_data(path, scenario_id):
     return scenario.scenario_id, map_features
 
 
-def shape_str(xs, ys):
-    result = ""
-    for x, y in zip(xs, ys):
-        result += f"{x},{y} "
-    return result[:-1]
+def get_map_features(path, scenario_id):
+    scenario = None
+    dataset = Waymo.read_dataset(path)
+    for record in dataset:
+        parsed_scenario = scenario_pb2.Scenario()
+        parsed_scenario.ParseFromString(bytearray(record))
+        if parsed_scenario.scenario_id == scenario_id:
+            scenario = parsed_scenario
+            break
 
+    if scenario is None:
+        errmsg = f"Dataset file does not contain scenario with id: {scenario_id}"
+        raise ValueError(errmsg)
 
-def generate_sumo_map(path, scenario_id):
-    def make_counter():
-        i = 0
+    features = {}
+    lanes = []
+    for i in range(len(scenario.map_features)):
+        map_feature = scenario.map_features[i]
+        key = map_feature.WhichOneof("feature_data")
+        if key is not None:
+            features[map_feature.id] = getattr(map_feature, key)
+            if key == "lane":
+                lanes.append((getattr(map_feature, key), map_feature.id))
 
-        def f():
-            nonlocal i
-            i += 1
-            return i
-
-        return f
-
-    edge_counter = make_counter()
-    node_counter = make_counter()
-    nodes_root = ET.Element("nodes")
-    edges_root = ET.Element("edges")
-
-    def add_segment(xs, ys):
-        nonlocal node_counter, edge_counter
-        nonlocal nodes_root, edges_root
-
-        start_node_id = f"node-{node_counter()}"
-        start_node = ET.SubElement(nodes_root, "node")
-        start_node.set("id", start_node_id)
-        start_node.set("type", "priority")
-        start_node.set("x", str(xs[0]))
-        start_node.set("y", str(ys[0]))
-
-        end_node_id = f"node-{node_counter()}"
-        end_node = ET.SubElement(nodes_root, "node")
-        end_node.set("id", end_node_id)
-        end_node.set("type", "priority")
-        end_node.set("x", str(xs[-1]))
-        end_node.set("y", str(ys[-1]))
-
-        edge = ET.SubElement(edges_root, "edge")
-        edge.set("id", f"edge-{edge_counter()}")
-        edge.set("from", start_node_id)
-        edge.set("to", end_node_id)
-        edge.set("priority", str(1))
-        edge.set("numLanes", str(1))
-        edge.set("speed", str(11.0))
-        lane = ET.SubElement(edge, "lane")
-        lane.set("index", str(0))
-        lane.set("width", str(4))
-        lane.set("shape", shape_str(xs, ys))
-
-    scenario_id, map_features = read_map_data(path, scenario_id)
-    nodes_path = f"nodes-{scenario_id}.nod.xml"
-    edges_path = f"edges-{scenario_id}.edg.xml"
-    net_path = f"net-{scenario_id}.net.xml"
-
-    lanes = [convert_polyline(lane.polyline) for lane in map_features["lane"]]
-    # lanes = list(filter(lambda lane: max(lane[1]) > 8150, lanes))
-
-    # Build XML
-    for lane in lanes:
-        add_segment(*lane)
-
-    # Write XML
-    edges_xml = xml.dom.minidom.parseString(ET.tostring(edges_root)).toprettyxml()
-    nodes_xml = xml.dom.minidom.parseString(ET.tostring(nodes_root)).toprettyxml()
-    with open(edges_path, "w") as f:
-        f.write(edges_xml)
-    with open(nodes_path, "w") as f:
-        f.write(nodes_xml)
-
-    # Generate netfile with netconvert
-    print(f"Generating SUMO map file: {net_path}")
-    proc = subprocess.Popen(
-        [
-            "netconvert",
-            f"--node-files={nodes_path}",
-            f"--edge-files={edges_path}",
-            f"--output-file={net_path}",
-            "--offset.disable-normalization",
-            # "--geometry.split",
-            # "--junctions.join"
-        ],
-        stdout=subprocess.PIPE,
-    )
-    for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):
-        print(line.rstrip())
-
-
-def safe_print(obj, name):
-    if hasattr(obj, name):
-        print(getattr(obj, name))
+    return scenario.scenario_id, features, lanes
 
 
 def plot_map(map_features):
-    lanes = [convert_polyline(lane.polyline) for lane in map_features["lane"]]
+    lanes = map_features["lane"][:1]
+    lane_points = [convert_polyline(lane.polyline) for lane in lanes]
     # lanes = list(filter(lambda lane: max(lane[1]) > 8150, lanes))
-    for xs, ys in lanes:
+    for xs, ys in lane_points:
         plt.plot(xs, ys, linestyle=":", color="gray")
     for road_line in map_features["road_line"]:
         xs, ys = convert_polyline(road_line.polyline)
@@ -212,22 +124,186 @@ def plot_map(map_features):
         )
 
 
+def plot_lane(lane):
+    xs, ys = convert_polyline(lane.polyline)
+    plt.plot(xs, ys, linestyle="-", c="gray")
+    # plt.scatter(xs, ys, s=12, c="gray")
+    # plt.scatter(xs[0], ys[0], s=12, c="red")
+
+
+def plot_road_line(road_line):
+    xs, ys = convert_polyline(road_line.polyline)
+    plt.plot(xs, ys, "y-")
+    plt.scatter(xs, ys, s=12, c="y")
+    # plt.scatter(xs[0], ys[0], s=12, c="red")
+
+
+def plot_road_edge(road_edge):
+    xs, ys = convert_polyline(road_edge.polyline)
+    plt.plot(xs, ys, "k-")
+    plt.scatter(xs, ys, s=12, c="black")
+    # plt.scatter(xs[0], ys[0], s=12, c="red")
+
+
+def line_intersect(a, b, c, d) -> Union[float, None]:
+    r = b - a
+    s = d - c
+    d = r[0] * s[1] - r[1] * s[0]
+
+    if d == 0:
+        return None
+
+    u = ((c[0] - a[0]) * r[1] - (c[1] - a[1]) * r[0]) / d
+    t = ((c[0] - a[0]) * s[1] - (c[1] - a[1]) * s[0]) / d
+
+    if 0 <= u <= 1 and 0 <= t <= 1:
+        return a + t * r
+
+    return None
+
+
+def create_polygons(features, lanes):
+    iteration = 0
+    q = queue.Queue()
+    q.put(lanes[3])
+    while not q.empty() and iteration < 5:
+        iteration += 1
+        lane, lane_id = q.get()
+        if lane_id == 86:
+            continue
+        max_ray_dist = 10
+        xs, ys = convert_polyline(lane.polyline)
+        lane_pts = [np.array([x, y]) for x, y in zip(xs, ys)]
+        n_pts = len(lane_pts)
+        left_pts = [None] * n_pts
+        right_pts = [None] * n_pts
+
+        plot_lane(lane)
+        print(lane_id)
+
+        if lane.entry_lanes:
+            for entry_lane in lane.entry_lanes:
+                q.put((features[entry_lane], entry_lane))
+        if lane.exit_lanes:
+            for exit_lane in lane.exit_lanes:
+                q.put((features[exit_lane], exit_lane))
+        if lane.left_neighbors:
+            pass
+        if lane.right_neighbors:
+            pass
+
+        if lane.left_boundaries or lane.right_boundaries:
+            for name, lst in [("Left", list(lane.left_boundaries)), ("Right", list(lane.right_boundaries))]:
+                for i in range(n_pts):
+                    p = lane_pts[i]
+                    dp = None
+                    if i < n_pts - 1:
+                        dp = lane_pts[i + 1] - p
+                    else:
+                        dp = p - lane_pts[i - 1]
+
+                    dp /= np.linalg.norm(dp)
+                    angle = math.pi / 2
+                    normal = np.array([
+                        math.cos(angle) * dp[0] - math.sin(angle) * dp[1],
+                        math.sin(angle) * dp[0] + math.cos(angle) * dp[1]
+                    ])
+                    if name == "Right":
+                        normal *= -1.0
+                    ray_end = p + max_ray_dist * normal
+                    # plt.plot([p[0], ray_end[0]], [p[1], ray_end[1]], linestyle=":", color="gray")
+
+                    # Check ray-line intersection for each boundary segment
+                    for boundary in lst:
+                        feature = features[boundary.boundary_feature_id]
+                        boundary_xs, boundary_ys = convert_polyline(feature.polyline)
+                        boundary_pts = [np.array([x, y]) for x, y in zip(boundary_xs, boundary_ys)]
+                        for j in range(len(boundary_pts) - 1):
+                            b0 = boundary_pts[j]
+                            b1 = boundary_pts[j + 1]
+                            intersect_pt = line_intersect(b0, b1, p, ray_end)
+                            if intersect_pt is not None:
+                                if name == "Left":
+                                    left_pts[i] = intersect_pt
+                                else:
+                                    right_pts[i] = intersect_pt
+                                # plt.scatter(intersect_pt[0], intersect_pt[1], s=12, c="red")
+                                break
+
+                # # Plot
+                # for b in lst:
+                #     if b.boundary_type == 0:
+                #         plot_road_edge(features[b.boundary_feature_id])
+                #     else:
+                #         plot_road_line(features[b.boundary_feature_id])
+
+        end_ind = n_pts - 1
+
+        # Fill in missing vals - backwards pass
+        for i in range(end_ind + 1):
+            if left_pts[end_ind - i] is None and i > 0:
+                boundary_pt = left_pts[end_ind - i + 1]
+                if boundary_pt is None:
+                    continue
+                lane_pt = lane_pts[end_ind - i + 1]
+                width_vec = boundary_pt - lane_pt
+                left_pts[end_ind - i] = lane_pts[end_ind - i] + width_vec
+            if right_pts[end_ind - i] is None and i > 0:
+                boundary_pt = right_pts[end_ind - i + 1]
+                if boundary_pt is None:
+                    continue
+                lane_pt = lane_pts[end_ind - i + 1]
+                width_vec = boundary_pt - lane_pt
+                right_pts[end_ind - i] = lane_pts[end_ind - i] + width_vec
+
+        # Fill in missing vals - forward pass
+        for i in range(1, n_pts):
+            if left_pts[i] is None:
+                boundary_pt = left_pts[i - 1]
+                if boundary_pt is None:
+                    continue
+                lane_pt = lane_pts[i - 1]
+                width_vec = boundary_pt - lane_pt
+                left_pts[i] = lane_pts[i] + width_vec
+            if right_pts[i] is None:
+                boundary_pt = right_pts[i - 1]
+                if boundary_pt is None:
+                    continue
+                lane_pt = lane_pts[i - 1]
+                width_vec = boundary_pt - lane_pt
+                right_pts[i] = lane_pts[i] + width_vec
+
+        # assert(all([p is not None for p in left_pts]))
+        # assert(all([p is not None for p in right_pts]))
+
+        # Create polygon
+        poly_xs, poly_ys = [], []
+        for p in left_pts + right_pts[::-1] + [left_pts[0]]:
+            if p is not None:
+                poly_xs.append(p[0])
+                poly_ys.append(p[1])
+        plt.plot(poly_xs, poly_ys, "k-")
+        # plt.scatter(poly_xs, poly_ys, s=12, c="black")
+
+
 def plot(path, scenario_id):
     # Get data
-    trajectories, ego_id = read_trajectory_data(path, scenario_id)
-    scenario_id, map_features = read_map_data(path, scenario_id)
+    # trajectories, ego_id = read_trajectory_data(path, scenario_id)
+    scenario_id, features, lanes = get_map_features(path, scenario_id)
 
     # Plot map and trajectories
     fig, ax = plt.subplots()
     ax.set_title(f"Scenario {scenario_id})")
-
-    plot_map(map_features)
+    ax.axis("equal")
+    # plot_map(map_features)
+    create_polygons(features, lanes)
 
     # for k, v in trajectories.items():
     #     plt.scatter(v[0], v[1], marker='.')
 
     mng = plt.get_current_fig_manager()
-    mng.resize(*mng.window.maxsize())
+    mng.resize(1000, 1000)
+    # mng.resize(*mng.window.maxsize())
     plt.show()
 
 
@@ -239,7 +315,7 @@ def dump_plots(outdir, path):
         scenario.ParseFromString(bytearray(record))
 
         scenario_id = scenario.scenario_id
-        map_features = get_map_features(scenario)
+        map_features = get_map_features_for_scenario(scenario)
 
         fig, ax = plt.subplots()
         ax.set_title(f"Scenario {scenario_id}")
@@ -255,55 +331,6 @@ def dump_plots(outdir, path):
         outpath = os.path.join(outdir, filename)
         fig = plt.gcf()
         # w, h = mng.window.maxsize()
-        dpi = 100
-        fig.set_size_inches(w / dpi, h / dpi)
-        print(f"Saving {outpath}")
-        fig.savefig(outpath, dpi=100)
-        plt.close("all")
-
-
-def animate(path, scenario_id, screenshot=False, outdir=None):
-    # Get data
-    trajectories, ego_id = read_trajectory_data(path, scenario_id)
-    scenario_id, map_features = read_map_data(path, scenario_id)
-
-    # Plot map and trajectories
-    fig, ax = plt.subplots()
-    ax.set_title(f"Scenario {scenario_id}")
-
-    plot_map(map_features)
-
-    max_len = 0
-    data, points = [], []
-    for k, v in trajectories.items():
-        xs, ys = v[0], v[1]
-        if len(xs) > max_len:
-            max_len = len(xs)
-        if k == ego_id:
-            (point,) = plt.plot(xs[0], ys[0], "cs")
-        else:
-            (point,) = plt.plot(xs[0], ys[0], "ks")
-        data.append((xs, ys))
-        points.append(point)
-
-    def update(i):
-        drawn_pts = []
-        for (xs, ys), point in zip(data, points):
-            if i < len(xs):
-                point.set_data(xs[i], ys[i])
-                drawn_pts.append(point)
-        return drawn_pts
-
-    mng = plt.get_current_fig_manager()
-    mng.resize(*mng.window.maxsize())
-    if not screenshot:
-        anim = FuncAnimation(fig, update, frames=max_len, blit=True, interval=100)
-        plt.show()
-    else:
-        filename = f"scenario-{scenario_id}.png"
-        outpath = os.path.join(outdir, filename)
-        fig = plt.gcf()
-        w, h = mng.window.maxsize()
         dpi = 100
         fig.set_size_inches(w / dpi, h / dpi)
         print(f"Saving {outpath}")
@@ -345,12 +372,5 @@ if __name__ == "__main__":
 
     if args.outdir:
         dump_plots(args.outdir, args.file)
-        # for i in range(79):
-        #     animate(args.file, i, screenshot=True, outdir=args.outdir)
     else:
-        if args.gen:
-            generate_sumo_map(args.file, args.gen[0])
-        elif args.plot:
-            plot(args.file, args.plot[0])
-        elif args.animate:
-            animate(args.file, args.animate[0])
+        plot(args.file, args.plot[0])
