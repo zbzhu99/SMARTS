@@ -163,11 +163,9 @@ def line_intersect(a, b, c, d) -> Union[float, None]:
 
 
 def create_polygons(features, lanes):
-    iteration = 0
     q = queue.Queue()
     q.put(lanes[3])
-    while not q.empty() and iteration < 20:
-        iteration += 1
+    while not q.empty():
         lane, lane_id = q.get()
         if lane_id == 86:
             continue
@@ -188,9 +186,11 @@ def create_polygons(features, lanes):
             for exit_lane in lane.exit_lanes:
                 q.put((features[exit_lane], exit_lane))
         if lane.left_neighbors:
-            pass
+            for l_n in lane.left_neighbors:
+                q.put(features[l_n], l_n)
         if lane.right_neighbors:
-            pass
+            for r_n in lane.right_neighbors:
+                q.put(features[r_n], r_n)
 
         if lane.left_boundaries or lane.right_boundaries:
             for name, lst in [("Left", list(lane.left_boundaries)), ("Right", list(lane.right_boundaries))]:
