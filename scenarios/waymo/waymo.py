@@ -6,6 +6,7 @@ import argparse
 import math
 import os
 import queue
+import time
 from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -24,13 +25,7 @@ def convert_polyline(polyline) -> Tuple[List[float], List[float]]:
 
 
 def get_map_features_for_scenario(scenario) -> Dict:
-    map_features = {}
-    map_features["lane"] = []
-    map_features["road_line"] = []
-    map_features["road_edge"] = []
-    map_features["stop_sign"] = []
-    map_features["crosswalk"] = []
-    map_features["speed_bump"] = []
+    map_features = {"lane": [], "road_line": [], "road_edge": [], "stop_sign": [], "crosswalk": [], "speed_bump": []}
     for i in range(len(scenario.map_features)):
         map_feature = scenario.map_features[i]
         key = map_feature.WhichOneof("feature_data")
@@ -38,36 +33,6 @@ def get_map_features_for_scenario(scenario) -> Dict:
             map_features[key].append(getattr(map_feature, key))
 
     return map_features
-
-
-def read_map_data(path, scenario_id):
-    scenario = None
-    dataset = Waymo.read_dataset(path)
-    for record in dataset:
-        parsed_scenario = scenario_pb2.Scenario()
-        parsed_scenario.ParseFromString(bytearray(record))
-        if parsed_scenario.scenario_id == scenario_id:
-            scenario = parsed_scenario
-            break
-
-    if scenario is None:
-        errmsg = f"Dataset file does not contain scenario with id: {scenario_id}"
-        raise ValueError(errmsg)
-
-    map_features = {}
-    map_features["lane"] = []
-    map_features["road_line"] = []
-    map_features["road_edge"] = []
-    map_features["stop_sign"] = []
-    map_features["crosswalk"] = []
-    map_features["speed_bump"] = []
-    for i in range(len(scenario.map_features)):
-        map_feature = scenario.map_features[i]
-        key = map_feature.WhichOneof("feature_data")
-        if key is not None:
-            map_features[key].append(getattr(map_feature, key))
-
-    return scenario.scenario_id, map_features
 
 
 def get_map_features(path, scenario_id):
@@ -163,18 +128,22 @@ def line_intersect(a, b, c, d) -> Union[float, None]:
 
 
 def create_polygons(features, lanes):
+    start = time.time()
+    seen = set()
     q = queue.Queue()
     q.put(lanes[3])
     while not q.empty():
         lane, lane_id = q.get()
-        if lane_id == 86:
+        if lane_id in seen:
             continue
+        seen.add(lane_id)
         max_ray_dist = 10
         xs, ys = convert_polyline(lane.polyline)
         lane_pts = [np.array([x, y]) for x, y in zip(xs, ys)]
         n_pts = len(lane_pts)
         left_pts = [None] * n_pts
         right_pts = [None] * n_pts
+        normals = [None] * n_pts
 
         plot_lane(lane)
         print(lane_id)
@@ -187,16 +156,15 @@ def create_polygons(features, lanes):
                 q.put((features[exit_lane], exit_lane))
         if lane.left_neighbors:
             for l_n in lane.left_neighbors:
-                q.put(features[l_n], l_n)
+                q.put(features[l_n.feature_id], l_n.feature_id)
         if lane.right_neighbors:
             for r_n in lane.right_neighbors:
-                q.put(features[r_n], r_n)
+                q.put(features[r_n.feature_id], r_n.feature_id)
 
         if lane.left_boundaries or lane.right_boundaries:
             for name, lst in [("Left", list(lane.left_boundaries)), ("Right", list(lane.right_boundaries))]:
                 for i in range(n_pts):
                     p = lane_pts[i]
-                    dp = None
                     if i < n_pts - 1:
                         dp = lane_pts[i + 1] - p
                     else:
@@ -208,9 +176,9 @@ def create_polygons(features, lanes):
                         math.cos(angle) * dp[0] - math.sin(angle) * dp[1],
                         math.sin(angle) * dp[0] + math.cos(angle) * dp[1]
                     ])
-                    if name == "Right":
-                        normal *= -1.0
-                    ray_end = p + max_ray_dist * normal
+                    normals[i] = normal
+                    sign = -1.0 if name == "Right" else 1.0
+                    ray_end = p + sign * max_ray_dist * normal
                     # plt.plot([p[0], ray_end[0]], [p[1], ray_end[1]], linestyle=":", color="gray")
 
                     # Check ray-line intersection for each boundary segment
@@ -237,44 +205,58 @@ def create_polygons(features, lanes):
                 #     else:
                 #         plot_road_line(features[b.boundary_feature_id])
 
-        end_ind = n_pts - 1
+        left_boundary_empty = all([p is None for p in left_pts])
+        right_boundary_empty = all([p is None for p in right_pts])
 
-        # Fill in missing vals - backwards pass
-        for i in range(end_ind + 1):
-            if left_pts[end_ind - i] is None and i > 0:
-                boundary_pt = left_pts[end_ind - i + 1]
-                if boundary_pt is None:
-                    continue
-                lane_pt = lane_pts[end_ind - i + 1]
-                width_vec = boundary_pt - lane_pt
-                left_pts[end_ind - i] = lane_pts[end_ind - i] + width_vec
-            if right_pts[end_ind - i] is None and i > 0:
-                boundary_pt = right_pts[end_ind - i + 1]
-                if boundary_pt is None:
-                    continue
-                lane_pt = lane_pts[end_ind - i + 1]
-                width_vec = boundary_pt - lane_pt
-                right_pts[end_ind - i] = lane_pts[end_ind - i] + width_vec
+        if left_boundary_empty and right_boundary_empty:
+            pass
+        else:
+            # Fill in missing vals - backwards pass
+            for i in range(n_pts - 2, -1, -1):
+                if left_pts[i] is None:
+                    boundary_pt = left_pts[i + 1]
+                    if boundary_pt is not None:
+                        lane_pt = lane_pts[i + 1]
+                        width = np.linalg.norm(boundary_pt - lane_pt)
+                        left_pts[i] = lane_pts[i] + width * normals[i]
+                if right_pts[i] is None:
+                    boundary_pt = right_pts[i + 1]
+                    if boundary_pt is not None:
+                        lane_pt = lane_pts[i + 1]
+                        width = np.linalg.norm(boundary_pt - lane_pt)
+                        right_pts[i] = lane_pts[i] - width * normals[i]
 
-        # Fill in missing vals - forward pass
-        for i in range(1, n_pts):
-            if left_pts[i] is None:
-                boundary_pt = left_pts[i - 1]
-                if boundary_pt is None:
-                    continue
-                lane_pt = lane_pts[i - 1]
-                width_vec = boundary_pt - lane_pt
-                left_pts[i] = lane_pts[i] + width_vec
-            if right_pts[i] is None:
-                boundary_pt = right_pts[i - 1]
-                if boundary_pt is None:
-                    continue
-                lane_pt = lane_pts[i - 1]
-                width_vec = boundary_pt - lane_pt
-                right_pts[i] = lane_pts[i] + width_vec
+            # Fill in missing vals - forward pass
+            for i in range(1, n_pts):
+                if left_pts[i] is None:
+                    boundary_pt = left_pts[i - 1]
+                    if boundary_pt is not None:
+                        lane_pt = lane_pts[i - 1]
+                        width = np.linalg.norm(boundary_pt - lane_pt)
+                        left_pts[i] = lane_pts[i] + width * normals[i]
+                if right_pts[i] is None:
+                    boundary_pt = right_pts[i - 1]
+                    if boundary_pt is not None:
+                        lane_pt = lane_pts[i - 1]
+                        width = np.linalg.norm(boundary_pt - lane_pt)
+                        right_pts[i] = lane_pts[i] - width * normals[i]
 
-        # assert(all([p is not None for p in left_pts]))
-        # assert(all([p is not None for p in right_pts]))
+            if left_boundary_empty:
+                for i in range(n_pts):
+                    boundary_pt = right_pts[i]
+                    if boundary_pt is not None:
+                        left_pts[i] = lane_pts[i] - (boundary_pt - lane_pts[i])
+
+            if right_boundary_empty:
+                for i in range(n_pts):
+                    boundary_pt = left_pts[i]
+                    if boundary_pt is not None:
+                        right_pts[i] = lane_pts[i] - (boundary_pt - lane_pts[i])
+
+        if not all([p is not None for p in left_pts]):
+            print(f"Empty left boundary for {lane_id}")
+        if not all([p is not None for p in right_pts]):
+            print(f"Empty right boundary for {lane_id}")
 
         # Create polygon
         poly_xs, poly_ys = [], []
@@ -284,6 +266,9 @@ def create_polygons(features, lanes):
                 poly_ys.append(p[1])
         plt.plot(poly_xs, poly_ys, "k-")
         # plt.scatter(poly_xs, poly_ys, s=12, c="black")
+    end = time.time()
+    elapsed = round((end - start) * 1000.0, 3)
+    print(f"create_polygons took: {elapsed} ms")
 
 
 def plot(path, scenario_id):
@@ -293,7 +278,7 @@ def plot(path, scenario_id):
 
     # Plot map and trajectories
     fig, ax = plt.subplots()
-    ax.set_title(f"Scenario {scenario_id})")
+    ax.set_title(f"Scenario {scenario_id}")
     ax.axis("equal")
     # plot_map(map_features)
     create_polygons(features, lanes)
@@ -309,7 +294,6 @@ def plot(path, scenario_id):
 
 def dump_plots(outdir, path):
     dataset = Waymo.read_dataset(path)
-    scenario = None
     for record in dataset:
         scenario = scenario_pb2.Scenario()
         scenario.ParseFromString(bytearray(record))
