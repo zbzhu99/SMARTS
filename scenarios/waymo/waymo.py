@@ -155,11 +155,9 @@ def create_polygons(features, lanes):
             for exit_lane in lane.exit_lanes:
                 q.put((features[exit_lane], exit_lane))
         if lane.left_neighbors:
-            for l_n in lane.left_neighbors:
-                q.put(features[l_n.feature_id], l_n.feature_id)
+            pass
         if lane.right_neighbors:
-            for r_n in lane.right_neighbors:
-                q.put(features[r_n.feature_id], r_n.feature_id)
+            pass
 
         if lane.left_boundaries or lane.right_boundaries:
             for name, lst in [("Left", list(lane.left_boundaries)), ("Right", list(lane.right_boundaries))]:
