@@ -50,7 +50,7 @@ def read_map_data(path, scenario_id):
             scenario = parsed_scenario
             break
 
-    if scenario == None:
+    if scenario is None:
         errmsg = f"Dataset file does not contain scenario with id: {scenario_id}"
         raise ValueError(errmsg)
 
@@ -166,7 +166,7 @@ def create_polygons(features, lanes):
     iteration = 0
     q = queue.Queue()
     q.put(lanes[3])
-    while not q.empty() and iteration < 5:
+    while not q.empty() and iteration < 20:
         iteration += 1
         lane, lane_id = q.get()
         if lane_id == 86:
