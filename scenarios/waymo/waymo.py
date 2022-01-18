@@ -218,7 +218,7 @@ def create_polygons(features, all_lanes):
     #     q.put((features[i], i))
     while not q.empty() and iteration < len(all_lanes):
         lane, lane_id = q.get()
-        if lane_id in seen:
+        if lane_id in seen or (not lane.entry_lanes and not lane.exit_lanes):
             continue
         seen.add(lane_id)
         iteration += 1
