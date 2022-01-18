@@ -3,6 +3,7 @@ Visualization and prototyping script for the Waymo motion dataset.
 """
 
 import argparse
+from dataclasses import dataclass
 import math
 import os
 import queue
@@ -127,56 +128,6 @@ def line_intersect(a, b, c, d) -> Union[float, None]:
     return None
 
 
-lane_indices = [
-    70,
-    71,
-    84,
-    89,
-    98,
-    99,
-    99,
-    101,
-    102,
-    102,
-    104,
-    105,
-    106,
-    112,
-    113,
-    113,
-    114,
-    115,
-    117,
-    117,
-    119,
-    119,
-    120,
-    121,
-    121,
-    124,
-    132,
-    136,
-    138,
-    141,
-    143,
-    151,
-    152,
-    152,
-    153,
-    153,
-    156,
-    157,
-    158,
-    159,
-    160,
-    160,
-    161,
-    162,
-    165,
-    167,
-]
-
-
 def rotate(v, angle):
     return np.array([
         math.cos(angle) * v[0] - math.sin(angle) * v[1],
@@ -184,74 +135,47 @@ def rotate(v, angle):
     ])
 
 
-def is_straight(normals):
-    v = rotate(normals[0], math.pi / 2)
-    for n in normals:
-        if abs(np.dot(v, n)) > 0.01:
-            return False
-    return True
+@dataclass
+class Lane:
+    lane_id: int
+    lane_pts: List
+    n_pts: int
+    left_pts: List
+    right_pts: List
+    normals: List
+    left_neighbors: List['Lane']
+    right_neighbors: List['Lane']
+    entry_lanes: List['Lane']
+    exit_lanes: List['Lane']
+    max_ray_dist: float = 10.0
 
+    def __init__(self, lane_id, polyline):
+        self.lane_id = lane_id
+        self.lane_pts = [np.array([p.x, p.y]) for p in polyline]
+        self.n_pts = len(self.lane_pts)
+        self.left_pts = [None] * self.n_pts
+        self.right_pts = [None] * self.n_pts
+        self.normals = [None] * self.n_pts
+        self.left_neighbors = []
+        self.right_neighbors = []
+        self.entry_lanes = []
+        self.exit_lanes = []
 
-def create_polygons(features, all_lanes):
-    start = time.time()
+    def is_straight(self):
+        v = rotate(self.normals[0], math.pi / 2)
+        for n in self.normals:
+            if abs(np.dot(v, n)) > 0.01:
+                return False
+        return True
 
-    iteration = 0
-    seen = set()
-    q = queue.Queue()
-    for l in all_lanes:
-        q.put(l)
-    # for i in lane_indices:
-    #     q.put((features[i], i))
-    inds = [
-        # 87,
-        # 86,
-        # 93,
-        # 89,
-        # 92,
-        81,
-        88,
-        96,
-        110,
-        109,
-    ]
-    # for i in inds:
-    #     q.put((features[i], i))
-    while not q.empty() and iteration < len(all_lanes):
-        lane, lane_id = q.get()
-        if lane_id in seen or (not lane.entry_lanes and not lane.exit_lanes):
-            continue
-        seen.add(lane_id)
-        iteration += 1
-        max_ray_dist = 10
-        lane_pts = [np.array([p.x, p.y]) for p in lane.polyline]
-        n_pts = len(lane_pts)
-        left_pts = [None] * n_pts
-        right_pts = [None] * n_pts
-        normals = [None] * n_pts
-
-        print()
-        print(f"--- Lane {lane_id}")
-
-        # if lane.left_neighbors:
-        #     for left_lane in lane.left_neighbors:
-        #         q.put((features[left_lane.feature_id], left_lane.feature_id))
-        # if lane.right_neighbors:
-        #     for right_lane in lane.right_neighbors:
-        #         q.put((features[right_lane.feature_id], right_lane.feature_id))
-        # if lane.entry_lanes:
-        #     for entry_lane in lane.entry_lanes:
-        #         q.put((features[entry_lane], entry_lane))
-        # if lane.exit_lanes:
-        #     for exit_lane in lane.exit_lanes:
-        #         q.put((features[exit_lane], exit_lane))
-
-        for i in range(n_pts):
-            p = lane_pts[i]
+    def calculate_normals(self):
+        for i in range(self.n_pts):
+            p = self.lane_pts[i]
             dp = None
-            if i < n_pts - 1:
-                dp = lane_pts[i + 1] - p
+            if i < self.n_pts - 1:
+                dp = self.lane_pts[i + 1] - p
             else:
-                dp = p - lane_pts[i - 1]
+                dp = p - self.lane_pts[i - 1]
 
             dp /= np.linalg.norm(dp)
             angle = math.pi / 2
@@ -259,12 +183,16 @@ def create_polygons(features, all_lanes):
                 math.cos(angle) * dp[0] - math.sin(angle) * dp[1],
                 math.sin(angle) * dp[0] + math.cos(angle) * dp[1]
             ])
-            normals[i] = normal
+            self.normals[i] = normal
 
-            if lane.left_boundaries or lane.right_boundaries:
-                for name, lst in [("Left", list(lane.left_boundaries)), ("Right", list(lane.right_boundaries))]:
+    def compute_boundaries(self, lane_obj, features):
+        for i in range(self.n_pts):
+            p = self.lane_pts[i]
+            n = self.normals[i]
+            if lane_obj.left_boundaries or lane_obj.right_boundaries:
+                for name, lst in [("Left", list(lane_obj.left_boundaries)), ("Right", list(lane_obj.right_boundaries))]:
                     sign = -1.0 if name == "Right" else 1.0
-                    ray_end = p + sign * max_ray_dist * normal
+                    ray_end = p + sign * self.max_ray_dist * n
                     # plt.plot([p[0], ray_end[0]], [p[1], ray_end[1]], linestyle=":", color="gray")
 
                     # Check ray-line intersection for each boundary segment
@@ -278,58 +206,111 @@ def create_polygons(features, all_lanes):
                             intersect_pt = line_intersect(b0, b1, p, ray_end)
                             if intersect_pt is not None:
                                 if name == "Left":
-                                    left_pts[i] = intersect_pt
+                                    self.left_pts[i] = intersect_pt
                                 else:
-                                    right_pts[i] = intersect_pt
+                                    self.right_pts[i] = intersect_pt
                                 # plt.scatter(intersect_pt[0], intersect_pt[1], s=12, c="red")
                                 break
 
-        # straight = is_straight(normals)
-        # print(f"is_straight: {straight}")
+    def fill_interp_left(self):
+        assert self.left_pts[0] is not None
+        assert self.left_pts[-1] is not None
+        start_width = np.linalg.norm(self.left_pts[0] - self.lane_pts[0])
+        end_width = np.linalg.norm(self.left_pts[-1] - self.lane_pts[-1])
+        dw = (end_width - start_width) / float(self.n_pts)
+        for i in range(self.n_pts):
+            new_width = start_width + dw * i
+            self.left_pts[i] = self.lane_pts[i] + new_width * self.normals[i]
 
-        left_boundary_empty = all([p is None for p in left_pts])
-        right_boundary_empty = all([p is None for p in right_pts])
+    def fill_interp_right(self):
+        assert self.right_pts[0] is not None
+        assert self.right_pts[-1] is not None
+        start_width = np.linalg.norm(self.right_pts[0] - self.lane_pts[0])
+        end_width = np.linalg.norm(self.right_pts[-1] - self.lane_pts[-1])
+        dw = (end_width - start_width) / float(self.n_pts)
+        for i in range(self.n_pts):
+            new_width = start_width + dw * i
+            self.right_pts[i] = self.lane_pts[i] + new_width * self.normals[i]
 
-        # Fill in missing vals - backwards pass
-        for i in range(n_pts - 2, -1, -1):
-            if left_pts[i] is None:
-                boundary_pt = left_pts[i + 1]
-                if boundary_pt is not None:
-                    lane_pt = lane_pts[i + 1]
-                    width = np.linalg.norm(boundary_pt - lane_pt)
-                    left_pts[i] = lane_pts[i] + width * normals[i]
-            if right_pts[i] is None:
-                boundary_pt = right_pts[i + 1]
-                if boundary_pt is not None:
-                    lane_pt = lane_pts[i + 1]
-                    width = np.linalg.norm(boundary_pt - lane_pt)
-                    right_pts[i] = lane_pts[i] - width * normals[i]
+    def assign_anchor_points(self):
+        # Left
+        if self.left_pts[0] is None:
+            for l in self.entry_lanes:
+                print(f"Checking entry lane: {l.lane_id}")
+                if l.left_pts[-1] is not None:
+                    print("Found anchor point for entry lane")
+                    self.left_pts[0] = l.left_pts[-1]
+                    self.fill_interp_left()
+                    break
+        if self.left_pts[-1] is None:
+            for l in self.exit_lanes:
+                print(f"Checking exit lane: {l.lane_id}")
+                if l.left_pts[0] is not None:
+                    print("Found anchor point for exit lane")
+                    self.left_pts[-1] = l.left_pts[0]
+                    self.fill_interp_left()
+                    break
 
-        # Fill in missing vals - forward pass
-        for i in range(1, n_pts):
-            if left_pts[i] is None:
-                boundary_pt = left_pts[i - 1]
-                if boundary_pt is not None:
-                    lane_pt = lane_pts[i - 1]
-                    width = np.linalg.norm(boundary_pt - lane_pt)
-                    left_pts[i] = lane_pts[i] + width * normals[i]
-            if right_pts[i] is None:
-                boundary_pt = right_pts[i - 1]
-                if boundary_pt is not None:
-                    lane_pt = lane_pts[i - 1]
-                    width = np.linalg.norm(boundary_pt - lane_pt)
-                    right_pts[i] = lane_pts[i] - width * normals[i]
+        # Right
+        if self.right_pts[0] is None:
+            for l in self.entry_lanes:
+                print(f"Checking entry lane: {l.lane_id}")
+                if l.right_pts[-1] is not None:
+                    print("Found anchor point for entry lane")
+                    self.right_pts[0] = l.right_pts[-1]
+                    self.fill_interp_right()
+                    break
 
+        if self.right_pts[-1] is None:
+            for l in self.exit_lanes:
+                print(f"Checking exit lane: {l.lane_id}")
+                if l.right_pts[0] is not None:
+                    print("Found anchor point for exit lane")
+                    self.right_pts[-1] = l.right_pts[0]
+                    self.fill_interp_right()
+                    break
+
+    def fill_forward(self):
+        for i in range(1, self.n_pts):
+            if self.left_pts[i] is None:
+                boundary_pt = self.left_pts[i - 1]
+                if boundary_pt is not None:
+                    lane_pt = self.lane_pts[i - 1]
+                    width = np.linalg.norm(boundary_pt - lane_pt)
+                    self.left_pts[i] = self.lane_pts[i] + width * self.normals[i]
+            if self.right_pts[i] is None:
+                boundary_pt = self.right_pts[i - 1]
+                if boundary_pt is not None:
+                    lane_pt = self.lane_pts[i - 1]
+                    width = np.linalg.norm(boundary_pt - lane_pt)
+                    self.right_pts[i] = self.lane_pts[i] - width * self.normals[i]
+
+    def fill_backward(self):
+        for i in range(self.n_pts - 2, -1, -1):
+            if self.left_pts[i] is None:
+                boundary_pt = self.left_pts[i + 1]
+                if boundary_pt is not None:
+                    lane_pt = self.lane_pts[i + 1]
+                    width = np.linalg.norm(boundary_pt - lane_pt)
+                    self.left_pts[i] = self.lane_pts[i] + width * self.normals[i]
+            if self.right_pts[i] is None:
+                boundary_pt = self.right_pts[i + 1]
+                if boundary_pt is not None:
+                    lane_pt = self.lane_pts[i + 1]
+                    width = np.linalg.norm(boundary_pt - lane_pt)
+                    self.right_pts[i] = self.lane_pts[i] - width * self.normals[i]
+
+    def correct_degenerate_cases(self):
         # Check for high variance in widths
-        left_widths = [None] * n_pts
-        right_widths = [None] * n_pts
+        left_widths = [None] * self.n_pts
+        right_widths = [None] * self.n_pts
         variance_cutoff = 0.3
-        for i in range(n_pts):
-            if left_pts[i] is not None:
-                width = np.linalg.norm(left_pts[i] - lane_pts[i])
+        for i in range(self.n_pts):
+            if self.left_pts[i] is not None:
+                width = np.linalg.norm(self.left_pts[i] - self.lane_pts[i])
                 left_widths[i] = width
-            if right_pts[i] is not None:
-                width = np.linalg.norm(right_pts[i] - lane_pts[i])
+            if self.right_pts[i] is not None:
+                width = np.linalg.norm(self.right_pts[i] - self.lane_pts[i])
                 right_widths[i] = width
 
         if all([w is not None for w in left_widths]):
@@ -338,10 +319,10 @@ def create_polygons(features, all_lanes):
             if left_variance > variance_cutoff:
                 start_width = left_widths[0]
                 end_width = left_widths[-1]
-                dw = (end_width - start_width) / float(n_pts)
-                for i in range(n_pts):
+                dw = (end_width - start_width) / float(self.n_pts)
+                for i in range(self.n_pts):
                     new_width = start_width + dw * i
-                    left_pts[i] = lane_pts[i] + new_width * normals[i]
+                    self.left_pts[i] = self.lane_pts[i] + new_width * self.normals[i]
 
         if all([w is not None for w in right_widths]):
             right_variance = np.var(right_widths)
@@ -349,35 +330,103 @@ def create_polygons(features, all_lanes):
             if right_variance > variance_cutoff:
                 start_width = right_widths[0]
                 end_width = right_widths[-1]
-                dw = (end_width - start_width) / float(n_pts - 1)
-                for i in range(n_pts):
+                dw = (end_width - start_width) / float(self.n_pts - 1)
+                for i in range(self.n_pts):
                     new_width = start_width + dw * i
-                    right_pts[i] = lane_pts[i] - new_width * normals[i]
+                    self.right_pts[i] = self.lane_pts[i] - new_width * self.normals[i]
 
-        if left_boundary_empty:
-            for i in range(n_pts):
-                boundary_pt = right_pts[i]
-                if boundary_pt is not None:
-                    left_pts[i] = lane_pts[i] - (boundary_pt - lane_pts[i])
+        # left_boundary_empty = all([p is None for p in self.left_pts])
+        # right_boundary_empty = all([p is None for p in self.right_pts])
 
-        if right_boundary_empty:
-            for i in range(n_pts):
-                boundary_pt = left_pts[i]
-                if boundary_pt is not None:
-                    right_pts[i] = lane_pts[i] - (boundary_pt - lane_pts[i])
+        # if left_boundary_empty:
+        #     for i in range(self.n_pts):
+        #         start_width = right_widths[0]
+        #         end_width = right_widths[-1]
+        #         dw = (end_width - start_width)/float(self.n_pts - 1)
+        #         for i in range(self.n_pts):
+        #             new_width = start_width + dw * i
+        #             self.left_pts[i] = self.lane_pts[i] + new_width * self.normals[i]
+        # if right_boundary_empty:
+        #     for i in range(self.n_pts):
+        #         start_width = left_widths[0]
+        #         end_width = left_widths[-1]
+        #         dw = (end_width - start_width)/float(self.n_pts - 1)
+        #         for i in range(self.n_pts):
+        #             new_width = start_width + dw * i
+        #             self.right_pts[i] = self.lane_pts[i] + new_width * self.normals[i]
+
+
+def create_polygons(features, all_lanes):
+    start = time.time()
+
+    # Create Lane objects
+    lanes: Dict[int, Lane] = dict()
+    for lane_obj, lane_id in all_lanes:
+        lane = Lane(lane_id, lane_obj.polyline)
+        lanes[lane_id] = lane
+
+    # Create lane connections
+    for lane_obj, lane_id in all_lanes:
+        lane = lanes[lane_id]
+        if lane_obj.left_neighbors:
+            for left_lane in lane_obj.left_neighbors:
+                lane.left_neighbors.append(lanes[left_lane.feature_id])
+        if lane_obj.right_neighbors:
+            for right_lane in lane_obj.right_neighbors:
+                lane.right_neighbors.append(lanes[right_lane.feature_id])
+        if lane_obj.entry_lanes:
+            for entry_lane in lane_obj.entry_lanes:
+                lane.entry_lanes.append(lanes[entry_lane])
+        if lane_obj.exit_lanes:
+            for exit_lane in lane_obj.exit_lanes:
+                lane.exit_lanes.append(lanes[exit_lane])
+
+    ids = [
+        81,
+        86,
+        88,
+        # 92,
+        # 93,
+        # 89,
+        # 80,
+        # 87,
+        # 96,
+        # 110,
+        # 109,
+    ]
+
+    for lane_id in ids:
+        lane_obj = features[lane_id]
+        lane = lanes[lane_id]
+        print(f"--- Lane {lane_id}")
+        # print([l.lane_id for l in lane.entry_lanes])
+        # print([l.lane_id for l in lane.exit_lanes])
+
+        lane.calculate_normals()
+        lane.compute_boundaries(lane_obj, features)
+        if lane.is_straight():
+            lane.fill_backward()
+            lane.fill_forward()
+            lane.correct_degenerate_cases()
 
         # assert(all([p is not None for p in left_pts]))
         # assert(all([p is not None for p in right_pts]))
+        # if not all([p is not None for p in lane.left_pts]):
+        #     print(f"Empty left boundary")
+        # if not all([p is not None for p in lane.right_pts]):
+        #     print(f"Empty right boundary")
 
-        if not all([p is not None for p in left_pts]):
-            print(f"Empty left boundary")
-        if not all([p is not None for p in right_pts]):
-            print(f"Empty right boundary")
+    # Assign anchor points
+    for lane_id in ids:
+        lane = lanes[lane_id]
+        lane.assign_anchor_points()
+        lane.correct_degenerate_cases()
 
-        # Create polygon
-        plot_lane(lane)
+    # Create polygons and plot
+    for lane_id in ids:
+        lane = lanes[lane_id]
         poly_xs, poly_ys = [], []
-        for p in left_pts + right_pts[::-1] + [left_pts[0]]:
+        for p in lane.left_pts + lane.right_pts[::-1] + [lane.left_pts[0]]:
             if p is not None:
                 poly_xs.append(p[0])
                 poly_ys.append(p[1])
@@ -385,16 +434,17 @@ def create_polygons(features, all_lanes):
         # plt.scatter(poly_xs, poly_ys, s=12, c="blue")
 
     # Plot boundaries
-    # for i in inds:
-    #     lane = features[i]
-    # # for lane, lane_id in all_lanes:
-    #     if lane.left_boundaries or lane.right_boundaries:
-    #         for name, lst in [("Left", list(lane.left_boundaries)), ("Right", list(lane.right_boundaries))]:
-    #             for b in lst:
-    #                 if b.boundary_type == 0:
-    #                     plot_road_edge(features[b.boundary_feature_id])
-    #                 else:
-    #                     plot_road_line(features[b.boundary_feature_id])
+    for i in ids:
+        lane_obj = features[i]
+        plot_lane(lane_obj)
+        # for lane, lane_id in all_lanes:
+        if lane_obj.left_boundaries or lane_obj.right_boundaries:
+            for name, lst in [("Left", list(lane_obj.left_boundaries)), ("Right", list(lane_obj.right_boundaries))]:
+                for b in lst:
+                    if b.boundary_type == 0:
+                        plot_road_edge(features[b.boundary_feature_id])
+                    else:
+                        plot_road_line(features[b.boundary_feature_id])
 
     end = time.time()
     elapsed = round((end - start) * 1000.0, 3)
@@ -424,6 +474,7 @@ def plot(path, scenario_id):
 
 def dump_plots(outdir, path):
     dataset = Waymo.read_dataset(path)
+    scenario = None
     for record in dataset:
         scenario = scenario_pb2.Scenario()
         scenario.ParseFromString(bytearray(record))
