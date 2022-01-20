@@ -240,7 +240,6 @@ class Lane:
                 if l.left_pts[-1] is not None:
                     print("Found anchor point for entry lane")
                     self.left_pts[0] = l.left_pts[-1]
-                    self.fill_interp_left()
                     break
         if self.left_pts[-1] is None:
             for l in self.exit_lanes:
@@ -248,9 +247,8 @@ class Lane:
                 if l.left_pts[0] is not None:
                     print("Found anchor point for exit lane")
                     self.left_pts[-1] = l.left_pts[0]
-                    self.fill_interp_left()
                     break
-
+        self.fill_interp_left()
         # Right
         if self.right_pts[0] is None:
             for l in self.entry_lanes:
@@ -258,7 +256,6 @@ class Lane:
                 if l.right_pts[-1] is not None:
                     print("Found anchor point for entry lane")
                     self.right_pts[0] = l.right_pts[-1]
-                    self.fill_interp_right()
                     break
 
         if self.right_pts[-1] is None:
@@ -267,8 +264,9 @@ class Lane:
                 if l.right_pts[0] is not None:
                     print("Found anchor point for exit lane")
                     self.right_pts[-1] = l.right_pts[0]
-                    self.fill_interp_right()
+
                     break
+        self.fill_interp_right()
 
     def fill_forward(self):
         for i in range(1, self.n_pts):
