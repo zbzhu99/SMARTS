@@ -258,6 +258,15 @@ class Lane:
                     print("Found anchor point for entry lane")
                     self.left_pts[0] = l.left_pts[-1]
                     break
+        if self.left_pts[0] is None:
+            for l in self.entry_lanes:
+                print(f"Checking entry lane: {l.lane_id}")
+                for i in range(len(l.left_pts), -1, -1):
+                    if l.left_pts[i] is not None:
+                        print("Found anchor point for entry lane")
+                        self.left_pts[0] = l.left_pts[i]
+                        break
+
         if self.left_pts[-1] is None:
             for l in self.exit_lanes:
                 print(f"Checking exit lane: {l.lane_id}")
@@ -265,6 +274,16 @@ class Lane:
                     print("Found anchor point for exit lane")
                     self.left_pts[-1] = l.left_pts[0]
                     break
+
+        if self.left_pts[-1] is None:
+            for l in self.exit_lanes:
+                print(f"Checking exit lane: {l.lane_id}")
+                for i in range(len(l.left_pts)):
+                    if l.left_pts[i] is not None:
+                        print("Found anchor point for exit lane")
+                        self.left_pts[-1] = l.left_pts[i]
+                        break
+
         self.fill_interp_left()
         # Right
         if self.right_pts[0] is None:
@@ -275,14 +294,31 @@ class Lane:
                     self.right_pts[0] = l.right_pts[-1]
                     break
 
+        if self.right_pts[0] is None:
+            for l in self.entry_lanes:
+                print(f"Checking entry lane: {l.lane_id}")
+                for i in range(len(l.right_pts), -1, -1):
+                    if l.right_pts[i] is not None:
+                        print("Found anchor point for entry lane")
+                        self.right_pts[0] = l.right_pts[i]
+                        break
+
         if self.right_pts[-1] is None:
             for l in self.exit_lanes:
                 print(f"Checking exit lane: {l.lane_id}")
                 if l.right_pts[0] is not None:
                     print("Found anchor point for exit lane")
                     self.right_pts[-1] = l.right_pts[0]
-
                     break
+
+        if self.right_pts[-1] is None:
+            for l in self.exit_lanes:
+                print(f"Checking exit lane: {l.lane_id}")
+                for i in range(len(l.right_pts)):
+                    if l.right_pts[i] is not None:
+                        print("Found anchor point for exit lane")
+                        self.right_pts[-1] = l.right_pts[i]
+                        break
         self.fill_interp_right()
 
     def fill_forward(self):
