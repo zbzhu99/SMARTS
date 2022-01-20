@@ -213,16 +213,6 @@ class Lane:
                                 break
 
     def fill_interp_left(self):
-        try:
-            assert self.left_pts[0] is not None
-        except AssertionError as e:
-            print(f"could not find entry anchor point for : {self.lane_id}")
-            raise e
-        try:
-            assert self.left_pts[-1] is not None
-        except AssertionError as e:
-            print(f"could not find exit anchor point for : {self.lane_id}")
-            raise e
         start_width = np.linalg.norm(self.left_pts[0] - self.lane_pts[0])
         end_width = np.linalg.norm(self.left_pts[-1] - self.lane_pts[-1])
         dw = (end_width - start_width) / float(self.n_pts)
@@ -231,17 +221,6 @@ class Lane:
             self.left_pts[i] = self.lane_pts[i] + new_width * self.normals[i]
 
     def fill_interp_right(self):
-        try:
-            assert self.right_pts[0] is not None
-        except AssertionError as e:
-            print(f"could not find entry anchor point for : {self.lane_id}")
-            raise e
-        try:
-            assert self.right_pts[-1] is not None
-        except AssertionError as e:
-            print(f"could not find exit anchor point for : {self.lane_id}")
-            raise e
-
         start_width = np.linalg.norm(self.right_pts[0] - self.lane_pts[0])
         end_width = np.linalg.norm(self.right_pts[-1] - self.lane_pts[-1])
         dw = (end_width - start_width) / float(self.n_pts)
