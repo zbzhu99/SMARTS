@@ -392,7 +392,6 @@ def create_polygons(features, all_lanes):
         87,
         96,
         110,
-        109,
     ]
 
     for lane_id in ids:
