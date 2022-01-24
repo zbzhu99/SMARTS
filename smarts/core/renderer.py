@@ -313,7 +313,7 @@ class Renderer:
         )
         camera_np.reparentTo(self._root_np)
 
-        # mask is set to make undesireable objects invisible to this camera
+        # mask is set to make undesirable objects invisible to this camera
         camera_np.node().setCameraMask(camera_np.node().getCameraMask() & mask)
 
         return Renderer.OffscreenCamera(camera_np, buffer, tex, self)
