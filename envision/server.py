@@ -220,7 +220,6 @@ class WebClientRunLoop:
                     self._seek = None
 
                 assert len(frames_to_send) > 0
-                print(len(frames_to_send), "len of frames to send .... ")
                 closed = self._push_frames_to_web_client(frames_to_send)
                 if closed:
                     self._log.debug("Socket closed, exiting")
@@ -420,7 +419,6 @@ class ModelFileHandler(FileHandler):
     """This model file handler serves vehicle and other models to the client."""
 
     def initialize(self):
-        print("Inside model file handler ---------------------")
         # We store the resource filenames as values in `path_map` and route them
         # through `importlib.resources` for resolution.
         super().initialize(
@@ -460,7 +458,6 @@ class MainHandler(tornado.web.RequestHandler):
 def make_app(scenario_dirs: Sequence, max_capacity_mb: float):
     """Create the envision web server application through composition of services."""
     with pkg_resources.path(web_dist, ".") as dist_path:
-        print(dist_path, "dist_path---------------")
         return tornado.web.Application(
             [
                 (r"/", MainHandler),

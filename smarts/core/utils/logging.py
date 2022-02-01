@@ -18,13 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import ctypes
-import logging
 import os
 import sys
 from contextlib import contextmanager
 from io import UnsupportedOperation
 from time import time
-from IPython import get_ipython
 
 
 @contextmanager
@@ -47,7 +45,7 @@ def isnotebook():
     """Determines if executing in ipython (Jupyter Notebook)"""
     try:
         shell = get_ipython().__class__.__name__
-        if shell == "ZMQInteractiveShell" or 'google.colab' in sys.modules:
+        if shell == "ZMQInteractiveShell" or "google.colab" in sys.modules:
             return True  # Jupyter notebook or qtconsole or Google Colab
     except NameError:
         pass
