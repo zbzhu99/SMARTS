@@ -30,7 +30,7 @@ import subprocess
 import sys
 from dataclasses import replace
 from pathlib import Path
-from typing import Any, Sequence, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union
 
 import cloudpickle
 
@@ -134,7 +134,8 @@ def gen_scenario(
         )
 
 
-def gen_map(scenario: str, map_spec: types.MapSpec, output_dir: str = None):
+def gen_map(scenario: str, map_spec: types.MapSpec, output_dir: Optional[str] = None):
+    """Saves a map spec to file."""
     output_path = os.path.join(output_dir or scenario, "map_spec.pkl")
     with open(output_path, "wb") as f:
         # we use cloudpickle here instead of pickle because the
@@ -145,11 +146,11 @@ def gen_map(scenario: str, map_spec: types.MapSpec, output_dir: str = None):
 def gen_traffic(
     scenario: str,
     traffic: types.Traffic,
-    name: str = None,
-    output_dir: str = None,
+    name: Optional[str] = None,
+    output_dir: Optional[str] = None,
     seed: int = 42,
     overwrite: bool = False,
-    map_spec: types.MapSpec = None,
+    map_spec: Optional[types.MapSpec] = None,
 ):
     """Generates the traffic routes for the given scenario. If the output directory is
     not provided, the scenario directory is used. If name is not provided the default is
@@ -174,7 +175,7 @@ def gen_social_agent_missions(
     name: str,
     seed: int = 42,
     overwrite: bool = False,
-    map_spec: types.MapSpec = None,
+    map_spec: Optional[types.MapSpec] = None,
 ):
     """Generates the social agent missions for the given scenario.
 
@@ -189,9 +190,11 @@ def gen_social_agent_missions(
             A short name for this grouping of social agents. Is also used as the name
             of the social agent traffic file
         seed:
-            The random seed to use when generating behaviour
+            The random seed to use when generating behavior
         overwrite:
             If to forcefully write over the previous existing output file
+        map_spec:
+            An optional map specification that takes precedence over scenario directory information.
     """
 
     # For backwards compatibility we support both a single value and a sequence
@@ -231,10 +234,10 @@ def gen_missions(
     missions: Sequence,
     seed: int = 42,
     overwrite: bool = False,
-    map_spec: types.MapSpec = None,
+    map_spec: Optional[types.MapSpec] = None,
 ):
     """Generates a route file to represent missions (a route per mission). Will create
-    the output_dir if it doesn't exist already. The ouput file will be named `missions`.
+    the output_dir if it doesn't exist already. The output file will be named `missions`.
 
     Args:
         scenario:
@@ -242,9 +245,11 @@ def gen_missions(
         missions:
             A sequence of missions for social agents to perform
         seed:
-            The random seed to use when generating behaviour
+            The random seed to use when generating behavior
         overwrite:
             If to forcefully write over the previous existing output file
+        map_spec:
+            An optional map specification that takes precedence over scenario directory information.
     """
 
     saved = _gen_missions(
@@ -272,7 +277,7 @@ def gen_group_laps(
     num_laps: int = 3,
     seed: int = 42,
     overwrite: bool = False,
-    map_spec: types.MapSpec = None,
+    map_spec: Optional[types.MapSpec] = None,
 ):
     """Generates missions that start with a grid offset at the startline and do a number
     of laps until finishing.
@@ -328,6 +333,13 @@ def gen_group_laps(
 
 
 def gen_bubbles(scenario: str, bubbles: Sequence[types.Bubble]):
+    """Generates 'bubbles' in the scenario that capture vehicles for actors.
+    Args:
+        scenario:
+            The scenario directory
+        bubbles:
+            The bubbles to add to the scenario.
+    """
     output_path = os.path.join(scenario, "bubbles.pkl")
     with open(output_path, "wb") as f:
         pickle.dump(bubbles, f)
@@ -350,7 +362,7 @@ def _gen_missions(
     output_dir: str,
     seed: int = 42,
     overwrite: bool = False,
-    map_spec: types.MapSpec = None,
+    map_spec: Optional[types.MapSpec] = None,
 ):
     """Generates a route file to represent missions (a route per mission). Will
     create the output_dir if it doesn't exist already.
@@ -429,8 +441,22 @@ def _validate_entry_tactic(mission):
 
 
 def gen_traffic_histories(
-    scenario: str, histories_datasets, overwrite: bool, map_spec: types.MapSpec = None
+    scenario: str,
+    histories_datasets: Sequence[str],
+    overwrite: bool,
+    map_spec: Optional[types.MapSpec] = None,
 ):
+    """Converts traffic history to a format that SMARTS can use.
+    Args:
+        scenario:
+            The scenario directory
+        histories_datasets:
+            A sequence of traffic history files.
+        overwrite:
+            If to forcefully write over the previous existing output file
+        map_spec:
+            An optional map specification that takes precedence over scenario directory information.
+    """
     # For SUMO maps, we need to check if the map was shifted and translate the vehicle positions if so
     xy_offset = None
     if not map_spec:

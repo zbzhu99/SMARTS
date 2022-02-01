@@ -1,5 +1,6 @@
 from os import path
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 this_dir = path.abspath(path.dirname(__file__))
 with open(
@@ -12,7 +13,7 @@ setup(
     description="Scalable Multi-Agent RL Training School",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version="0.4.18",
+    version="0.5.1",
     packages=find_packages(exclude=("tests", "examples")),
     include_package_data=True,
     zip_safe=True,
@@ -24,12 +25,11 @@ setup(
         "setuptools>=41.0.0,!=50.0",
         "cached-property>=1.5.2",
         "click>=8.0.3",  # used in scl
-        "gym==0.18.3",
+        "gym==0.19.0",
         "numpy>=1.19.5",
         "pandas>=1.3.4",
         "psutil>=5.8.0",
         "pybullet==3.0.6",
-        "pynput>=1.7.4",  # Used by HumanKeyboardAgent
         "rich>=10.13.0",
         "rtree>=0.9.7",  # Used by sumolib
         "sh>=1.14.2",
@@ -55,8 +55,25 @@ setup(
         "protobuf>=3.19.1",
         "PyYAML>=6.0",
         "twisted>=21.7.0",
+        "opendrive2lanelet",
     ],
     extras_require={
+        "camera-obs": ["Panda3D==1.10.9", "panda3d-gltf==0.13"],
+        "dev": [
+            "black==20.8b1",
+            "grpcio-tools==1.32.0",
+            "isort==5.7.0",
+            "pre-commit==2.16.0",
+            "pylint>=2.12.2",
+            "pytype>=2022.1.13",
+        ],
+        "doc": [
+            "sphinx>=4.4.0",
+            "sphinx-rtd-theme>=1.0.0",
+            "sphinxcontrib-apidoc>=0.3.0",
+        ],
+        "extras": ["pynput>=1.7.4"],  # Used by HumanKeyboardAgent
+        "ros": ["catkin_pkg", "rospkg"],
         "test": [
             # The following are for testing
             "ipykernel>=6.5.0",
@@ -70,32 +87,12 @@ setup(
             "tensorflow>=2.4.0",  # For rllib tests
         ],
         "train": [
-            "ray[rllib]==1.0.1.post1",  # We use Ray for our multiprocessing needs
-            # XXX: TF requires specific version of scipy
-            "scipy==1.4.1",
+            "ray[rllib]==1.0.1.post1",
             "tensorflow>=2.4.0",
             "torch==1.4.0",
             "torchvision==0.5.0",
         ],
-        "dev": [
-            "black==20.8b1",
-            "grpcio-tools==1.32.0",
-            "isort==5.7.0",
-            "sphinx",
-            "sphinx-rtd-theme",
-            "sphinxcontrib-apidoc",
-        ],
-        "camera-obs": [
-            "Panda3D==1.10.9",
-            "panda3d-gltf==0.13",
-        ],
-        "ros": [
-            "catkin_pkg",
-            "rospkg",
-        ],
-        "waymo": [
-            "waymo-open-dataset-tf-2-2-0",
-        ],
+        "waymo": ["waymo-open-dataset-tf-2-2-0"],
     },
     entry_points={"console_scripts": ["scl=cli.cli:scl"]},
 )
