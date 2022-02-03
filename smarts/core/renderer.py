@@ -83,6 +83,7 @@ class _ShowBaseInstance(ShowBase):
         """Initializer for the purposes of maintaining a singleton of this class."""
         self._render_lock = Lock()
         try:
+            print("BRUHHHH")
             # There can be only 1 ShowBase instance at a time.
             super().__init__(windowType="offscreen")
             print("HEREEEEEEEEEEEEEEEEEEEEEEE")
