@@ -163,6 +163,7 @@ class Renderer:
         """Initialize this renderer."""
         self._root_np = self._showbase_instance.setup_sim_root(self._simid)
         self._vehicles_np = self._root_np.attachNewNode("vehicles")
+        print(self._showbase_instance)
 
         map_path = scenario.map_glb_filepath
         if self._road_map_np:
