@@ -82,6 +82,7 @@ class _ShowBaseInstance(ShowBase):
     def init(self):
         """Initializer for the purposes of maintaining a singleton of this class."""
         self._render_lock = Lock()
+        print("IN INIT")
         try:
             print("BRUHHHH")
             # There can be only 1 ShowBase instance at a time.
