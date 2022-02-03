@@ -71,9 +71,12 @@ class _ShowBaseInstance(ShowBase):
             # have makeTextureBuffer create a visible window
             # loadPrcFileData('', 'show-buffers true')
         it = cls.__dict__.get("__it__")
+
+        print("in __new__")
         if it is None:
             cls.__it__ = it = object.__new__(cls)
             it.init()
+            print("init called")
         return it
 
     def __init__(self):
