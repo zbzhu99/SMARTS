@@ -93,6 +93,7 @@ class _ShowBaseInstance(ShowBase):
             self.setFrameRateMeter(False)
 
         except Exception as e:
+            print("HEYO")
             print(e)
             raise e
 
@@ -168,6 +169,7 @@ class Renderer:
                 "road_map={} already exists. Removing and adding a new "
                 "one from glb_path={}".format(self._road_map_np, map_path)
             )
+        print("HI")
         print("fifth wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww")    
         map_np = self._showbase_instance.loader.loadModel(map_path, noCache=True)
         print("sixth wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww")
