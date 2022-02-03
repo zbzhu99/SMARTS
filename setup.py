@@ -78,6 +78,8 @@ setup(
             # The following are for testing
             "ipykernel>=6.8.0",
             "jupyter-client==6.1.12",
+            "opencv-python==4.1.2.30",
+            "opencv-python-headless==4.1.2.30",
             "pytest>=6.2.5",
             "pytest-benchmark>=3.4.1",
             "pytest-cov>=3.0.0",
@@ -87,6 +89,8 @@ setup(
             "tensorflow>=2.4.0",  # For rllib tests
         ],
         "train": [
+            "opencv-python==4.1.2.30",
+            "opencv-python-headless==4.1.2.30",
             "ray[rllib]==1.0.1.post1",
             "tensorflow>=2.4.0",
             "torch==1.4.0",
