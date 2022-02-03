@@ -85,7 +85,7 @@ class _ShowBaseInstance(ShowBase):
         try:
             # There can be only 1 ShowBase instance at a time.
             super().__init__(windowType="offscreen")
-
+            print("HEREEEEEEEEEEEEEEEEEEEEEEE")
             gltf.patch_loader(self.loader)
             self.setBackgroundColor(0, 0, 0, 1)
 
@@ -93,6 +93,7 @@ class _ShowBaseInstance(ShowBase):
             self.setFrameRateMeter(False)
 
         except Exception as e:
+            print(e)
             raise e
 
     def destroy(self):
