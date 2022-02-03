@@ -153,6 +153,7 @@ class Renderer:
         # Note: Each instance of the SMARTS simulation will have its own Renderer,
         # but all Renderer objects share the same ShowBaseInstance.
         self._showbase_instance = _ShowBaseInstance()
+        print("showbase made")
 
     @property
     def id(self):
