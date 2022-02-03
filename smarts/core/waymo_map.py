@@ -35,14 +35,6 @@ from .road_map import RoadMap, Waypoint
 from .utils.file import read_tfrecord_file
 
 
-def convert_polyline(polyline) -> Tuple[List[float], List[float]]:
-    xs, ys = [], []
-    for p in polyline:
-        xs.append(p.x)
-        ys.append(p.y)
-    return xs, ys
-
-
 class RoadLineType(Enum):
     UNKNOWN = 0
     BROKEN_SINGLE_WHITE = 1
@@ -106,8 +98,7 @@ class WaymoMap(RoadMap):
                 self, spacing=map_spec.lanepoint_spacing
             )
 
-    @staticmethod
-    def _load(path, scenario_id):
+    def _load(self, path, scenario_id):
         scenario = None
         dataset = read_tfrecord_file(path)
         for record in dataset:
@@ -124,19 +115,25 @@ class WaymoMap(RoadMap):
         features = {"lane": [], "road_line": [], "road_edge": [], "stop_sign": [], "crosswalk": [],
                     "speed_bump": []}
 
-        lanes = []
         for i in range(len(scenario.map_features)):
             map_feature = scenario.map_features[i]
             key = map_feature.WhichOneof("feature_data")
             if key is not None:
-                features[key].append(getattr(map_feature, key))
+                features[key].append(getattr(map_feature, key), map_feature.id)
 
-        return scenario.scenario_id, features, lanes
+        for lane in features["lane"]:
+            lane_center = lane[0]
+            lane_id = lane[1]
+            self._lanes[lane_id] = WaymoMap.Lane(self, lane_id, lane_center)
+        return scenario.scenario_id, features
+
 
     @classmethod
     def from_spec(cls, map_spec: MapSpec):
         """Generate a road network from the given map specification."""
         pass  # TODO
+
+
 
     @property
     def source(self) -> str:
@@ -183,3 +180,43 @@ class WaymoMap(RoadMap):
         return self._surfaces.get(surface_id)
 
     # TODO, etc.
+
+    class Lane(RoadMap.Lane, Surface):
+        lane_id: int
+        lane_pts: List
+
+        def __init__(self, road_map, lane_id, lane_center):
+            super().__init__(lane_id, road_map)
+            self.lane_id = lane_id
+            self.lane_pts = [np.array([p.x, p.y]) for p in lane_center.polyline]
+            self.entry_lanes = [entry_lane for entry_lane in lane_center.entry_lanes]
+            self.exit_lanes = [exit_lane for exit_lane in lane_center.exit_lanes]
+            self.left_boundaries = self.extract_boundaries(lane_center.left_boundaries)
+            self.right_boundaries = self.extract_boundaries(lane_center.right_boundaries)
+            self.left_neighbors = self.extract_neighbors(lane_center.left_neighbors)
+            self.right_neighbors = self.extract_neighbors(lane_center.right_neighbors)
+
+        @staticmethod
+        def extract_neighbours(self, neighbours):
+            nbs = []
+            for i in range(len(neighbours)):
+                nb = dict()
+                nb['id'] = neighbours[i].feature_id
+                nb['indexes'] = [
+                    neighbours[i].self_start_index, neighbours[i].self_end_index, neighbours[i].neighbor_start_index, neighbours[i].neighbor_end_index
+                ]
+                nb['boundaries'] = self.extract_boundaries(neighbours.boundaries)
+                nbs.append(nb)
+            return nbs
+
+        @staticmethod
+        def extract_boundaries(boundaries):
+            bds = []
+            for i in range(len(boundaries)):
+                boundary = dict()
+                boundary['index'] = [boundaries[i].lane_start_index, boundaries[i].lane_end_index]
+                boundary['type'] = RoadLineType(boundaries[i].boundary_type)
+                boundary['id'] = boundaries[i].boundary_feature_id
+                bds.append(boundary)
+
+            return bds
