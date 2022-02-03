@@ -43,7 +43,7 @@ setup(
         # The following is for both SS and Envision
         "cloudpickle>=1.3.0,<1.4.0",
         # The following are for /envision
-        "tornado~=5.1.0",
+        "tornado>=6.1",
         "websocket-client>=1.2.1",
         # The following is used for imitation learning and envision
         "ijson>=3.1.4",
@@ -55,7 +55,7 @@ setup(
         "protobuf>=3.19.1",
         "PyYAML>=6.0",
         "twisted>=21.7.0",
-        "opendrive2lanelet",
+        "opendrive2lanelet>=1.2.1",
     ],
     extras_require={
         "camera-obs": ["Panda3D==1.10.9", "panda3d-gltf==0.13"],
@@ -76,12 +76,12 @@ setup(
         "ros": ["catkin_pkg", "rospkg"],
         "test": [
             # The following are for testing
-            "ipykernel>=6.5.0",
+            "ipykernel>=6.8.0",
             "jupyter-client==6.1.12",
             "pytest>=6.2.5",
             "pytest-benchmark>=3.4.1",
             "pytest-cov>=3.0.0",
-            "pytest-notebook>=0.6.1",
+            "pytest-notebook==0.7.0",
             "pytest-xdist>=2.4.0",
             "ray[rllib]==1.0.1.post1",  # We use Ray for our multiprocessing needs
             "tensorflow>=2.4.0",  # For rllib tests
