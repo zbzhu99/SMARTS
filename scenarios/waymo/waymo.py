@@ -493,7 +493,7 @@ def create_polygons(features, all_lanes):
     #     lane.correct_degenerate_cases()
 
     # Create polygons and plot
-    for lane_id in ids:
+    for lane_id in lanes:
         lane = lanes[lane_id]
         lane_poly = lane.get_lane_shape()
         poly_xs, poly_ys = lane_poly.exterior.coords.xy
@@ -502,6 +502,7 @@ def create_polygons(features, all_lanes):
         #         poly_xs.append(p[0])
         #         poly_ys.append(p[1])
         plt.plot(poly_xs, poly_ys, "b-")
+        plot_lane(lane.lane_obj)
         # plt.scatter(poly_xs, poly_ys, s=12, c="blue")
 
     # Plot boundaries
