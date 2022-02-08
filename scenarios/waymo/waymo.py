@@ -235,7 +235,7 @@ class Lane:
             boundary_width = self.compute_width()
             width = max(sum(boundary_width[0]), sum(boundary_width[1]), 3.5)
             print(width)
-            return width
+            return 3.5
 
         dist_to_left_lane = 0
         dist_to_right_lane = 0
