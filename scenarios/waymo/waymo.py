@@ -233,14 +233,13 @@ class Lane:
 
         if len(right_lanes) + len(left_lanes) == 0:
             boundary_width = self.compute_width()
-
             return max(sum(boundary_width[0]), sum(boundary_width[1]), 6)
 
         dist_to_left_lane = 0
         dist_to_right_lane = 0
 
         if len(right_lanes) > 0:
-            right_lane, _ = self.map_features[right_lanes[0].feature_id]
+            right_lane = self.map_features[right_lanes[0].feature_id]
             self_start = right_lanes[0].self_start_index
             neighbor_start = right_lanes[0].neighbor_start_index
             right_l_polyline = np.array([[p.x, p.y] for p in right_lane.polyline])
@@ -249,7 +248,7 @@ class Lane:
             dist_to_right_lane = norm(n_point[0] - self_point[0], n_point[1] - self_point[1])
 
         if len(left_lanes) > 0:
-            left_lane, _ = self.map_features[left_lanes[-1].feature_id]
+            left_lane = self.map_features[left_lanes[-1].feature_id]
             self_start = left_lanes[-1].self_start_index
             neighbor_start = left_lanes[-1].neighbor_start_index
             left_l_polyline = np.array([[p.x, p.y] for p in left_lane.polyline])
