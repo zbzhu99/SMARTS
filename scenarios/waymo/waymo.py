@@ -233,7 +233,9 @@ class Lane:
 
         if len(right_lanes) + len(left_lanes) == 0:
             boundary_width = self.compute_width()
-            return max(sum(boundary_width[0]), sum(boundary_width[1]), 4)
+            width = max(sum(boundary_width[0]), sum(boundary_width[1]), 4)
+            print(width)
+            return width
 
         dist_to_left_lane = 0
         dist_to_right_lane = 0
@@ -256,7 +258,9 @@ class Lane:
             self_point = self.lane_pts[self_start]
             dist_to_left_lane = norm(n_point[0] - self_point[0], n_point[1] - self_point[1])
 
-        return max(dist_to_left_lane, dist_to_right_lane, 3.5)
+        width = max(dist_to_left_lane, dist_to_right_lane, 3.5)
+        print(width)
+        return width
 
     def get_lane_shape(self):
         lane_width = self.get_lane_width()
