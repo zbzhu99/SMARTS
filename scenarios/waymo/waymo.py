@@ -245,7 +245,7 @@ class Lane:
             right_l_polyline = np.array([[p.x, p.y] for p in right_lane.polyline])
             n_point = right_l_polyline[neighbor_start]
             self_point = self.lane_pts[self_start]
-            dist_to_right_lane = norm(n_point[0] - self_point[0], n_point[1] - self_point[1])
+            dist_to_right_lane = np.linalg.norm(n_point[0] - self_point[0], n_point[1] - self_point[1])
 
         if len(left_lanes) > 0:
             left_lane = self.map_features[left_lanes[-1].feature_id]
@@ -254,7 +254,7 @@ class Lane:
             left_l_polyline = np.array([[p.x, p.y] for p in left_lane.polyline])
             n_point = left_l_polyline[neighbor_start]
             self_point = self.lane_pts[self_start]
-            dist_to_left_lane = np.norm(n_point[0] - self_point[0], n_point[1] - self_point[1])
+            dist_to_left_lane = np.linalg.norm(n_point[0] - self_point[0], n_point[1] - self_point[1])
 
         return max(dist_to_left_lane, dist_to_right_lane, 4)
 
