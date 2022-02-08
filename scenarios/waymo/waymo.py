@@ -232,7 +232,9 @@ class Lane:
         left_lanes = self.lane_obj.left_neighbors
 
         if len(right_lanes) + len(left_lanes) == 0:
-            return max(sum(self.compute_width()), 6)
+            boundary_width = self.compute_width()
+
+            return max(sum(boundary_width[0]), sum(boundary_width[1]), 6)
 
         dist_to_left_lane = 0
         dist_to_right_lane = 0
