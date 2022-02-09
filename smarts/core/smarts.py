@@ -1350,7 +1350,7 @@ class SMARTS:
                 traffic[v.vehicle_id] = envision_types.TrafficActorState(
                     name=self._agent_manager.agent_name(agent_id),
                     actor_type=actor_type,
-                    vehicle_type=envision_types.VehicleType.Car,
+                    vehicle_type=envision_types.VehicleType.Passenger,
                     position=tuple(v.pose.position),
                     heading=float(v.pose.heading),
                     speed=v.speed,
@@ -1380,7 +1380,7 @@ class SMARTS:
                 )
                 traffic[v.vehicle_id] = envision_types.TrafficActorState(
                     actor_type=envision_types.TrafficActorType.SocialVehicle,
-                    vehicle_type=veh_type,
+                    vehicle_type=envision_types.VehicleType(veh_type),
                     position=tuple(v.pose.position),
                     heading=float(v.pose.heading),
                     speed=v.speed,
