@@ -408,6 +408,10 @@ class WaymoMap(RoadMap):
         def speed_limit(self) -> float:
             return self._speed_limit
 
+        @property
+        def is_drivable(self) -> bool:
+            return True
+
         @lru_cache(maxsize=8)
         def offset_along_lane(self, world_point: Point) -> float:
             return offset_along_shape(world_point[:2], self._lane_pts)

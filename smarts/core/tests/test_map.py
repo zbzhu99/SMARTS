@@ -672,15 +672,29 @@ def test_waymo_map():
     l1 = road_map.lane_by_id("100")
     assert l1
     assert l1.lane_id == "100"
+    assert l1.is_drivable
     assert round(l1.length, 2) == 124.48
     assert l1.speed_limit == 13.4112
     assert set(l.lane_id for l in l1.incoming_lanes) == {"101", "110", "105"}
-    assert set(l.lane_id for l in l1.outgoing_lanes) == {
-        "58_0_R_-1",
-        "59_0_R_-1",
-        "60_0_R_-1",
-    }
+    assert set(l.lane_id for l in l1.outgoing_lanes) == set()
 
+    l1_vector = l1.vector_at_offset(50.01)
+    l1_vector = l1_vector.tolist()
+    assert l1_vector == [-0.9999973500028005, -0.0020437969740241257, 0.0]
+
+    # point on lane
+    # point = (31.0, 2.0, 0)
+    # refline_pt = l1.to_lane_coord(point)
+    # assert round(refline_pt.s, 2) == 44.02
+    # assert round(refline_pt.t, 2) == -0.31
+    #
+    #     offset = refline_pt.s
+    #     width, conf = l0.width_at_offset(offset)
+    #     assert round(width, 2) == 3.12
+    #     assert conf == 1.0
+    #     assert round(l0.curvature_radius_at_offset(offset), 2) == -291.53
+    #     assert l0.contains_point(point)
+    #     assert l0.road.contains_point(point)
 
 # XXX: The below is just for testing. Remove before merging.
 
