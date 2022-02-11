@@ -672,8 +672,7 @@ def test_waymo_map():
 
     l1 = road_map.lane_by_id("100")
     assert l1
-    # leftmost lane
-    assert l1.length == 55.6
+    assert round(l1.length, 2) == 124.48
     assert l1.speed_limit == 16.67
     assert set(l.lane_id for l in l1.incoming_lanes) == set()
     assert set(l.lane_id for l in l1.outgoing_lanes) == {
