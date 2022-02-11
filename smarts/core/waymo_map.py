@@ -404,6 +404,7 @@ class WaymoMap(RoadMap):
                 for exit_lanes in self._lane_feat.exit_lanes
             ]
 
+        @property
         def speed_limit(self) -> float:
             return self._speed_limit
 
