@@ -680,7 +680,7 @@ def test_waymo_map():
 
     l1_vector = l1.vector_at_offset(50.01)
     l1_vector = l1_vector.tolist()
-    assert l1_vector == [-0.9999973500028005, -0.0020437969740241257, 0.0]
+    assert l1_vector == [-0.5304760093854384, -0.8476999406939285, 0.0]
 
     # point on lane
     # point = (31.0, 2.0, 0)
