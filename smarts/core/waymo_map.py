@@ -142,7 +142,18 @@ class WaymoMap(RoadMap):
     @cached_property
     def bounding_box(self) -> BoundingBox:
         """Get the minimal axis aligned bounding box that contains all map geometry."""
-        pass  # TODO
+        x_mins, y_mins, x_maxs, y_maxs = [], [], [], []
+        for lane_id in self._lanes:
+            lane = self._lanes[lane_id]
+            x_mins.append(lane.bounding_box.min_pt.x)
+            y_mins.append(lane.bounding_box.min_pt.y)
+            x_maxs.append(lane.bounding_box.max_pt.x)
+            y_maxs.append(lane.bounding_box.max_pt.y)
+
+        return BoundingBox(
+            min_pt=Point(x=min(x_mins), y=min(y_mins)),
+            max_pt=Point(x=max(x_maxs), y=max(y_maxs)),
+        )
 
     @property
     def scale_factor(self) -> float:

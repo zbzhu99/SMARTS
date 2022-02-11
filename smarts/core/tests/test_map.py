@@ -668,6 +668,7 @@ def test_waymo_map():
     for lane_id, lane in road_map._lanes.items():
         assert lane.length > 0
         assert lane.lane_id
+        print(lane_id)
 
 
 # XXX: The below is just for testing. Remove before merging.
