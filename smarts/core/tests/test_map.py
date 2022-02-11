@@ -666,7 +666,6 @@ def test_waymo_map():
     assert isinstance(road_map, WaymoMap)
     assert len(road_map._lanes) > 0
     for lane_id, lane in road_map._lanes.items():
-        print(lane_id)
         assert lane.length > 0
         assert lane.lane_id
 
