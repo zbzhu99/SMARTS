@@ -671,9 +671,10 @@ def test_waymo_map():
 
     l1 = road_map.lane_by_id("100")
     assert l1
+    assert l1.lane_id == "100"
     assert round(l1.length, 2) == 124.48
     assert l1.speed_limit == 13.4112
-    assert set(l.lane_id for l in l1.incoming_lanes) == set()
+    assert set(l.lane_id for l in l1.incoming_lanes) == {"101", "110", "105"}
     assert set(l.lane_id for l in l1.outgoing_lanes) == {
         "58_0_R_-1",
         "59_0_R_-1",

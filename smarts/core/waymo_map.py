@@ -392,7 +392,7 @@ class WaymoMap(RoadMap):
         def incoming_lanes(self) -> List[RoadMap.Lane]:
             """Lanes leading into this lane."""
             return [
-                self._map.lane_by_id(entry_lane)
+                self._map.lane_by_id(str(entry_lane))
                 for entry_lane in self._lane_feat.entry_lanes
             ]
 
@@ -400,7 +400,7 @@ class WaymoMap(RoadMap):
         def outgoing_lanes(self) -> List[RoadMap.Lane]:
             """Lanes leading out of this lane."""
             return [
-                self._map.lane_by_id(exit_lanes)
+                self._map.lane_by_id(str(exit_lanes))
                 for exit_lanes in self._lane_feat.exit_lanes
             ]
 
