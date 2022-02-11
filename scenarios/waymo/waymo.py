@@ -504,7 +504,10 @@ def create_polygons(features, all_lanes):
         #     if p is not None:
         #         poly_xs.append(p[0])
         #         poly_ys.append(p[1])
-        plt.plot(poly_xs, poly_ys, "b-")
+        if lane_id == str(100):
+            plt.plot(poly_xs, poly_ys, "r-")
+        else:
+            plt.plot(poly_xs, poly_ys, "b-")
         plot_lane(lane.lane_obj)
         # plt.scatter(poly_xs, poly_ys, s=12, c="blue")
 
