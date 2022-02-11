@@ -49,7 +49,7 @@ class WaymoMap(RoadMap):
     """A map associated with a Waymo dataset"""
 
     DEFAULT_LANE_SPEED = 16.67  # in m/s
-    DEFAULT_LANE_WIDTH = 3.2
+    DEFAULT_LANE_WIDTH = 3.5
 
     def __init__(self, map_spec: MapSpec, waymo_scenario):
         self._log = logging.getLogger(self.__class__.__name__)
@@ -205,7 +205,7 @@ class WaymoMap(RoadMap):
             self._n_pts = len(self._lane_pts)
             self._left_widths = [0] * self._n_pts
             self._right_widths = [0] * self._n_pts
-            self._polygon = None
+            self._lane_polygon = None
 
         def _calculate_normals(self) -> Sequence[np.ndarray]:
             normals = [None] * self._n_pts
@@ -358,8 +358,11 @@ class WaymoMap(RoadMap):
                 self._right_widths[0],
                 self._right_widths[-1],
             )
+
             if max_width == 0:
-                max_width = 3
+                max_width = WaymoMap.DEFAULT_LANE_WIDTH / 2
+
+            self._lane_width = max_width * 2
 
             new_left_pts = [None] * self._n_pts
             new_right_pts = [None] * self._n_pts
@@ -373,7 +376,7 @@ class WaymoMap(RoadMap):
                 if p is not None:
                     xs.append(p[0])
                     ys.append(p[1])
-            self._polygon = Polygon(list(zip(xs, ys)))
+            self._lane_polygon = Polygon(list(zip(xs, ys)))
 
         @property
         def lane_id(self) -> str:

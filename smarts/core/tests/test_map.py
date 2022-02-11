@@ -684,19 +684,17 @@ def test_waymo_map():
     assert l1_vector == [-0.5304760093854384, -0.8476999406939285, 0.0]
 
     # point on lane
-    assert l1.width_at_offset(1.0) == 3.5
     point = (-2764.5, 2714.0, 0)
     refline_pt = l1.to_lane_coord(point)
     assert round(refline_pt.s, 2) == 44.02
     assert round(refline_pt.t, 2) == -0.31
-    #
-    #     offset = refline_pt.s
-    #     width, conf = l0.width_at_offset(offset)
-    #     assert round(width, 2) == 3.12
-    #     assert conf == 1.0
-    #     assert round(l0.curvature_radius_at_offset(offset), 2) == -291.53
-    #     assert l0.contains_point(point)
-    #     assert l0.road.contains_point(point)
+
+    offset = refline_pt.s
+    width, conf = l1.width_at_offset(offset)
+    assert round(width, 2) == 3.12
+    assert conf == 1.0
+    assert round(l1.curvature_radius_at_offset(offset), 2) == -291.53
+    assert l1.contains_point(point)
 
 # XXX: The below is just for testing. Remove before merging.
 
