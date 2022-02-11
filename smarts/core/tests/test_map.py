@@ -675,6 +675,7 @@ def test_waymo_map():
     assert l1.is_drivable
     assert round(l1.length, 2) == 124.48
     assert l1.speed_limit == 13.4112
+
     assert set(l.lane_id for l in l1.incoming_lanes) == {"101", "110", "105"}
     assert set(l.lane_id for l in l1.outgoing_lanes) == set()
 
@@ -683,10 +684,11 @@ def test_waymo_map():
     assert l1_vector == [-0.5304760093854384, -0.8476999406939285, 0.0]
 
     # point on lane
-    # point = (31.0, 2.0, 0)
-    # refline_pt = l1.to_lane_coord(point)
-    # assert round(refline_pt.s, 2) == 44.02
-    # assert round(refline_pt.t, 2) == -0.31
+    assert l1.width_at_offset(1.0) == 3.5
+    point = (-2764.5, 2714.0, 0)
+    refline_pt = l1.to_lane_coord(point)
+    assert round(refline_pt.s, 2) == 44.02
+    assert round(refline_pt.t, 2) == -0.31
     #
     #     offset = refline_pt.s
     #     width, conf = l0.width_at_offset(offset)
