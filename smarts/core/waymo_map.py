@@ -202,7 +202,7 @@ class WaymoMap(RoadMap):
                 self._speed_limit = WaymoMap.DEFAULT_LANE_SPEED
 
             # Geometry
-            self._n_pts = len(self._lane_pts)
+            self._n_pts = self._lane_pts.size
             self._left_widths = [0] * self._n_pts
             self._right_widths = [0] * self._n_pts
             self._lane_polygon = None
