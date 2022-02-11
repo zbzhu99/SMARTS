@@ -684,7 +684,7 @@ def test_waymo_map():
     assert l1_vector == [-0.5304760093854384, -0.8476999406939285, 0.0]
 
     # point on lane
-    point = (-2764.5, 2714.0, 0)
+    point = (2714.0, -2764.5, 0)
     refline_pt = l1.to_lane_coord(point)
     assert round(refline_pt.s, 2) == 44.02
     assert round(refline_pt.t, 2) == -0.31

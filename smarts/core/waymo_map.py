@@ -192,7 +192,7 @@ class WaymoMap(RoadMap):
             self._lane_id = lane_id
             self._lane_feat = lane_feat
             # XXX: why np.array?  i.e., should we use smarts.core.coordinates.Point here instead?
-            self._lane_pts = [np.array([p.x, p.y]) for p in lane_feat.polyline]
+            self._lane_pts = np.array([p.x, p.y] for p in lane_feat.polyline)
             self._lane_width = None
             self._bounding_box = None
 
