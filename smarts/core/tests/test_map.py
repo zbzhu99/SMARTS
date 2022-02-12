@@ -693,7 +693,7 @@ def test_waymo_map():
     width, conf = l1.width_at_offset(offset)
     assert round(width, 2) == 4.43
     assert conf == 1.0
-    assert round(l1.curvature_radius_at_offset(offset), 2) == -291.53
+    assert round(l1.curvature_radius_at_offset(offset), 2) == -3136.8
     assert l1.contains_point(point)
 
 # XXX: The below is just for testing. Remove before merging.
