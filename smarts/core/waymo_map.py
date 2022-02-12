@@ -376,7 +376,7 @@ class WaymoMap(RoadMap):
                 if p is not None:
                     xs.append(p[0])
                     ys.append(p[1])
-            self._lane_polygon = Polygon(list(zip(xs, ys)))
+            self._lane_polygon = list(zip(xs, ys))
 
         @property
         def lane_id(self) -> str:
@@ -453,7 +453,7 @@ class WaymoMap(RoadMap):
         @cached_property
         def bounding_box(self) -> Optional[BoundingBox]:
             """Get the minimal axis aligned bounding box that contains all geometry in this lane."""
-            x_coordinates, y_coordinates = zip(*self.lane_polygon)
+            x_coordinates, y_coordinates = zip(*self._lane_polygon)
             self._bounding_box = BoundingBox(
                 min_pt=Point(x=min(x_coordinates), y=min(y_coordinates)),
                 max_pt=Point(x=max(x_coordinates), y=max(y_coordinates)),
@@ -547,7 +547,7 @@ class WaymoMap(RoadMap):
 
         for i in self._lane_rtree.intersection((x - r, y - r, x + r, y + r)):
             lane = all_lanes[i]
-            d = distance_point_to_polygon((x, y), lane.lane_polygon)
+            d = distance_point_to_polygon((x, y), lane._lane_polygon)
             if d < r:
                 neighboring_lanes.append((lane, d))
         return neighboring_lanes

@@ -760,8 +760,10 @@ if __name__ == "__main__":
     for lane_id, lane in road_map._lanes.items():
         plot_lane(lane._lane_feat)
         # plot_boundaries(lane_feat, features)
-        xs = [x for x in lane._polygon.exterior.coords.xy[0]]
-        ys = [y for y in lane._polygon.exterior.coords.xy[1]]
+        xs, ys = [], []
+        for x, y in lane._lane_polygon:
+            xs.append(x)
+            ys.append(y)
         plt.plot(xs, ys, "b-")
 
     mng = plt.get_current_fig_manager()
