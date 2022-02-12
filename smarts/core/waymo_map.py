@@ -193,6 +193,7 @@ class WaymoMap(RoadMap):
             self._lane_feat = lane_feat
             # XXX: why np.array?  i.e., should we use smarts.core.coordinates.Point here instead?
             self._lane_pts = [np.array([p.x, p.y]) for p in lane_feat.polyline]
+            self._centerline_pts = [(p.x, p.y) for p in lane_feat.polyline]
             self._lane_width = None
             self._bounding_box = None
 
@@ -211,7 +212,6 @@ class WaymoMap(RoadMap):
             normals = [None] * self._n_pts
             for i in range(self._n_pts):
                 p = self._lane_pts[i]
-                dp = None
                 if i < self._n_pts - 1:
                     dp = self._lane_pts[i + 1] - p
                 else:
@@ -417,7 +417,7 @@ class WaymoMap(RoadMap):
 
         @lru_cache(maxsize=8)
         def offset_along_lane(self, world_point: Point) -> float:
-            return offset_along_shape(world_point[:2], self._lane_pts)
+            return offset_along_shape(world_point[:2], self._centerline_pts)
 
         @lru_cache(maxsize=8)
         def width_at_offset(self, lane_point_s: float) -> Tuple[float, float]:
@@ -425,7 +425,7 @@ class WaymoMap(RoadMap):
 
         @lru_cache(maxsize=8)
         def from_lane_coord(self, lane_point: RefLinePoint) -> Point:
-            x, y = position_at_shape_offset(self._lane_pts, lane_point.s)
+            x, y = position_at_shape_offset(self._centerline_pts, lane_point.s)
             return Point(x=x, y=y)
 
         @lru_cache(maxsize=8)
