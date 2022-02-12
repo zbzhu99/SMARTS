@@ -665,9 +665,13 @@ def test_waymo_map():
 
     assert isinstance(road_map, WaymoMap)
     assert len(road_map._lanes) > 0
+    assert road_map.bounding_box.max_pt == Point(x=100.0, y=9.750000000000002, z=0)
+    assert road_map.bounding_box.min_pt == Point(x=0.0, y=-6.5, z=0)
     for lane_id, lane in road_map._lanes.items():
         assert lane.length > 0
         assert lane.lane_id
+
+
 
     l1 = road_map.lane_by_id("100")
     assert l1
@@ -695,6 +699,25 @@ def test_waymo_map():
     assert conf == 1.0
     assert round(l1.curvature_radius_at_offset(offset), 2) == -3136.8
     assert l1.contains_point(point)
+
+    # nearest lane for a point outside all lanes
+    #     point = (164.0, -68.0, 0)
+    #     l4 = road_map.nearest_lane(point)
+    #     assert l4.lane_id == "64_0_R_-2"
+    #     assert l4.road.road_id == "64_0_R"
+    #     assert l4.index == 0
+    #     assert l4.speed_limit == 16.67
+    #     assert not l4.road.contains_point(point)
+    #     assert l4.is_drivable
+    #
+    # nearest lane for a point inside a lane
+    #     point = (151.0, -60.0, 0)
+    #     l5 = road_map.nearest_lane(point)
+    #     assert l5.lane_id == "65_0_R_-1"
+    #     assert l5.road.road_id == "65_0_R"
+    #     assert l5.index == 1
+    #     assert l5.road.contains_point(point)
+    #     assert l5.is_drivable
 
 # XXX: The below is just for testing. Remove before merging.
 
