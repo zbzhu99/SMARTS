@@ -687,7 +687,7 @@ def test_waymo_map():
     point = (2714.0, -2764.5, 0)
     refline_pt = l1.to_lane_coord(point)
     assert round(refline_pt.s, 2) == 50.77
-    assert round(refline_pt.t, 2) == -0.31
+    assert round(refline_pt.t, 2) == 1.18
 
     offset = refline_pt.s
     width, conf = l1.width_at_offset(offset)
