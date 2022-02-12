@@ -703,20 +703,14 @@ def test_waymo_map():
     #     point = (164.0, -68.0, 0)
     #     l4 = road_map.nearest_lane(point)
     #     assert l4.lane_id == "64_0_R_-2"
-    #     assert l4.road.road_id == "64_0_R"
-    #     assert l4.index == 0
     #     assert l4.speed_limit == 16.67
-    #     assert not l4.road.contains_point(point)
-    #     assert l4.is_drivable
+    #     assert not l4.contains_point(point)
     #
     # nearest lane for a point inside a lane
     #     point = (151.0, -60.0, 0)
     #     l5 = road_map.nearest_lane(point)
     #     assert l5.lane_id == "65_0_R_-1"
-    #     assert l5.road.road_id == "65_0_R"
-    #     assert l5.index == 1
-    #     assert l5.road.contains_point(point)
-    #     assert l5.is_drivable
+    #     assert l5.contains_point(point)
 
 # XXX: The below is just for testing. Remove before merging.
 
