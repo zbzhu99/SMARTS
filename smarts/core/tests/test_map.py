@@ -738,7 +738,7 @@ def convert_polyline(polyline):
 
 
 def plot_lane(lane):
-    xs, ys = convert_polyline(lane.polyline)
+    xs, ys = convert_polyline(lane["polyline"])
     plt.plot(xs, ys, linestyle="-", c="gray")
     # plt.scatter(xs, ys, s=12, c="gray")
     # plt.scatter(xs[0], ys[0], s=12, c="red")
