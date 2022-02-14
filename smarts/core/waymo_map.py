@@ -19,20 +19,16 @@
 # THE SOFTWARE.
 import logging
 import math
-import os
 import rtree
 from functools import lru_cache
-from subprocess import check_output
 import time
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
 from waymo_open_dataset.protos import scenario_pb2
-from enum import Enum
 import numpy as np
 from cached_property import cached_property
 from shapely.geometry import Polygon
 
 from smarts.sstudio.types import MapSpec
-
 from .coordinates import BoundingBox, Heading, Point, Pose, RefLinePoint
 from .lanepoints import LanePoints, LinkedLanePoint
 from .road_map import RoadMap, Waypoint
@@ -464,9 +460,7 @@ class WaymoMap(RoadMap):
         def contains_point(self, point: Point) -> bool:
             if (
                 self.bounding_box.min_pt.x <= point[0] <= self.bounding_box.max_pt.x
-                and self.bounding_box.min_pt.y
-                <= point[1]
-                <= self.bounding_box.max_pt.y
+                and self.bounding_box.min_pt.y <= point[1] <= self.bounding_box.max_pt.y
             ):
                 lane_point = self.to_lane_coord(point)
                 return (
@@ -474,32 +468,6 @@ class WaymoMap(RoadMap):
                     and 0 <= lane_point.s < self.length
                 )
             return False
-
-        @lru_cache(8)
-        def _edges_at_point(self, point: Point) -> Tuple[Point, Point]:
-            """Get the boundary points perpendicular to the center of the lane closest to the given
-             world coordinate.
-            Args:
-                point:
-                    A world coordinate point.
-            Returns:
-                A pair of points indicating the left boundary and right boundary of the lane.
-            """
-            reference_line_vertices_len = int((len(self._lane_polygon) - 1) / 2)
-            # left_edge
-            left_edge_shape = self._lane_polygon[:reference_line_vertices_len]
-            left_offset = offset_along_shape(point[:2], left_edge_shape)
-            x, y = position_at_shape_offset(left_edge_shape, left_offset)
-            left_edge = Point(x, y)
-
-            # right_edge
-            right_edge_shape = self._lane_polygon[
-                reference_line_vertices_len : len(self._lane_polygon) - 1
-            ]
-            right_offset = offset_along_shape(point[:2], right_edge_shape)
-            x, y = position_at_shape_offset(right_edge_shape, right_offset)
-            right_edge = Point(x, y)
-            return left_edge, right_edge
 
         @lru_cache(maxsize=8)
         def project_along(
