@@ -403,6 +403,15 @@ class WaymoMap(RoadMap):
                 for exit_lanes in self._lane_feat.exit_lanes
             ]
 
+        @cached_property
+        def lanes_in_same_direction(self) -> List[RoadMap.Lane]:
+            in_same_direction = []
+            for l_neighbor in self._lane_feat.left_neighbors:
+                in_same_direction.append(self._map.lane_by_id(str(l_neighbor.feature_id)))
+            for r_neighbor in self._lane_feat.right_neigbors:
+                in_same_direction.append(self._map.lane_by_id(str(r_neighbor.feature_id)))
+            return in_same_direction
+
         @property
         def speed_limit(self) -> float:
             return self._speed_limit
