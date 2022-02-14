@@ -706,7 +706,7 @@ def test_waymo_map():
     # nearest lane for a point inside a lane
     point = (2740.0, -2710.0, 0)
     l2 = road_map.nearest_lane(point)
-    assert l2.lane_id == "64_0_R_-2"
+    assert l2.lane_id == "97"
     assert l2.speed_limit == 16.67
 
     # nearest lane for a point outside all lanes
