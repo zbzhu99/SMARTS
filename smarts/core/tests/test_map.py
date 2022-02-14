@@ -788,7 +788,7 @@ if __name__ == "__main__":
     road_map = WaymoMap.from_spec(map_spec)
 
     for lane_id, lane in road_map._lanes.items():
-        plot_lane(lane._lane_feat)
+        plot_lane(lane._lane_dict)
         # plot_boundaries(lane_feat, features)
         xs, ys = [], []
         for x, y in lane._lane_polygon:
