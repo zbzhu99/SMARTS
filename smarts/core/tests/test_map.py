@@ -703,6 +703,16 @@ def test_waymo_map():
     assert round(l1.curvature_radius_at_offset(offset), 2) == -3136.8
     assert l1.contains_point(point)
 
+    # check for locations (lane, offset tuples) within distance at this offset
+    candidates = l1.project_along(offset, 150)
+    assert (len(candidates)) == 3
+
+    # oncoming lanes at this point
+    on_lanes = l1.oncoming_lanes_at_offset(offset)
+    assert on_lanes
+    assert len(on_lanes) == 1
+    assert on_lanes[0].lane_id == "53_0_R_-1"
+
     # nearest lane for a point inside a lane
     point = (2740.0, -2710.0, 0)
     l2 = road_map.nearest_lane(point)
