@@ -65,13 +65,16 @@ def get_map_features(path, scenario_id):
 
 def get_traffic_light_lanes(scenario):
     num_steps = len(scenario.timestamps_seconds)
+    print("num_step: ", num_steps)
     tls_lanes = []
     for i in range(num_steps):
         dynamic_states = scenario.dynamic_map_states[i]
         for j in range(len(dynamic_states.lane_states)):
+            print("here")
             lane_state = dynamic_states.lane_states[j]
             tls_lanes.append(lane_state.lane)
     return tls_lanes
+
 
 def plot_map(map_features):
     lanes = map_features["lane"][:1]
