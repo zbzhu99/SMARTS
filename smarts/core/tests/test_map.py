@@ -687,11 +687,7 @@ def test_waymo_map():
     assert set(l.lane_id for l in l1.outgoing_lanes) == set()
 
     right_lane, direction = l1.lane_to_right
-    assert right_lane
-    assert direction
-    assert right_lane.is_drivable
-    assert right_lane.lane_id == "1_1_L_2"
-    # assert right_lane.index == 1
+    assert not right_lane
 
     left_lane, direction = l1.lane_to_left
     assert left_lane
