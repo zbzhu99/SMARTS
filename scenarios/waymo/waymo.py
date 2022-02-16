@@ -59,9 +59,19 @@ def get_map_features(path, scenario_id):
             features[map_feature.id] = getattr(map_feature, key)
             if key == "lane":
                 lanes.append((getattr(map_feature, key), map_feature.id))
+    tls_lanes = get_traffic_light_lanes(scenario)
+    return scenario.scenario_id, features, lanes, tls_lanes
 
-    return scenario.scenario_id, features, lanes
 
+def get_traffic_light_lanes(scenario):
+    num_steps = len(scenario.timestamps_seconds)
+    tls_lanes = []
+    for i in range(num_steps):
+        dynamic_states = scenario.dynamic_map_states[i]
+        for j in range(len(dynamic_states.lane_states)):
+            lane_state = dynamic_states.lane_states[j]
+            tls_lanes.append(lane_state.lane)
+    return tls_lanes
 
 def plot_map(map_features):
     lanes = map_features["lane"][:1]
@@ -436,7 +446,7 @@ class Lane:
                     self.right_pts[i] = self.lane_pts[i] - new_width * self.normals[i]
 
 
-def create_polygons(features, all_lanes):
+def create_polygons(features, all_lanes, tls_lanes):
     start = time.time()
 
     # Create Lane objects
@@ -504,7 +514,7 @@ def create_polygons(features, all_lanes):
         #     if p is not None:
         #         poly_xs.append(p[0])
         #         poly_ys.append(p[1])
-        if lane_id == 100:
+        if lane_id in tls_lanes:
             plt.plot(poly_xs, poly_ys, "r-")
         else:
             plt.plot(poly_xs, poly_ys, "b-")
@@ -532,14 +542,14 @@ def create_polygons(features, all_lanes):
 def plot(path, scenario_id):
     # Get data
     # trajectories, ego_id = read_trajectory_data(path, scenario_id)
-    scenario_id, features, lanes = get_map_features(path, scenario_id)
-
+    scenario_id, features, lanes, tls_lanes = get_map_features(path, scenario_id)
+    print(tls_lanes)
     # Plot map and trajectories
     fig, ax = plt.subplots()
     ax.set_title(f"Scenario {scenario_id}")
     ax.axis("equal")
     # plot_map(map_features)
-    create_polygons(features, lanes)
+    create_polygons(features, lanes, tls_lanes)
 
     # for k, v in trajectories.items():
     #     plt.scatter(v[0], v[1], marker='.')
