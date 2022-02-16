@@ -559,10 +559,6 @@ class WaymoMap(RoadMap):
         def speed_limit(self) -> float:
             return self._speed_limit
 
-        @property
-        def is_drivable(self) -> bool:
-            return True
-
         @lru_cache(maxsize=8)
         def offset_along_lane(self, world_point: Point) -> float:
             return offset_along_shape(world_point[:2], self._centerline_pts)
@@ -797,3 +793,52 @@ class WaymoMap(RoadMap):
 
         def lane_at_index(self, index: int) -> RoadMap.Lane:
             return self._lanes[index]
+
+        class _WaypointsCache:
+            def __init__(self):
+                self.lookahead = 0
+                self.point = (0, 0, 0)
+                self.filter_road_ids = ()
+                self._starts = {}
+
+            # XXX:  all vehicles share this cache now (as opposed to before
+            # when it was in Plan.py and each vehicle had its own cache).
+            # TODO: probably need to add vehicle_id to the key somehow (or just make it bigger)
+            def _match(self, lookahead, point, filter_road_ids) -> bool:
+                return (
+                        lookahead <= self.lookahead
+                        and point[0] == self.point[0]
+                        and point[1] == self.point[1]
+                        and filter_road_ids == self.filter_road_ids
+                )
+
+            def update(
+                    self,
+                    lookahead: int,
+                    point: Tuple[float, float, float],
+                    filter_road_ids: tuple,
+                    llp,
+                    paths: List[List[Waypoint]],
+            ):
+                """Update the current cache if not already cached."""
+                if not self._match(lookahead, point, filter_road_ids):
+                    self.lookahead = lookahead
+                    self.point = point
+                    self.filter_road_ids = filter_road_ids
+                    self._starts = {}
+                self._starts[llp.lp.lane.index] = paths
+
+            def query(
+                    self,
+                    lookahead: int,
+                    point: Tuple[float, float, float],
+                    filter_road_ids: tuple,
+                    llp,
+            ) -> Optional[List[List[Waypoint]]]:
+                """Attempt to find previously cached waypoints"""
+                if self._match(lookahead, point, filter_road_ids):
+                    hit = self._starts.get(llp.lp.lane.index, None)
+                    if hit:
+                        # consider just returning all of them (not slicing)?
+                        return [path[: (lookahead + 1)] for path in hit]
+                    return None
