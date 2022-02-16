@@ -24,7 +24,6 @@ import logging
 import math
 import os
 import sqlite3
-import struct
 import sys
 from typing import Any, Dict, Generator, Iterable, Optional, Tuple, Union
 
@@ -36,6 +35,7 @@ from numpy.lib.stride_tricks import as_strided as stride
 from numpy.lib.stride_tricks import sliding_window_view
 
 from smarts.core.utils.math import vec_to_radians
+from smarts.core.utils.file import read_tfrecord_file
 
 try:
     from waymo_open_dataset.protos import scenario_pb2
@@ -65,16 +65,22 @@ class _TrajectoryDataset:
 
     @property
     def scale(self) -> float:
+        """The base scale based on the ratio of map lane size to real lane size."""
         return self._scale
 
     @property
     def rows(self) -> Iterable:
+        """The iterable rows of the dataset."""
         raise NotImplementedError
 
     def column_val_in_row(self, row, col_name: str) -> Any:
+        """Access the value of a dataset row which intersects with the given column name."""
+        # XXX: this public method is improper because this requires a dataset row but that is
+        # implementation specific.
         raise NotImplementedError
 
     def check_dataset_spec(self, dataset_spec: Dict[str, Any]):
+        """Validate the form of the dataset specification."""
         errmsg = None
         if "input_path" not in dataset_spec:
             errmsg = "'input_path' field is required in dataset yaml."
@@ -131,7 +137,12 @@ class _TrajectoryDataset:
         ccur.close()
 
     def create_output(self, time_precision: int = 3):
-        """ time_precision is limit for digits after decimal for sim_time (3 is milisecond precision) """
+        """Convert the dataset into the output database file.
+
+        Args:
+            time_precision: A limit for digits after decimal for each processed sim_time.
+                (3 is millisecond precision)
+        """
         dbconxn = sqlite3.connect(self._output)
 
         self._log.debug("creating tables...")
@@ -218,6 +229,8 @@ class _TrajectoryDataset:
 
 
 class Interaction(_TrajectoryDataset):
+    """A tool to convert a dataset to a database for use in SMARTS."""
+
     def __init__(self, dataset_spec: Dict[str, Any], output: str):
         super().__init__(dataset_spec, output)
         assert not self._flip_y
@@ -317,6 +330,8 @@ class Interaction(_TrajectoryDataset):
 
 
 class NGSIM(_TrajectoryDataset):
+    """A tool for conversion of a NGSIM dataset for use within SMARTS."""
+
     def __init__(self, dataset_spec: Dict[str, Any], output: str):
         super().__init__(dataset_spec, output)
         self._prev_heading = 3 * math.pi / 2
@@ -566,25 +581,10 @@ class OldJSON(_TrajectoryDataset):
 
 
 class Waymo(_TrajectoryDataset):
+    """A tool for conversion of a Waymo dataset for use within SMARTS."""
+
     def __init__(self, dataset_spec: Dict[str, Any], output: str):
         super().__init__(dataset_spec, output)
-
-    @staticmethod
-    def read_dataset(path: str) -> Generator[bytes, None, None]:
-        """Iterate over the records in a TFRecord file and return the bytes of each record.
-
-        path: The path to the TFRecord file
-        """
-        with open(path, "rb") as f:
-            while True:
-                length_bytes = f.read(8)
-                if len(length_bytes) != 8:
-                    return
-                record_len = int(struct.unpack("Q", length_bytes)[0])
-                _ = f.read(4)  # masked_crc32_of_length (ignore)
-                record_data = f.read(record_len)
-                _ = f.read(4)  # masked_crc32_of_data (ignore)
-                yield record_data
 
     @property
     def rows(self) -> Generator[Dict, None, None]:
@@ -593,7 +593,7 @@ class Waymo(_TrajectoryDataset):
 
         def constrain_angle(angle: float) -> float:
             """Constrain to [-pi, pi]"""
-            angle = angle % (2 * math.pi)
+            angle %= 2 * math.pi
             if angle > math.pi:
                 angle -= 2 * math.pi
             return angle
@@ -606,7 +606,7 @@ class Waymo(_TrajectoryDataset):
 
         # Loop over the scenarios in the TFRecord and check its ID for a match
         scenario = None
-        dataset = Waymo.read_dataset(self._dataset_spec["input_path"])
+        dataset = read_tfrecord_file(self._dataset_spec["input_path"])
         for record in dataset:
             parsed_scenario = scenario_pb2.Scenario()
             parsed_scenario.ParseFromString(bytearray(record))
@@ -630,7 +630,7 @@ class Waymo(_TrajectoryDataset):
                 obj_state = scenario.tracks[i].states[j]
                 vel = np.array([obj_state.velocity_x, obj_state.velocity_y])
 
-                row = {}
+                row = dict()
                 row["valid"] = obj_state.valid
                 row["vehicle_id"] = vehicle_id
                 row["type"] = vehicle_type
@@ -664,8 +664,7 @@ class Waymo(_TrajectoryDataset):
                         continue
 
                     # Interpolate backwards using previous timestep
-                    interp_row = {}
-                    interp_row["sim_time"] = time_expected
+                    interp_row = {"sim_time": time_expected}
 
                     prev_row = rows[j - 1]
                     prev_time = prev_row["sim_time"]
@@ -691,8 +690,7 @@ class Waymo(_TrajectoryDataset):
                         continue
 
                     # Interpolate forwards using next timestep
-                    interp_row = {}
-                    interp_row["sim_time"] = time_expected
+                    interp_row = {"sim_time": time_expected}
 
                     next_row = rows[j + 1]
                     next_time = next_row["sim_time"]
@@ -712,7 +710,7 @@ class Waymo(_TrajectoryDataset):
 
             # Third pass -- filter invalid states, replace interpolated values, convert to ms, constrain angles
             for j in range(num_steps):
-                if rows[j]["valid"] == False:
+                if not rows[j]["valid"]:
                     continue
                 if interp_rows[j] is not None:
                     rows[j]["sim_time"] = interp_rows[j]["sim_time"]

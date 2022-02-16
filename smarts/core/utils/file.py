@@ -22,14 +22,24 @@ import hashlib
 import os
 import shutil
 from contextlib import contextmanager
+from typing import Generator
+import struct
 
 
 def file_in_folder(filename: str, path: str) -> bool:
+    """Checks to see if a file exists
+    Args:
+        filename: The name of the file.
+        path: The path to the directory of the file.
+    Returns:
+        If the file exists.
+    """
     return os.path.exists(os.path.join(path, filename))
 
 
 # https://stackoverflow.com/a/2166841
 def isnamedtupleinstance(x):
+    """Check to see if an object is a named tuple."""
     t = type(x)
     b = t.__bases__
     if len(b) != 1 or b[0] != tuple:
@@ -41,6 +51,7 @@ def isnamedtupleinstance(x):
 
 
 def isdataclass(x):
+    """Check if an object is a dataclass."""
     return dataclasses.is_dataclass(x)
 
 
@@ -65,6 +76,12 @@ def unpack(obj):
 
 
 def copy_tree(from_path, to_path, overwrite=False):
+    """Copy a directory tree (including files) to another location.
+    Args:
+        from_path: The directory to copy.
+        to_path: The output directory.
+        overwrite: If to overwrite the output directory.
+    """
     if os.path.exists(to_path):
         if overwrite:
             shutil.rmtree(to_path)
@@ -77,12 +94,14 @@ def copy_tree(from_path, to_path, overwrite=False):
 
 
 def path2hash(file_path: str):
+    """Converts a file path to a hash value."""
     m = hashlib.md5()
     m.update(bytes(file_path, "utf-8"))
     return m.hexdigest()
 
 
 def file_md5_hash(file_path: str) -> str:
+    """Converts file contents to a hash value. Useful for doing a file diff."""
     hasher = hashlib.md5()
     with open(file_path) as f:
         hasher.update(f.read().encode())
@@ -91,6 +110,7 @@ def file_md5_hash(file_path: str) -> str:
 
 
 def smarts_log_dir() -> str:
+    """Retrieves the smarts logging directory."""
     ## Following should work for linux and macos
     smarts_dir = os.path.join(os.path.expanduser("~"), ".smarts")
     os.makedirs(smarts_dir, exist_ok=True)
@@ -98,11 +118,15 @@ def smarts_log_dir() -> str:
 
 
 def make_dir_in_smarts_log_dir(dir):
+    """Return a new directory location in the smarts logging directory."""
     return os.path.join(smarts_log_dir(), dir)
 
 
 @contextmanager
 def suppress_pkg_resources():
+    """A context manager that injects an `ImportError` into the `pkg_resources` module to force
+    package fallbacks in imports that can use alternatives to `pkg_resources`.
+    """
     import sys
 
     import pkg_resources
@@ -113,3 +137,20 @@ def suppress_pkg_resources():
     sys.modules["pkg_resources"] = property(raise_import_error)
     yield
     sys.modules["pkg_resources"] = pkg_res
+
+
+def read_tfrecord_file(path: str) -> Generator[bytes, None, None]:
+    """Iterate over the records in a TFRecord file and return the bytes of each record.
+
+    path: The path to the TFRecord file
+    """
+    with open(path, "rb") as f:
+        while True:
+            length_bytes = f.read(8)
+            if len(length_bytes) != 8:
+                return
+            record_len = int(struct.unpack("Q", length_bytes)[0])
+            _ = f.read(4)  # masked_crc32_of_length (ignore)
+            record_data = f.read(record_len)
+            _ = f.read(4)  # masked_crc32_of_data (ignore)
+            yield record_data

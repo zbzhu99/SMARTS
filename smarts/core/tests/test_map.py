@@ -20,6 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 import math
+import os
+from pathlib import Path
+from matplotlib import pyplot as plt
+
 import numpy as np
 import pytest
 
@@ -27,6 +31,8 @@ from smarts.core.coordinates import Point
 from smarts.core.opendrive_road_network import OpenDriveRoadNetwork
 from smarts.core.scenario import Scenario
 from smarts.core.sumo_road_network import SumoRoadNetwork
+from smarts.core.waymo_map import WaymoMap
+from smarts.sstudio.types import MapSpec
 
 
 @pytest.fixture
@@ -48,14 +54,13 @@ def test_sumo_map(sumo_scenario):
     road_map = sumo_scenario.road_map
     assert isinstance(road_map, SumoRoadNetwork)
 
-    point = (125.20, 139.0, 0)
+    point = Point(125.20, 139.0, 0)
     lane = road_map.nearest_lane(point)
     assert lane.lane_id == "edge-north-NS_0"
     assert lane.road.road_id == "edge-north-NS"
     assert lane.index == 0
     assert lane.road.contains_point(point)
     assert lane.is_drivable
-    assert len(lane.shape().exterior.coords) >= 2
     assert lane.length == 55.6
 
     right_lane, direction = lane.lane_to_right
@@ -80,7 +85,9 @@ def test_sumo_map(sumo_scenario):
     assert reflinept.t == 0.0
 
     offset = reflinept.s
-    assert lane.width_at_offset(offset) == 3.2
+    width, conf = lane.width_at_offset(offset)
+    assert width == 3.2
+    assert conf == 1.0
     assert lane.curvature_radius_at_offset(offset) == math.inf
 
     on_lanes = lane.oncoming_lanes_at_offset(offset)
@@ -113,11 +120,9 @@ def test_sumo_map(sumo_scenario):
     r1 = road_map.road_by_id("edge-north-NS")
     assert r1
     assert r1.is_drivable
-    assert len(r1.shape()) >= 2
     r2 = road_map.road_by_id("edge-east-WE")
     assert r2
     assert r2.is_drivable
-    assert len(r2.shape()) >= 2
 
     routes = road_map.generate_routes(r1, r2)
     assert routes
@@ -165,7 +170,6 @@ def test_opendrive_map_4lane(opendrive_scenario_4lane):
     assert len(r_0_R.lanes) == 2
     assert r_0_R.lane_at_index(-1) is None
     assert r_0_R.lane_at_index(1).road.road_id == "57_0_R"
-    assert len(r_0_R.shape().exterior.coords) == 5
     assert set(r.road_id for r in r_0_R.incoming_roads) == set()
     assert set(r.road_id for r in r_0_R.outgoing_roads) == {
         "69_0_R",
@@ -179,7 +183,6 @@ def test_opendrive_map_4lane(opendrive_scenario_4lane):
     assert r2_0_R.length == 55.6
     assert len(r2_0_R.lanes) == 2
     assert r2_0_R.lane_at_index(0).road.road_id == "53_0_R"
-    assert len(r2_0_R.shape().exterior.coords) == 5
     assert set(r.road_id for r in r2_0_R.incoming_roads) == {
         "61_0_R",
         "65_0_R",
@@ -215,7 +218,6 @@ def test_opendrive_map_4lane(opendrive_scenario_4lane):
     assert len(l1.lanes_in_same_direction) == 1
     assert l1.length == 55.6
     assert l1.is_drivable
-    assert len(l1.shape().exterior.coords) == 5
     assert l1.speed_limit == 16.67
     assert set(l.lane_id for l in l1.incoming_lanes) == set()
     assert set(l.lane_id for l in l1.outgoing_lanes) == {
@@ -241,13 +243,15 @@ def test_opendrive_map_4lane(opendrive_scenario_4lane):
     assert left_lane.index == 1
 
     # point on lane
-    point = (148.0, -28.0, 0)
+    point = Point(148.0, -28.0, 0)
     refline_pt = l1.to_lane_coord(point)
     assert round(refline_pt.s, 2) == 38.0
     assert round(refline_pt.t, 2) == -0.4
 
     offset = refline_pt.s
-    assert l1.width_at_offset(offset) == 3.20
+    width, conf = l1.width_at_offset(offset)
+    assert width == 3.20
+    assert conf == 1.0
     assert l1.curvature_radius_at_offset(offset) == math.inf
     assert l1.contains_point(point)
     assert l1.road.contains_point(point)
@@ -260,28 +264,20 @@ def test_opendrive_map_4lane(opendrive_scenario_4lane):
     assert len(on_lanes) == 1
     assert on_lanes[0].lane_id == "53_0_R_-1"
 
-    # lane edges on point
-    left_edge, right_edge = l1.edges_at_point(point)
-    assert (round(left_edge.x, 2), round(left_edge.y, 2)) == (150.0, -28.0)
-    assert (round(right_edge.x, 2), round(right_edge.y, 2)) == (146.8, -28.0)
-
-    # road edges on point
-    road_left_edge, road_right_edge = l1.road.edges_at_point(point)
-    assert (round(road_left_edge.x, 2), round(road_left_edge.y, 2)) == (150.0, -28.0)
-    assert (round(road_right_edge.x, 2), round(road_right_edge.y, 2)) == (143.6, -28.0)
-
     # check for locations (lane, offset tuples) within distance at this offset
     candidates = l1.project_along(offset, 70)
     assert (len(candidates)) == 6
 
     # point not on lane but on road
-    point = (144.0, -28.0, 0)
+    point = Point(144.0, -28.0, 0)
     refline_pt = l1.to_lane_coord(point)
     assert round(refline_pt.s, 2) == 38.0
     assert round(refline_pt.t, 2) == -4.4
 
     offset = refline_pt.s
-    assert l1.width_at_offset(offset) == 3.20
+    width, conf = l1.width_at_offset(offset)
+    assert width == 3.20
+    assert conf == 1.0
     assert l1.curvature_radius_at_offset(offset) == math.inf
     assert not l1.contains_point(point)
     assert l1.road.contains_point(point)
@@ -303,18 +299,8 @@ def test_opendrive_map_4lane(opendrive_scenario_4lane):
     foes = l3.foes
     assert set(f.lane_id for f in foes) == {"58_0_R_-1", "62_0_R_-1"}
 
-    # road edges on point for a road with one lane
-    point = (148.52, -52.22, 0)
-    r5 = road_map.road_by_id("60_0_R")
-    road_left_edge, road_right_edge = r5.edges_at_point(point)
-    assert (round(road_left_edge.x, 2), round(road_left_edge.y, 2)) == (150.79, -51.56)
-    assert (round(road_right_edge.x, 2), round(road_right_edge.y, 2)) == (
-        147.72,
-        -52.45,
-    )
-
     # nearest lane for a point outside road
-    point = (164.0, -68.0, 0)
+    point = Point(164.0, -68.0, 0)
     l4 = road_map.nearest_lane(point)
     assert l4.lane_id == "64_0_R_-2"
     assert l4.road.road_id == "64_0_R"
@@ -324,7 +310,7 @@ def test_opendrive_map_4lane(opendrive_scenario_4lane):
     assert l4.is_drivable
 
     # nearest lane for a point inside road
-    point = (151.0, -60.0, 0)
+    point = Point(151.0, -60.0, 0)
     l5 = road_map.nearest_lane(point)
     assert l5.lane_id == "65_0_R_-1"
     assert l5.road.road_id == "65_0_R"
@@ -335,14 +321,15 @@ def test_opendrive_map_4lane(opendrive_scenario_4lane):
     # Lanepoints
     lanepoints = road_map._lanepoints
 
-    point = (148.0, -17.0, 0)
+    point = Point(148.0, -17.0, 0)
     l1_lane_point = lanepoints.closest_lanepoint_on_lane_to_point(point, l1.lane_id)
     assert (
         round(l1_lane_point.pose.position[0], 2),
         round(l1_lane_point.pose.position[1], 2),
     ) == (148.4, -17.0)
 
-    point = (148.00, -47.00)
+    r5 = road_map.road_by_id("60_0_R")
+    point = Point(148.00, -47.00)
     r5_linked_lane_point = lanepoints.closest_linked_lanepoint_on_road(
         point, r5.road_id
     )
@@ -564,35 +551,29 @@ def test_opendrive_map_merge(opendrive_scenario_merge):
     assert l0_vector == [-0.9999973500028005, -0.0020437969740241257, 0.0]
 
     # point on lane
-    point = (31.0, 2.0, 0)
+    point = Point(31.0, 2.0, 0)
     refline_pt = l0.to_lane_coord(point)
     assert round(refline_pt.s, 2) == 44.02
     assert round(refline_pt.t, 2) == -0.31
 
     offset = refline_pt.s
-    assert round(l0.width_at_offset(offset), 2) == 3.12
+    width, conf = l0.width_at_offset(offset)
+    assert round(width, 2) == 3.12
+    assert conf == 1.0
     assert round(l0.curvature_radius_at_offset(offset), 2) == -291.53
     assert l0.contains_point(point)
     assert l0.road.contains_point(point)
 
-    # lane edges on point
-    left_edge, right_edge = l0.edges_at_point(point)
-    assert (round(left_edge.x, 2), round(left_edge.y, 2)) == (31.08, 0.13)
-    assert (round(right_edge.x, 2), round(right_edge.y, 2)) == (31.0, 3.25)
-
-    # road edges on point
-    road_left_edge, road_right_edge = r_1_1_R.edges_at_point(point)
-    assert (round(road_left_edge.x, 2), round(road_left_edge.y, 2)) == (31.08, 0.13)
-    assert (round(road_right_edge.x, 2), round(road_right_edge.y, 2)) == (31.0, -6.5)
-
     # point not on lane but on road
-    point = (31.0, 4.5, 0)
+    point = Point(31.0, 4.5, 0)
     refline_pt = l0.to_lane_coord(point)
     assert round(refline_pt.s, 2) == 43.97
     assert round(refline_pt.t, 2) == -2.81
 
     offset = refline_pt.s
-    assert round(l0.width_at_offset(offset), 2) == 3.12
+    width, conf = l0.width_at_offset(offset)
+    assert round(width, 2) == 3.12
+    assert conf == 1.0
     assert round(l0.curvature_radius_at_offset(offset), 2) == -292.24
     assert not l0.contains_point(point)
     assert l0.road.contains_point(point)
@@ -602,7 +583,7 @@ def test_opendrive_map_merge(opendrive_scenario_merge):
     assert (len(candidates)) == 3
 
     # nearest lanes for a point in lane
-    point = (60.0, -2.38, 0)
+    point = Point(60.0, -2.38, 0)
     l4 = road_map.nearest_lane(point)
     assert l4.lane_id == "1_1_R_-2"
     assert l4.road.road_id == "1_1_R"
@@ -611,7 +592,7 @@ def test_opendrive_map_merge(opendrive_scenario_merge):
     assert l4.is_drivable
 
     # get the road for point containing it
-    point = (80.0, 1.3, 0)
+    point = Point(80.0, 1.3, 0)
     r4 = road_map.road_with_point(point)
     assert r4.road_id == "1_2_R"
 
@@ -647,14 +628,14 @@ def test_opendrive_map_merge(opendrive_scenario_merge):
     # Lanepoints
     lanepoints = road_map._lanepoints
 
-    point = (48.39, 0.4, 0)
+    point = Point(48.39, 0.4, 0)
     l1_lane_point = lanepoints.closest_lanepoint_on_lane_to_point(point, "1_1_R_-1")
     assert (
         round(l1_lane_point.pose.position[0], 2),
         round(l1_lane_point.pose.position[1], 2),
     ) == (48.5, -0.15)
 
-    point = (20.0, 1.3, 0)
+    point = Point(20.0, 1.3, 0)
     r0_linked_lane_point = lanepoints.closest_linked_lanepoint_on_road(point, "1_0_L")
     assert r0_linked_lane_point.lp.lane.lane_id == "1_0_L_1"
     assert (
@@ -665,3 +646,148 @@ def test_opendrive_map_merge(opendrive_scenario_merge):
     r0_lp_path = lanepoints.paths_starting_at_lanepoint(r0_linked_lane_point, 5, ())
     assert len(r0_lp_path) == 1
     assert [llp.lp.lane.lane_id for llp in r0_lp_path[0]].count("1_0_L_1") == 6
+
+
+def test_waymo_map():
+    scenario_id = "4f30f060069bbeb9"
+    dataset_root = os.path.join(Path(__file__).parent, "maps/")
+    dataset_file = (
+        "uncompressed_scenario_training_20s_training_20s.tfrecord-00000-of-01000"
+    )
+    dataset_path = os.path.join(dataset_root, dataset_file)
+
+    if not os.path.exists(dataset_path):
+        return
+
+    source_str = f"{dataset_path}#{scenario_id}"
+    map_spec = MapSpec(source=source_str)
+    road_map = WaymoMap.from_spec(map_spec)
+
+    assert isinstance(road_map, WaymoMap)
+    assert len(road_map._lanes) > 0
+    assert road_map.bounding_box.max_pt == Point(
+        x=2912.9108803947315, y=-2516.317007241915, z=0
+    )
+    assert road_map.bounding_box.min_pt == Point(
+        x=2638.180643600848, y=-2827.317950309347, z=0
+    )
+    for lane_id, lane in road_map._lanes.items():
+        assert lane.length > 0
+        assert lane.lane_id
+
+    # Lane Tests
+    l1 = road_map.lane_by_id("100_0")
+    assert l1
+    assert l1.lane_id == "100_0"
+    assert l1.is_drivable
+    assert round(l1.length, 2) == 124.48
+    assert l1.speed_limit == 13.4112
+
+    assert set(l.lane_id for l in l1.incoming_lanes) == {"101_0", "110_0", "105_0"}
+    assert set(l.lane_id for l in l1.outgoing_lanes) == set()
+
+    l1_vector = l1.vector_at_offset(50.01)
+    l1_vector = l1_vector.tolist()
+    assert l1_vector == [-0.5304760093854384, -0.8476999406939285, 0.0]
+
+    # point on lane
+    point = Point(2714.0, -2764.5, 0)
+    refline_pt = l1.to_lane_coord(point)
+    assert round(refline_pt.s, 2) == 50.77
+    assert round(refline_pt.t, 2) == 1.18
+
+    offset = refline_pt.s
+    width, conf = l1.width_at_offset(offset)
+    assert round(width, 2) == 4.43
+    assert conf == 1.0
+    assert round(l1.curvature_radius_at_offset(offset), 2) == -3136.8
+    assert l1.contains_point(point)
+
+    # nearest lane for a point inside a lane
+    point = Point(2910.0, -2610.0, 0)
+    l2 = road_map.nearest_lane(point)
+    assert l2.lane_id == "156_0"
+    assert l2.speed_limit == 11.176
+    assert l2.contains_point(point)
+
+    # nearest lane for a point outside all lanes
+    point = Point(2910.0, -2612.0, 0)
+    l3 = road_map.nearest_lane(point)
+    assert l3.lane_id == "156_0"
+    assert not l3.contains_point(point)
+
+
+# XXX: The below is just for testing. Remove before merging.
+
+
+def convert_polyline(polyline):
+    xs, ys = [], []
+    for p in polyline:
+        xs.append(p.x)
+        ys.append(p.y)
+    return xs, ys
+
+
+def plot_lane(lane):
+    xs, ys = convert_polyline(lane["polyline"])
+    plt.plot(xs, ys, linestyle="-", c="gray")
+    # plt.scatter(xs, ys, s=12, c="gray")
+    # plt.scatter(xs[0], ys[0], s=12, c="red")
+
+
+def plot_road_line(road_line):
+    xs, ys = convert_polyline(road_line.polyline)
+    plt.plot(xs, ys, "y-")
+    plt.scatter(xs, ys, s=12, c="y")
+    # plt.scatter(xs[0], ys[0], s=12, c="red")
+
+
+def plot_road_edge(road_edge):
+    xs, ys = convert_polyline(road_edge.polyline)
+    plt.plot(xs, ys, "k-")
+    plt.scatter(xs, ys, s=12, c="black")
+    # plt.scatter(xs[0], ys[0], s=12, c="red")
+
+
+def plot_boundaries(lane, features):
+    if lane["left_boundaries"] or lane["right_boundaries"]:
+        for name, lst in [
+            ("Left", list(lane["left_boundaries"])),
+            ("Right", list(lane["right_boundaries"])),
+        ]:
+            for b in lst:
+                if b.boundary_type == 0:
+                    plot_road_edge(features[b.boundary_feature_id])
+                else:
+                    plot_road_line(features[b.boundary_feature_id])
+
+
+if __name__ == "__main__":
+    scenario_id = "4f30f060069bbeb9"
+    dataset_root = os.path.join(Path(__file__).parent, "maps/")
+    dataset_file = (
+        "uncompressed_scenario_training_20s_training_20s.tfrecord-00000-of-01000"
+    )
+    dataset_path = os.path.join(dataset_root, dataset_file)
+    source_str = f"{dataset_path}#{scenario_id}"
+
+    fig, ax = plt.subplots()
+    ax.set_title(f"Scenario {scenario_id}")
+    ax.axis("equal")
+
+    map_spec = MapSpec(source=source_str)
+    road_map = WaymoMap.from_spec(map_spec)
+
+    for lane_id, lane in road_map._lanes.items():
+        plot_lane(lane._lane_dict)
+        # plot_boundaries(lane_feat, features)
+        xs, ys = [], []
+        for x, y in lane._lane_polygon:
+            xs.append(x)
+            ys.append(y)
+        plt.plot(xs, ys, "b-")
+
+    mng = plt.get_current_fig_manager()
+    mng.resize(1000, 1000)
+    # mng.resize(*mng.window.maxsize())
+    plt.show()

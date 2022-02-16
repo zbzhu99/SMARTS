@@ -20,7 +20,16 @@
 import enum
 import math
 from dataclasses import dataclass
-from typing import NamedTuple, Optional, Sequence, SupportsFloat, Type, Union
+from typing import (
+    List,
+    NamedTuple,
+    Optional,
+    Sequence,
+    SupportsFloat,
+    Tuple,
+    Type,
+    Union,
+)
 
 import numpy as np
 from cached_property import cached_property
@@ -29,6 +38,7 @@ from typing_extensions import SupportsIndex
 
 from smarts.core.utils.math import (
     fast_quaternion_from_angle,
+    is_close,
     radians_to_vec,
     yaw_from_quaternion,
 )
@@ -36,12 +46,17 @@ from smarts.core.utils.math import (
 
 @dataclass(frozen=True)
 class Dimensions:
+    """A 3 dimension data structure representing a box."""
+
     length: float
     width: float
     height: float
 
     @classmethod
-    def init_with_defaults(cls, length: float, width: float, height: float, defaults):
+    def init_with_defaults(
+        cls, length: float, width: float, height: float, defaults: "Dimensions"
+    ) -> "Dimensions":
+        """Create with the given default values"""
         if not length or length == -1:
             length = defaults.length
         if not width or width == -1:
@@ -51,14 +66,19 @@ class Dimensions:
         return cls(length, width, height)
 
     @classmethod
-    def copy_with_defaults(cls, dims, defaults):
+    def copy_with_defaults(
+        cls, dims: "Dimensions", defaults: "Dimensions"
+    ) -> "Dimensions":
+        """Make a copy of the given dimensions with a default option."""
         return cls.init_with_defaults(dims.length, dims.width, dims.height, defaults)
 
     @property
-    def as_lwh(self):
+    def as_lwh(self) -> Tuple[float, float, float]:
+        """Convert to a tuple consisting of (length, width, height)."""
         return (self.length, self.width, self.height)
 
     def equal_if_defined(self, length: float, width: float, height: float) -> bool:
+        """Test if dimensions are matching."""
         return (
             (not self.length or self.length == -1 or self.length == length)
             and (not self.width or self.width == -1 or self.width == width)
@@ -70,13 +90,16 @@ _shapely_points = {}
 
 
 class Point(NamedTuple):
+    """A coordinate in space."""
+
     x: float
     y: float
     z: Optional[float] = 0
 
     @property
     def as_shapely(self) -> SPoint:
-        # Shapley Point construction is expensive!
+        """Use with caution! Convert this point to a shapely point."""
+        # Shapely Point construction is expensive!
         # Note that before python3.8, @cached_property was not thread safe,
         # nor can it be used in a NamedTuple (which doesn't have a __dict__).
         # (Points can be used by multi-threaded client code, even when
@@ -96,9 +119,150 @@ class Point(NamedTuple):
             del _shapely_points[self]
 
 
+def euclidean_distance(p1: Point, p2: Point) -> float:
+    """The distance taking measuring a direct line between p1 and p2."""
+    dx = p1[0] - p2[0]
+    dy = p1[1] - p2[1]
+    return math.sqrt(dx * dx + dy * dy)
+
+
+def position_at_offset(p1: Point, p2: Point, offset: float) -> Optional[Point]:
+    """A point between p1 and p2 given an offset less than the distance between p1 and p2."""
+    if is_close(offset, 0.0):  # for pathological cases with dist == 0 and offset == 0
+        return p1
+
+    dist = euclidean_distance(p1, p2)
+
+    if is_close(dist, offset):
+        return p2
+
+    if offset > dist:
+        return None
+
+    x = p1[0] + (p2[0] - p1[0]) * (offset / dist)
+    y = p1[1] + (p2[1] - p1[1]) * (offset / dist)
+    return Point(x, y)
+
+
+def offset_along_shape(point: Point, shape: List[Point]) -> Union[float, int]:
+    """An offset on a shape defined as a vector path determined by the closest location on the
+    path to the point.
+    """
+    if point not in shape:
+        return polygon_offset_with_minimum_distance_to_point(point, shape)
+    offset = 0
+    for i in range(len(shape) - 1):
+        if shape[i] == point:
+            break
+        offset += euclidean_distance(shape[i], shape[i + 1])
+    return offset
+
+
+def position_at_shape_offset(shape: List[Point], offset: float) -> Optional[Point]:
+    """A point defined as the offset into a shape defined as vector path."""
+    seen_length = 0
+    curr = shape[0]
+    for next_p in shape[1:]:
+        next_length = euclidean_distance(curr, next_p)
+        if seen_length + next_length > offset:
+            return position_at_offset(curr, next_p, offset - seen_length)
+        seen_length += next_length
+        curr = next_p
+    return shape[-1]
+
+
+def line_offset_with_minimum_distance_to_point(
+    point: Point,
+    line_start: Point,
+    line_end: Point,
+    perpendicular: bool = False,
+) -> Union[float, int]:
+    """Return the offset from line (line_start, line_end) where the distance to
+    point is minimal"""
+    p = point
+    p1 = line_start
+    p2 = line_end
+    d = euclidean_distance(p1, p2)
+    u = ((p[0] - p1[0]) * (p2[0] - p1[0])) + ((p[1] - p1[1]) * (p2[1] - p1[1]))
+    if d == 0.0 or u < 0.0 or u > d * d:
+        if perpendicular:
+            return -1
+        if u < 0.0:
+            return 0.0
+        return d
+    return u / d
+
+
+def polygon_offset_with_minimum_distance_to_point(
+    point: Point, polygon: List[Point]
+) -> Union[float, int]:
+    """Return the offset and the distance from the polygon start where the distance to the point is minimal"""
+    p = point
+    s = polygon
+    seen = 0
+    min_dist = 1e400
+    min_offset = -1
+    for i in range(len(s) - 1):
+        p_offset = line_offset_with_minimum_distance_to_point(p, s[i], s[i + 1])
+        dist = (
+            min_dist
+            if p_offset == -1
+            else euclidean_distance(p, position_at_offset(s[i], s[i + 1], p_offset))
+        )
+        if dist < min_dist:
+            min_dist = dist
+            min_offset = p_offset + seen
+        seen += euclidean_distance(s[i], s[i + 1])
+    return min_offset
+
+
+def distance_point_to_line(
+    point: Point,
+    line_start: Point,
+    line_end: Point,
+    perpendicular: bool = False,
+) -> Union[float, int]:
+    """Return the minimum distance between point and the line (line_start, line_end)"""
+    p1 = line_start
+    p2 = line_end
+    offset = line_offset_with_minimum_distance_to_point(
+        point, line_start, line_end, perpendicular
+    )
+    if offset == -1:
+        return -1
+    if offset == 0:
+        return euclidean_distance(point, p1)
+    u = offset / euclidean_distance(line_start, line_end)
+    intersection = (p1[0] + u * (p2[0] - p1[0]), p1[1] + u * (p2[1] - p1[1]))
+    return euclidean_distance(point, intersection)
+
+
+def distance_point_to_polygon(
+    point: Point, polygon: List[Point], perpendicular: bool = False
+) -> Union[float, int]:
+    """Return the minimum distance between point and polygon"""
+    p = point
+    s = polygon
+    min_dist = None
+    for i in range(len(s) - 1):
+        dist = distance_point_to_line(p, s[i], s[i + 1], perpendicular)
+        if dist == -1 and perpendicular and i != 0:
+            # distance to inner corner
+            dist = euclidean_distance(point, s[i])
+        if dist != -1:
+            if min_dist is None or dist < min_dist:
+                min_dist = dist
+    if min_dist is not None:
+        return min_dist
+    return -1
+
+
 class RefLinePoint(NamedTuple):
-    # See the Reference Line coordinate system in OpenDRIVE here:
-    #   https://www.asam.net/index.php?eID=dumpFile&t=f&f=4089&token=deea5d707e2d0edeeb4fccd544a973de4bc46a09#_coordinate_systems
+    """A reference line coordinate.
+    See the Reference Line coordinate system in OpenDRIVE here:
+       https://www.asam.net/index.php?eID=dumpFile&t=f&f=4089&token=deea5d707e2d0edeeb4fccd544a973de4bc46a09#_coordinate_systems
+    """
+
     s: float  # offset along lane from start of lane
     t: Optional[float] = 0  # horizontal displacement from center of lane
     h: Optional[float] = 0  # vertical displacement from surface of lane
@@ -106,23 +270,29 @@ class RefLinePoint(NamedTuple):
 
 @dataclass(frozen=True)
 class BoundingBox:
+    """A fitted box generally used to encapsulate geometry."""
+
     min_pt: Point
     max_pt: Point
 
     @property
     def length(self):
+        """The length of the box."""
         return self.max_pt.x - self.min_pt.x
 
     @property
     def width(self):
+        """The width of the box."""
         return self.max_pt.y - self.min_pt.y
 
     @property
     def height(self):
+        """The height of the box."""
         return self.max_pt.z - self.min_pt.z
 
     @property
     def center(self):
+        """The center point of the box."""
         return Point(
             x=(self.min_pt.x + self.max_pt.x) / 2,
             y=(self.min_pt.y + self.max_pt.y) / 2,
@@ -131,6 +301,7 @@ class BoundingBox:
 
     @property
     def as_dimensions(self) -> Dimensions:
+        """The box dimensions. This will lose offset information."""
         return Dimensions(length=self.length, width=self.width, height=self.height)
 
 
@@ -179,14 +350,17 @@ class Heading(float):
 
     @property
     def as_panda3d(self):
+        """Convert to Panda3D facing format."""
         return math.degrees(self)
 
     @property
     def as_bullet(self):
+        """Convert to bullet physics facing format."""
         return self
 
     @property
     def as_sumo(self):
+        """Convert to SUMO facing format"""
         return math.degrees(Heading._flip_clockwise(self))
 
     def relative_to(self, other: "Heading"):
@@ -203,8 +377,8 @@ class Heading(float):
 
         return Heading(rel_heading)
 
-    # 2D directional vector that aligns with Cartesian Coordinate System
     def direction_vector(self):
+        """Convert to a 2D directional vector that aligns with Cartesian Coordinate System"""
         return radians_to_vec(self)
 
     @staticmethod
@@ -218,6 +392,8 @@ class Heading(float):
 
 @dataclass
 class Pose:
+    """A pair of position and orientation values."""
+
     # TODO: these should be np.ndarray
     position: Sequence  # [x, y, z]
     orientation: Sequence  # [a, b, c, d] -> a + bi + cj + dk = 0
@@ -234,6 +410,7 @@ class Pose:
         return hash((*self.position, *self.orientation))
 
     def reset_with(self, position, heading: Heading):
+        """Resets the pose with the given position and heading values."""
         if self.position.dtype is not np.dtype(np.float64):
             # The slice assignment below doesn't change self.position's dtype,
             # which can be a problem if it was initialized with ints and
@@ -249,6 +426,7 @@ class Pose:
 
     @cached_property
     def point(self) -> Point:
+        """The positional value of this pose as a point."""
         return Point(*self.position)
 
     @classmethod
@@ -345,6 +523,9 @@ class Pose:
 
     @property
     def heading(self):
+        """The heading value converted from orientation."""
+
+        # XXX: changing the orientation should invalidate this
         if self.heading_ is None:
             yaw = yaw_from_quaternion(self.orientation)
             self.heading_ = Heading(yaw)

@@ -27,7 +27,8 @@ import warnings
 from collections import defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import List, NamedTuple, Sequence, Tuple
+from typing import List, NamedTuple, Optional, Sequence, Tuple
+
 import numpy as np
 
 with warnings.catch_warnings():
@@ -39,7 +40,7 @@ with warnings.catch_warnings():
         # aggressive
         from sklearn.neighbors import KDTree
 
-from smarts.core.coordinates import Heading, Pose, Point
+from smarts.core.coordinates import Heading, Point, Pose
 from smarts.core.road_map import RoadMap
 from smarts.core.utils.math import (
     fast_quaternion_from_angle,
@@ -52,12 +53,19 @@ from smarts.core.utils.math import (
 
 @dataclass(frozen=True)
 class LanePoint:
+    """A point on a lane."""
+
     lane: RoadMap.Lane
+    """The lane this point is on."""
     pose: Pose
+    """The pose of this lane."""
     lane_width: float
+    """The width of the lane at this point."""
 
 
 class LinkedLanePoint(NamedTuple):
+    """A lane point that is linked to the next points in the road network."""
+
     lp: LanePoint = None
     is_inferred: bool = True
     nexts: List[LinkedLanePoint] = []  # list of next immediate LanePoint(s)
@@ -71,6 +79,8 @@ class LinkedLanePoint(NamedTuple):
 
 
 class LanePoints:
+    """A LanePoint utility class."""
+
     def __init__(self, shape_lps: List[LinkedLanePoint], spacing: float):
         # self._road_map = road_map
 
@@ -139,11 +149,12 @@ class LanePoints:
                 heading = Heading(heading)
                 orientation = fast_quaternion_from_angle(heading)
 
+                lane_width, _ = road_map.lane_by_id(lane.getID()).width_at_offset(0)
                 first_lanepoint = LinkedLanePoint(
                     lp=LanePoint(
                         lane=road_map.lane_by_id(lane.getID()),
                         pose=Pose(position=lane_shape[0], orientation=orientation),
-                        lane_width=road_map.lane_by_id(lane.getID()).width_at_offset(0),
+                        lane_width=lane_width,
                     ),
                     nexts=[],
                     is_inferred=False,
@@ -159,6 +170,7 @@ class LanePoints:
                 shape_lanepoints.append(first_lanepoint)
                 curr_lanepoint = first_lanepoint
 
+                lane_width, _ = road_map.lane_by_id(lane.getID()).width_at_offset(0)
                 for p1, p2 in zip(lane_shape[1:], lane_shape[2:]):
                     heading_ = vec_to_radians(p2 - p1)
                     heading_ = Heading(heading_)
@@ -167,9 +179,7 @@ class LanePoints:
                         lp=LanePoint(
                             lane=road_map.lane_by_id(lane.getID()),
                             pose=Pose(position=p1, orientation=orientation_),
-                            lane_width=road_map.lane_by_id(
-                                lane.getID()
-                            ).width_at_offset(0),
+                            lane_width=lane_width,
                         ),
                         nexts=[],
                         is_inferred=False,
@@ -180,6 +190,7 @@ class LanePoints:
                     curr_lanepoint = linked_lanepoint
 
                 # Add a lanepoint for the last point of the current lane
+                lane_width, _ = curr_lanepoint.lp.lane.width_at_offset(0)
                 last_linked_lanepoint = LinkedLanePoint(
                     lp=LanePoint(
                         lane=curr_lanepoint.lp.lane,
@@ -187,7 +198,7 @@ class LanePoints:
                             position=lane_shape[-1],
                             orientation=curr_lanepoint.lp.pose.orientation,
                         ),
-                        lane_width=curr_lanepoint.lp.lane.width_at_offset(0),
+                        lane_width=lane_width,
                     ),
                     nexts=[],
                     is_inferred=False,
@@ -239,7 +250,6 @@ class LanePoints:
         assert type(od_road_network) == OpenDriveRoadNetwork
 
         def _shape_lanepoints_along_lane(
-            road_map: OpenDriveRoadNetwork,
             lane: RoadMap.Lane,
             lanepoint_by_lane_memo: dict,
         ) -> Tuple[LinkedLanePoint, List[LinkedLanePoint]]:
@@ -255,7 +265,7 @@ class LanePoints:
                         previous_lp.nexts.append(first_lanepoint)
                     continue
 
-                lane_shape = [np.array(p) for p in curr_lane.centerline_points]
+                lane_shape = [np.array([p.x, p.y]) for p in curr_lane.centerline_points]
 
                 assert len(lane_shape) >= 2, repr(lane_shape)
 
@@ -267,11 +277,12 @@ class LanePoints:
                     Point(x=lane_shape[0][0], y=lane_shape[0][1], z=0.0)
                 )
 
+                lane_width, _ = curr_lane.width_at_offset(first_lane_coord.s)
                 first_lanepoint = LinkedLanePoint(
                     lp=LanePoint(
                         lane=curr_lane,
                         pose=Pose(position=lane_shape[0], orientation=orientation),
-                        lane_width=curr_lane.width_at_offset(first_lane_coord.s),
+                        lane_width=lane_width,
                     ),
                     nexts=[],
                     is_inferred=False,
@@ -294,11 +305,12 @@ class LanePoints:
                     lp_lane_coord = curr_lane.to_lane_coord(
                         Point(x=p1[0], y=p1[1], z=0.0)
                     )
+                    lane_width, _ = curr_lane.width_at_offset(lp_lane_coord.s)
                     linked_lanepoint = LinkedLanePoint(
                         lp=LanePoint(
                             lane=curr_lane,
                             pose=Pose(position=p1, orientation=orientation_),
-                            lane_width=curr_lane.width_at_offset(lp_lane_coord.s),
+                            lane_width=lane_width,
                         ),
                         nexts=[],
                         is_inferred=False,
@@ -312,6 +324,9 @@ class LanePoints:
                 last_lane_coord = curr_lanepoint.lp.lane.to_lane_coord(
                     Point(x=lane_shape[-1][0], y=lane_shape[-1][1], z=0.0)
                 )
+                lane_width, _ = curr_lanepoint.lp.lane.width_at_offset(
+                    last_lane_coord.s
+                )
                 last_linked_lanepoint = LinkedLanePoint(
                     lp=LanePoint(
                         lane=curr_lanepoint.lp.lane,
@@ -319,9 +334,7 @@ class LanePoints:
                             position=lane_shape[-1],
                             orientation=curr_lanepoint.lp.pose.orientation,
                         ),
-                        lane_width=curr_lanepoint.lp.lane.width_at_offset(
-                            last_lane_coord.s
-                        ),
+                        lane_width=lane_width,
                     ),
                     nexts=[],
                     is_inferred=False,
@@ -358,7 +371,126 @@ class LanePoints:
                 # Ignore non drivable lanes in OpenDRIVE
                 if lane.is_drivable:
                     _, new_lps = _shape_lanepoints_along_lane(
-                        od_road_network, lane, lanepoint_by_lane_memo
+                        lane, lanepoint_by_lane_memo
+                    )
+                    shape_lps += new_lps
+
+        return cls(shape_lps, spacing)
+
+    @classmethod
+    def from_waymo(
+        cls,
+        waymo_road_network,
+        spacing,
+    ):
+        """Computes the lane shape (start/shape/end) lanepoints for all lanes in
+        the network, the result of this function can be used to interpolate
+        lanepoints along lanes to the desired granularity.
+        """
+        from .waymo_map import WaymoMap
+
+        assert type(waymo_road_network) == WaymoMap
+
+        def _shape_lanepoints_along_lane(
+            lane: RoadMap.Lane,
+            lanepoint_by_lane_memo: dict,
+        ) -> Tuple[LinkedLanePoint, List[LinkedLanePoint]]:
+            lane_queue = queue.Queue()
+            lane_queue.put((lane, None))
+            shape_lanepoints = []
+            initial_lanepoint = None
+            while not lane_queue.empty():
+                curr_lane, previous_lp = lane_queue.get()
+                first_lanepoint = lanepoint_by_lane_memo.get(curr_lane.lane_id)
+                if first_lanepoint:
+                    if previous_lp:
+                        previous_lp.nexts.append(first_lanepoint)
+                    continue
+
+                lane_shape = curr_lane._lane_pts
+
+                assert len(lane_shape) >= 2, repr(lane_shape)
+
+                heading = vec_to_radians(lane_shape[1] - lane_shape[0])
+                heading = Heading(heading)
+                orientation = fast_quaternion_from_angle(heading)
+
+                lane_width, _ = curr_lane.width_at_offset(0)
+                first_lanepoint = LinkedLanePoint(
+                    lp=LanePoint(
+                        lane=curr_lane,
+                        pose=Pose(position=lane_shape[0], orientation=orientation),
+                        lane_width=lane_width,
+                    ),
+                    nexts=[],
+                    is_inferred=False,
+                )
+
+                if previous_lp is not None:
+                    previous_lp.nexts.append(first_lanepoint)
+
+                if initial_lanepoint is None:
+                    initial_lanepoint = first_lanepoint
+
+                lanepoint_by_lane_memo[curr_lane.lane_id] = first_lanepoint
+                shape_lanepoints.append(first_lanepoint)
+                curr_lanepoint = first_lanepoint
+
+                for p1, p2 in zip(lane_shape[1:], lane_shape[2:]):
+                    heading_ = vec_to_radians(p2 - p1)
+                    heading_ = Heading(heading_)
+                    orientation_ = fast_quaternion_from_angle(heading_)
+                    lane_width, _ = curr_lane.width_at_offset(0)
+                    linked_lanepoint = LinkedLanePoint(
+                        lp=LanePoint(
+                            lane=curr_lane,
+                            pose=Pose(position=p1, orientation=orientation_),
+                            lane_width=lane_width,
+                        ),
+                        nexts=[],
+                        is_inferred=False,
+                    )
+
+                    shape_lanepoints.append(linked_lanepoint)
+                    curr_lanepoint.nexts.append(linked_lanepoint)
+                    curr_lanepoint = linked_lanepoint
+
+                # Add a lanepoint for the last point of the current lane
+                curr_lanepoint_lane = curr_lanepoint.lp.lane
+                lane_width, _ = curr_lanepoint_lane.width_at_offset(0)
+                last_linked_lanepoint = LinkedLanePoint(
+                    lp=LanePoint(
+                        lane=curr_lanepoint.lp.lane,
+                        pose=Pose(
+                            position=lane_shape[-1],
+                            orientation=curr_lanepoint.lp.pose.orientation,
+                        ),
+                        lane_width=lane_width,
+                    ),
+                    nexts=[],
+                    is_inferred=False,
+                )
+
+                shape_lanepoints.append(last_linked_lanepoint)
+                curr_lanepoint.nexts.append(last_linked_lanepoint)
+                curr_lanepoint = last_linked_lanepoint
+
+                for out_lane in curr_lane.outgoing_lanes:
+                    if out_lane.is_drivable:
+                        lane_queue.put((out_lane, curr_lanepoint))
+            return initial_lanepoint, shape_lanepoints
+
+        roads = waymo_road_network._roads
+        lanepoint_by_lane_memo = {}
+        shape_lps = []
+
+        for road_id in roads:
+            road = roads[road_id]
+            for lane in road.lanes:
+                # Ignore non drivable lanes in Waymo
+                if lane.is_drivable:
+                    _, new_lps = _shape_lanepoints_along_lane(
+                        lane, lanepoint_by_lane_memo
                     )
                     shape_lps += new_lps
 
@@ -488,11 +620,12 @@ class LanePoints:
             orientation = fast_quaternion_from_angle(heading)
 
             rmlane_coord = rmlane.to_lane_coord(Point(x=pos[0], y=pos[1], z=0.0))
+            lane_width, _ = rmlane.width_at_offset(rmlane_coord.s)
             linked_lanepoint = LinkedLanePoint(
                 lp=LanePoint(
                     lane=rmlane,
                     pose=Pose(position=pos, orientation=orientation),
-                    lane_width=rmlane.width_at_offset(rmlane_coord.s),
+                    lane_width=lane_width,
                 ),
                 nexts=[],
                 is_inferred=True,
@@ -582,9 +715,20 @@ class LanePoints:
         self,
         poses: Sequence[Pose],
         within_radius: float = 10,
-        on_lane_id: str = None,
+        on_lane_id: Optional[str] = None,
         maximum_count: int = 10,
     ) -> List[LanePoint]:
+        """Get the lanepoints closest to the given poses.
+        Args:
+            poses:
+                The poses to look around for lanepoints.
+            within_radius:
+                The radius which lanepoints can be found from the given poses.
+            on_lane_id:
+                Restricts the lanepoints to the specified lane.
+            maximum_count:
+                The maximum lanepoints found.
+        """
         if on_lane_id is None:
             lanepoints = self._linked_lanepoints
             kd_tree = self._lanepoints_kd_tree
@@ -601,17 +745,20 @@ class LanePoints:
         return [l_lps[0].lp for l_lps in linked_lanepoints]
 
     def closest_lanepoint_on_lane_to_point(self, point, lane_id: str) -> LanePoint:
+        """Returns the closest lanepoint on the given lane to the given world coordinate."""
         return self.closest_linked_lanepoint_on_lane_to_point(point, lane_id).lp
 
     def closest_linked_lanepoint_on_lane_to_point(
         self, point, lane_id: str
     ) -> LinkedLanePoint:
+        """Returns the closest linked lanepoint on the given lane."""
         lane_kd_tree = self._lanepoints_kd_tree_by_lane_id[lane_id]
         return LanePoints._closest_linked_lp_in_kd_tree_batched(
             [point], self._lanepoints_by_lane_id[lane_id], lane_kd_tree, k=1
         )[0][0]
 
     def closest_linked_lanepoint_on_road(self, point, road_id: str) -> LinkedLanePoint:
+        """Returns the closest linked lanepoint on the given road."""
         return LanePoints._closest_linked_lp_in_kd_tree_batched(
             [point],
             self._lanepoints_by_edge_id[road_id],
@@ -622,6 +769,17 @@ class LanePoints:
     def paths_starting_at_lanepoint(
         self, lanepoint: LinkedLanePoint, lookahead: int, filter_edge_ids: tuple
     ) -> List[List[LinkedLanePoint]]:
+        """Returns all full branches from the given lanepoint up to the length of the lookahead.
+        Args:
+            lanepoint:
+                The starting lanepoint.
+            lookahead:
+                The maximum lanepoints in a branch.
+            filter_edge_ids:
+                Blacklisted edge ids.
+        Returns:
+            All branches(as lists) stemming from the lanepoint.
+        """
         lanepoint_paths = [[lanepoint]]
         for _ in range(lookahead):
             next_lanepoint_paths = []
