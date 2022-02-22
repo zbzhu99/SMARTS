@@ -762,6 +762,7 @@ class WaymoMap(RoadMap):
             for lane in self._lanes:
                 lane._road = self
                 lane._index = idx_counter
+                idx_counter += 1
 
         @property
         def road_id(self) -> str:
