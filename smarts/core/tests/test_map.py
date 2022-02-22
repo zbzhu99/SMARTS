@@ -771,6 +771,14 @@ def plot_lane(lane):
     # plt.scatter(xs[0], ys[0], s=12, c="red")
 
 
+def get_lp_coords(lps):
+    xs, ys = [], []
+    for lp in lps:
+        xs.append(lp.lp.pose.position[0])
+        ys.append(lp.lp.pose.position[1])
+    return xs, ys
+
+
 def plot_road_line(road_line):
     xs, ys = convert_polyline(road_line.polyline)
     plt.plot(xs, ys, "y-")
@@ -822,6 +830,12 @@ if __name__ == "__main__":
             xs.append(x)
             ys.append(y)
         plt.plot(xs, ys, "b-")
+
+        # Plot lanepoints
+        if lane.is_drivable:
+            linked_lps = road_map._lanepoints._lanepoints_by_lane_id[lane.lane_id]
+            xlp, ylp = get_lp_coords(linked_lps)
+            plt.scatter(xlp, ylp, s=1, c="r")
 
     mng = plt.get_current_fig_manager()
     mng.resize(1000, 1000)
