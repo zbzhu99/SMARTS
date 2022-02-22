@@ -679,7 +679,6 @@ def test_waymo_map():
         assert road.length >= 0
         assert road.parallel_roads == []
         for lane in road.lanes:
-            assert lane.index
             assert lane.lane_id
             assert lane.length is not None
             assert lane.length >= 0
