@@ -806,7 +806,7 @@ if __name__ == "__main__":
     ax.set_title(f"Scenario {scenario_id}")
     ax.axis("equal")
 
-    map_spec = MapSpec(source=source_str)
+    map_spec = MapSpec(source=source_str, lanepoint_spacing=1.0)
     road_map = WaymoMap.from_spec(map_spec)
 
     for lane_id, lane in road_map._lanes.items():
