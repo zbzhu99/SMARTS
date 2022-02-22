@@ -770,9 +770,8 @@ def test_waymo_map():
     assert len(waypoints_for_route) == 4
     assert len(waypoints_for_route[0]) == 101
     lane_ids_under_wps = set()
-    for i in range(len(waypoints_for_route)):
-        for wp in waypoints_for_route[i]:
-            lane_ids_under_wps.add(wp.lane_id)
+    for wp in waypoints_for_route[0]:
+        lane_ids_under_wps.add(wp.lane_id)
     assert lane_ids_under_wps == {'107_0', '107_19', '107_20', '107_3', '107_5', '111_0'}
 
 # XXX: The below is just for testing. Remove before merging.
@@ -853,12 +852,12 @@ if __name__ == "__main__":
     road_map = WaymoMap.from_spec(map_spec)
 
     # Plot waypoints on nearest lanes of road for a given lanepoint
-    lp_101_0 = road_map._lanepoints._lanepoints_by_lane_id["101_0"]
-    lp_pose = lp_101_0[0].lp.pose
-    waypoints_path = road_map.waypoint_paths(lp_pose, 100)
-    for waypoints in waypoints_path:
-        xwp, ywp = get_wp_coords(waypoints)
-        plt.scatter(xwp, ywp, s=1, c="r")
+    # lp_101_0 = road_map._lanepoints._lanepoints_by_lane_id["101_0"]
+    # lp_pose = lp_101_0[0].lp.pose
+    # waypoints_path = road_map.waypoint_paths(lp_pose, 100)
+    # for waypoints in waypoints_path:
+    #     xwp, ywp = get_wp_coords(waypoints)
+    #     plt.scatter(xwp, ywp, s=1, c="r")
 
     for lane_id, lane in road_map._lanes.items():
         if lane_id in {'107_0', '107_19', '107_20', '107_3', '107_5', '111_0', "101_0"}:
