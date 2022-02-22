@@ -723,15 +723,15 @@ def test_waymo_map():
     assert not l3.contains_point(point)
 
     # Lanepoints
-    # lanepoints = road_map._lanepoints
-    #
-    # point = Point(148.0, -17.0, 0)
-    # l1_lane_point = lanepoints.closest_lanepoint_on_lane_to_point(point, l1.lane_id)
-    # assert (
-    #     round(l1_lane_point.pose.position[0], 2),
-    #     round(l1_lane_point.pose.position[1], 2),
-    # ) == (148.4, -17.0)
-    #
+    lanepoints = road_map._lanepoints
+
+    point = Point(2715.0, -2763.5, 0)
+    l1_lane_point = lanepoints.closest_lanepoint_on_lane_to_point(point, l1.lane_id)
+    assert (
+        round(l1_lane_point.pose.position[0], 2),
+        round(l1_lane_point.pose.position[1], 2),
+    ) == (148.4, -17.0)
+
     #     r5 = road_map.road_by_id("60_0_R")
     #     point = Point(148.00, -47.00)
     #     r5_linked_lane_point = lanepoints.closest_linked_lanepoint_on_road(
