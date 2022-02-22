@@ -671,9 +671,18 @@ def test_waymo_map():
     assert road_map.bounding_box.min_pt == Point(
         x=2638.180643600848, y=-2827.317950309347, z=0
     )
-    for lane_id, lane in road_map._lanes.items():
-        assert lane.length > 0
-        assert lane.lane_id
+
+    # Expected properties for all roads and lanes
+    for road_id, road in road_map._roads.items():
+        assert type(road_id) == str
+        assert road.length is not None
+        assert road.length >= 0
+        assert road.parallel_roads == []
+        for lane in road.lanes:
+            assert lane.lane_id
+            assert lane.length is not None
+            assert lane.length >= 0
+            assert lane.speed_limit > 0
 
     # Lane Tests
     l1 = road_map.lane_by_id("100_0")
@@ -743,7 +752,6 @@ def test_waymo_map():
     ) == (2713.84, -2762.52)
 
     r1 = road_map.road_by_id("waymo_road-100_0")
-    point = Point(2715.0, -2763.5, 0)
     r1_linked_lane_point = lanepoints.closest_linked_lanepoint_on_road(
         point, r1.road_id
     )
