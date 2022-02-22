@@ -555,17 +555,21 @@ class WaymoMap(RoadMap):
 
         @cached_property
         def incoming_lanes(self) -> List[RoadMap.Lane]:
-            return [
-                self._map.lane_by_id(str(entry_lane))
-                for entry_lane in self._lane_dict["entry_lanes"]
-            ]
+            incoming = []
+            for entry_lane in self._lane_dict["entry_lanes"]:
+                il = self._map.lane_by_id(str(entry_lane))
+                if il:
+                    incoming.append(il)
+            return incoming
 
         @cached_property
         def outgoing_lanes(self) -> List[RoadMap.Lane]:
-            return [
-                self._map.lane_by_id(str(exit_lanes))
-                for exit_lanes in self._lane_dict["exit_lanes"]
-            ]
+            outgoing = []
+            for exit_lanes in self._lane_dict["exit_lanes"]:
+                ol = self._map.lane_by_id(str(exit_lanes))
+                if ol:
+                    outgoing.append(ol)
+            return outgoing
 
         @cached_property
         def entry_surfaces(self) -> List[RoadMap.Surface]:
@@ -838,7 +842,7 @@ class WaymoMap(RoadMap):
         lane = self._lanes.get(lane_id)
         if not lane:
             self._log.warning(f"WaymoMap got request for unknown lane_id '{lane_id}'")
-        return self._lanes.get(lane_id)
+        return lane
 
     def _build_lane_r_tree(self):
         result = rtree.index.Index()
