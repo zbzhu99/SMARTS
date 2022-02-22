@@ -679,6 +679,7 @@ def test_waymo_map():
     l1 = road_map.lane_by_id("100_0")
     assert l1
     assert l1.lane_id == "100_0"
+    assert l1.road.road_id == ""
     assert l1.is_drivable
     assert round(l1.length, 2) == 124.48
     assert l1.speed_limit == 13.4112
@@ -730,7 +731,7 @@ def test_waymo_map():
     assert (
         round(l1_lane_point.pose.position[0], 2),
         round(l1_lane_point.pose.position[1], 2),
-    ) == (148.4, -17.0)
+    ) == (2713.84, -2762.52)
 
     #     r5 = road_map.road_by_id("60_0_R")
     #     point = Point(148.00, -47.00)
