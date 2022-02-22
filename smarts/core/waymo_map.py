@@ -849,9 +849,17 @@ class WaymoMap(RoadMap):
                         return True
             return False
 
+        @lru_cache(maxsize=16)
         def oncoming_roads_at_point(self, point: Point) -> List[RoadMap.Road]:
-            # TODO:  may not be able to do this one?
-            raise NotImplementedError()
+            result = []
+            for lane in self.lanes:
+                offset = lane.to_lane_coord(point).s
+                result += [
+                    ol.road
+                    for ol in lane.oncoming_lanes_at_offset(offset)
+                    if ol.road != self
+                ]
+            return result
 
         def parallel_roads(self) -> List[RoadMap.Road]:
             return []
