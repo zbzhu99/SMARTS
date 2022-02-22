@@ -845,19 +845,20 @@ if __name__ == "__main__":
     road_map = WaymoMap.from_spec(map_spec)
 
     for lane_id, lane in road_map._lanes.items():
-        plot_lane(lane._lane_dict)
-        # plot_boundaries(lane, features)
-        xs, ys = [], []
-        for x, y in lane._lane_polygon:
-            xs.append(x)
-            ys.append(y)
-        plt.plot(xs, ys, "b-")
+        if lane_id in {'107_0', '107_19', '107_20', '107_3', '107_5', '111_0', "101_0"}:
+            plot_lane(lane._lane_dict)
+            # plot_boundaries(lane, features)
+            xs, ys = [], []
+            for x, y in lane._lane_polygon:
+                xs.append(x)
+                ys.append(y)
+            plt.plot(xs, ys, "b-")
 
-        # Plot lanepoints
-        if lane.is_drivable:
-            linked_lps = road_map._lanepoints._lanepoints_by_lane_id[lane.lane_id]
-            xlp, ylp = get_lp_coords(linked_lps)
-            plt.scatter(xlp, ylp, s=1, c="r")
+            # Plot lanepoints
+            if lane.is_drivable:
+                linked_lps = road_map._lanepoints._lanepoints_by_lane_id[lane.lane_id]
+                xlp, ylp = get_lp_coords(linked_lps)
+                plt.scatter(xlp, ylp, s=1, c="r")
 
     mng = plt.get_current_fig_manager()
     mng.resize(1000, 1000)
