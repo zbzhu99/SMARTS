@@ -357,7 +357,7 @@ class WaymoMap(RoadMap):
                 lane_dict.get("speed_limit_mph", WaymoMap.DEFAULT_LANE_SPEED / 0.44704)
                 * 0.44704
             )
-
+            self._road = None
             # Geometry
             self._n_pts = len(self._lane_pts)
             self._left_widths = [0] * self._n_pts
@@ -539,6 +539,10 @@ class WaymoMap(RoadMap):
         def lane_id(self) -> str:
             return self._lane_id
 
+        @property
+        def road(self):
+            return self._road
+
         @cached_property
         def length(self) -> float:
             length = 0.0
@@ -715,11 +719,13 @@ class WaymoMap(RoadMap):
         Many of these might correspond to a single named road in reality."""
 
         def __init__(self, road_map, road_lanes: Sequence[RoadMap.Lane]):
-            self._road_id = "waymo_road-"
+            self._road_id = "waymo_road"
             for lane in road_lanes:
                 self._road_id += f"-{lane.lane_id}"
             super().__init__(self._road_id, road_map)
             self._lanes = road_lanes
+            for lane in self._lanes:
+                lane._road = self._road_id
 
         @property
         def road_id(self) -> str:
