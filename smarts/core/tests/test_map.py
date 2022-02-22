@@ -766,7 +766,7 @@ def test_waymo_map():
     # waypoints generation along road connections
     lp_101_0 = road_map._lanepoints._lanepoints_by_lane_id["101_0"]
     lp_pose = lp_101_0[0].lp.pose
-    waypoints_for_route = road_map.waypoint_paths(lp_pose, 200)
+    waypoints_for_route = road_map.waypoint_paths(lp_pose, 100)
     assert len(waypoints_for_route) == 4
     assert len(waypoints_for_route[0]) == 101
     lane_ids_under_wps = frozenset(
