@@ -344,7 +344,7 @@ class WaymoMap(RoadMap):
         return self._surfaces.get(surface_id)
 
     class Lane(RoadMap.Lane, Surface):
-        def __init__(self, road_map: RoadMap, lane_id: str, lane_dict: Dict[str, Any]):
+        def __init__(self, road_map, lane_id: str, lane_dict: Dict[str, Any]):
             super().__init__(lane_id, road_map)
             self._map = road_map
             self._lane_id = lane_id
@@ -646,6 +646,32 @@ class WaymoMap(RoadMap):
             self, offset: float, lookahead: int = 5
         ) -> float:
             return super().curvature_radius_at_offset(offset, lookahead)
+
+        @lru_cache(maxsize=16)
+        def oncoming_lanes_at_offset(self, offset: float) -> List[RoadMap.Lane]:
+            result = []
+            radius = 1.1 * self.width_at_offset(offset)[0]
+            pt = self.from_lane_coord(RefLinePoint(offset))
+            nearby_lanes = self._map.nearest_lanes(pt, radius=radius)
+            if not nearby_lanes:
+                return result
+            my_vect = self.vector_at_offset(offset)
+            my_norm = np.linalg.norm(my_vect)
+            if my_norm == 0:
+                return result
+            threshold = -0.995562  # cos(175*pi/180)
+            for lane, _ in nearby_lanes:
+                if lane == self:
+                    continue
+                lane_refline_pt = lane.to_lane_coord(pt)
+                lv = lane.vector_at_offset(lane_refline_pt.s)
+                lv_norm = np.linalg.norm(lv)
+                if lv_norm == 0:
+                    continue
+                lane_angle = np.dot(my_vect, lv) / (my_norm * lv_norm)
+                if lane_angle < threshold:
+                    result.append(lane)
+            return result
 
         @cached_property
         def bounding_box(self) -> Optional[BoundingBox]:
