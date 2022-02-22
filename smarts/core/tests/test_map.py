@@ -801,6 +801,14 @@ def get_lp_coords(lps):
     return xs, ys
 
 
+def get_wp_coords(wps):
+    xs, ys = [], []
+    for wp in wps:
+        xs.append(wp.pos[0])
+        ys.append(wp.pos[1])
+    return xs, ys
+
+
 def plot_road_line(road_line):
     xs, ys = convert_polyline(road_line.polyline)
     plt.plot(xs, ys, "y-")
@@ -844,6 +852,14 @@ if __name__ == "__main__":
     map_spec = MapSpec(source=source_str, lanepoint_spacing=1.0)
     road_map = WaymoMap.from_spec(map_spec)
 
+    # Plot waypoints on nearest lanes of road for a given lanepoint
+    lp_101_0 = road_map._lanepoints._lanepoints_by_lane_id["101_0"]
+    lp_pose = lp_101_0[0].lp.pose
+    waypoints_path = road_map.waypoint_paths(lp_pose, 100)
+    for waypoints in waypoints_path:
+        xwp, ywp = get_wp_coords(waypoints)
+        plt.scatter(xwp, ywp, s=1, c="r")
+
     for lane_id, lane in road_map._lanes.items():
         if lane_id in {'107_0', '107_19', '107_20', '107_3', '107_5', '111_0', "101_0"}:
             plot_lane(lane._lane_dict)
@@ -852,13 +868,16 @@ if __name__ == "__main__":
             for x, y in lane._lane_polygon:
                 xs.append(x)
                 ys.append(y)
-            plt.plot(xs, ys, "b-")
+            if lane_id == "101_0":
+                plt.plot(xs, ys, "r-")
+            else:
+                plt.plot(xs, ys, "b-")
 
-            # Plot lanepoints
-            if lane.is_drivable:
-                linked_lps = road_map._lanepoints._lanepoints_by_lane_id[lane.lane_id]
-                xlp, ylp = get_lp_coords(linked_lps)
-                plt.scatter(xlp, ylp, s=1, c="r")
+        # Plot lanepoints
+        # if lane.is_drivable:
+        #     linked_lps = road_map._lanepoints._lanepoints_by_lane_id[lane.lane_id]
+        #     xlp, ylp = get_lp_coords(linked_lps)
+        #     plt.scatter(xlp, ylp, s=1, c="r")
 
     mng = plt.get_current_fig_manager()
     mng.resize(1000, 1000)
