@@ -735,7 +735,7 @@ def test_waymo_map():
     l2 = road_map.nearest_lane(point)
     assert l2.lane_id == "156_0"
     assert l2.index == 0
-    assert l2.road.road_id == "waymo_road-"
+    assert l2.road.road_id == "waymo_road-156_0"
     assert l2.speed_limit == 11.176
     assert l2.contains_point(point)
 
