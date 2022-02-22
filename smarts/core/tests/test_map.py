@@ -769,12 +769,10 @@ def test_waymo_map():
     waypoints_for_route = road_map.waypoint_paths(lp_pose, 100)
     assert len(waypoints_for_route) == 4
     assert len(waypoints_for_route[0]) == 101
-    lane_ids_under_wps = frozenset(
-        [
-            frozenset([wp.lane_id for wp in waypoints_for_route[i]])
-            for i in range(len(waypoints_for_route))
-        ]
-    )
+    lane_ids_under_wps = set()
+    for i in range(len(waypoints_for_route)):
+        for wp in waypoints_for_route[i]:
+            lane_ids_under_wps.add(wp.lane_id)
     assert lane_ids_under_wps == {'107_0', '107_19', '107_20', '107_3', '107_5', '111_0'}
 
 # XXX: The below is just for testing. Remove before merging.
