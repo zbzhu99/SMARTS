@@ -750,7 +750,7 @@ def test_waymo_map():
     assert r1_linked_lane_point.lp.lane.lane_id == "100_0"
     r1_lp_path = lanepoints.paths_starting_at_lanepoint(r1_linked_lane_point, 10, ())
     assert len(r1_lp_path) == 1
-    assert [llp.lp.lane.lane_id for llp in r1_lp_path[0]].count("100_0") == 6
+    assert [llp.lp.lane.lane_id for llp in r1_lp_path[0]].count("100_0") == 11
 
 
 # XXX: The below is just for testing. Remove before merging.
