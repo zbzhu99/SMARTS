@@ -722,6 +722,31 @@ def test_waymo_map():
     assert l3.lane_id == "156_0"
     assert not l3.contains_point(point)
 
+    # Lanepoints
+    # lanepoints = road_map._lanepoints
+    #
+    # point = Point(148.0, -17.0, 0)
+    # l1_lane_point = lanepoints.closest_lanepoint_on_lane_to_point(point, l1.lane_id)
+    # assert (
+    #     round(l1_lane_point.pose.position[0], 2),
+    #     round(l1_lane_point.pose.position[1], 2),
+    # ) == (148.4, -17.0)
+    #
+    #     r5 = road_map.road_by_id("60_0_R")
+    #     point = Point(148.00, -47.00)
+    #     r5_linked_lane_point = lanepoints.closest_linked_lanepoint_on_road(
+    #         point, r5.road_id
+    #     )
+    #     assert r5_linked_lane_point.lp.lane.lane_id == "60_0_R_-1"
+    #     assert (
+    #         round(r5_linked_lane_point.lp.pose.position[0], 2),
+    #         round(r5_linked_lane_point.lp.pose.position[1], 2),
+    #     ) == (148.43, -46.88)
+    #
+    #     r5_lp_path = lanepoints.paths_starting_at_lanepoint(r5_linked_lane_point, 5, ())
+    #     assert len(r5_lp_path) == 1
+    #     assert [llp.lp.lane.lane_id for llp in r5_lp_path[0]].count("60_0_R_-1") == 6
+
 
 # XXX: The below is just for testing. Remove before merging.
 
@@ -786,7 +811,7 @@ if __name__ == "__main__":
 
     for lane_id, lane in road_map._lanes.items():
         plot_lane(lane._lane_dict)
-        # plot_boundaries(lane_feat, features)
+        # plot_boundaries(lane, features)
         xs, ys = [], []
         for x, y in lane._lane_polygon:
             xs.append(x)
