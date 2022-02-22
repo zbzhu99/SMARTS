@@ -679,6 +679,7 @@ def test_waymo_map():
         assert road.length >= 0
         assert road.parallel_roads == []
         for lane in road.lanes:
+            assert lane.index
             assert lane.lane_id
             assert lane.length is not None
             assert lane.length >= 0
@@ -690,6 +691,7 @@ def test_waymo_map():
     assert l1.lane_id == "100_0"
     assert l1.road.road_id == "waymo_road-100_0"
     assert l1.is_drivable
+    assert l1.index == 0
     assert round(l1.length, 2) == 124.48
     assert l1.speed_limit == 13.4112
 
@@ -733,6 +735,8 @@ def test_waymo_map():
     point = Point(2910.0, -2610.0, 0)
     l2 = road_map.nearest_lane(point)
     assert l2.lane_id == "156_0"
+    assert l2.index == 0
+    assert l2.road.road_id == "waymo_road-"
     assert l2.speed_limit == 11.176
     assert l2.contains_point(point)
 

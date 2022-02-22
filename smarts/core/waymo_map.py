@@ -358,6 +358,8 @@ class WaymoMap(RoadMap):
                 * 0.44704
             )
             self._road = None
+            self._index = None
+
             # Geometry
             self._n_pts = len(self._lane_pts)
             self._left_widths = [0] * self._n_pts
@@ -540,8 +542,12 @@ class WaymoMap(RoadMap):
             return self._lane_id
 
         @property
-        def road(self):
+        def road(self) -> RoadMap.Road:
             return self._road
+
+        @property
+        def index(self):
+            return self._index
 
         @cached_property
         def length(self) -> float:
@@ -750,8 +756,12 @@ class WaymoMap(RoadMap):
                 self._road_id += f"-{lane.lane_id}"
             super().__init__(self._road_id, road_map)
             self._lanes = road_lanes
+
+            # Set road and index for its lanes
+            idx_counter = 0
             for lane in self._lanes:
                 lane._road = self
+                lane._index = idx_counter
 
         @property
         def road_id(self) -> str:
@@ -861,6 +871,7 @@ class WaymoMap(RoadMap):
                 ]
             return result
 
+        @property
         def parallel_roads(self) -> List[RoadMap.Road]:
             return []
 
