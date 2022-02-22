@@ -775,8 +775,7 @@ def test_waymo_map():
             for i in range(len(waypoints_for_route))
         ]
     )
-    assert {"1_0_R_-1", "1_1_R_-1"} in lane_ids_under_wps
-    assert {"1_0_R_-2", "1_1_R_-3"} in lane_ids_under_wps
+    assert lane_ids_under_wps == {'107_0', '107_19', '107_20', '107_3', '107_5', '111_0'}
 
 # XXX: The below is just for testing. Remove before merging.
 
