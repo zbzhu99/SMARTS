@@ -660,7 +660,7 @@ def test_waymo_map():
         return
 
     source_str = f"{dataset_path}#{scenario_id}"
-    map_spec = MapSpec(source=source_str)
+    map_spec = MapSpec(source=source_str, lanepoint_spacing=1.0)
     road_map = WaymoMap.from_spec(map_spec)
 
     assert isinstance(road_map, WaymoMap)
