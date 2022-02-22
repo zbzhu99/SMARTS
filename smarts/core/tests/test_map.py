@@ -763,6 +763,20 @@ def test_waymo_map():
     assert len(r1_lp_path) == 1
     assert [llp.lp.lane.lane_id for llp in r1_lp_path[0]].count("100_0") == 11
 
+    # waypoints generation along road connections
+    lp_101_0 = road_map._lanepoints._lanepoints_by_lane_id["101_0"]
+    lp_pose = lp_101_0[0].lp.pose
+    waypoints_for_route = road_map.waypoint_paths(lp_pose, 100)
+    assert len(waypoints_for_route) == 6
+    assert len(waypoints_for_route[0]) == 61
+    lane_ids_under_wps = frozenset(
+        [
+            frozenset([wp.lane_id for wp in waypoints_for_route[i]])
+            for i in range(len(waypoints_for_route))
+        ]
+    )
+    assert {"1_0_R_-1", "1_1_R_-1"} in lane_ids_under_wps
+    assert {"1_0_R_-2", "1_1_R_-3"} in lane_ids_under_wps
 
 # XXX: The below is just for testing. Remove before merging.
 

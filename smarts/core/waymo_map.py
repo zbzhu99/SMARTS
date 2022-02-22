@@ -1067,9 +1067,6 @@ class WaymoMap(RoadMap):
             if lanepoint.is_inferred and 0 < idx < len(path) - 1:
                 continue
 
-            # Compute the lane's width at lanepoint's position
-            width_at_offset = lanepoint.lp.lane_width
-
             ref_lanepoints_coordinates["positions_x"].append(
                 lanepoint.lp.pose.position[0]
             )
@@ -1082,7 +1079,7 @@ class WaymoMap(RoadMap):
             ref_lanepoints_coordinates["lane_id"].append(lanepoint.lp.lane.lane_id)
             ref_lanepoints_coordinates["lane_index"].append(lanepoint.lp.lane.index)
 
-            ref_lanepoints_coordinates["lane_width"].append(width_at_offset)
+            ref_lanepoints_coordinates["lane_width"].append(lanepoint.lp.lane_width)
 
             ref_lanepoints_coordinates["speed_limit"].append(
                 lanepoint.lp.lane.speed_limit
