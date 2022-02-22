@@ -682,7 +682,7 @@ def test_waymo_map():
             assert lane.lane_id
             assert lane.length is not None
             assert lane.length >= 0
-            assert lane.speed_limit > 0
+            assert lane.speed_limit >= 0
 
     # Lane Tests
     l1 = road_map.lane_by_id("100_0")
