@@ -725,7 +725,7 @@ class WaymoMap(RoadMap):
             super().__init__(self._road_id, road_map)
             self._lanes = road_lanes
             for lane in self._lanes:
-                lane._road = self._road_id
+                lane._road = self
 
         @property
         def road_id(self) -> str:
