@@ -714,7 +714,11 @@ def test_waymo_map():
     on_lanes = l1.oncoming_lanes_at_offset(offset)
     assert on_lanes
     assert len(on_lanes) == 1
-    assert on_lanes[0].lane_id == "53_0_R_-1"
+    assert on_lanes[0].lane_id == "95_0"
+
+    # check for locations (lane, offset tuples) within distance at this offset
+    candidates = l1.project_along(offset, 70)
+    assert (len(candidates)) == 6
 
     # nearest lane for a point inside a lane
     point = Point(2910.0, -2610.0, 0)
