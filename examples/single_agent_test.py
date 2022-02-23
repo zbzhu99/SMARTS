@@ -44,7 +44,7 @@ def main(headless, num_episodes):
             agent_action = agent.act(observation)
             observation, reward, done, info = env.step(agent_action)
             episode.record_step(observation, reward, done, info)
-            time.sleep(0.1)
+            # time.sleep(0.1)
 
         print(observation.events)
         print(info.keys())
@@ -56,7 +56,7 @@ def main(headless, num_episodes):
             "Pos ==",
             observation.ego["pos"],
         )
-        time.sleep(3)
+        time.sleep(10)
 
 
     env.close()
