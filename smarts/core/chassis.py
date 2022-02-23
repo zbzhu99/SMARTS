@@ -234,9 +234,6 @@ class BoxChassis(Chassis):
         self._set_pose(force_pose)
 
     def _set_pose(self, pose: Pose):
-        """Use with caution since it disrupts the physics simulation. Sets the pose of the
-        chassis.
-        """
         position, orientation = pose.as_bullet()
         self._client.resetBasePositionAndOrientation(
             self.bullet_id, position, orientation
