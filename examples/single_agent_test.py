@@ -23,8 +23,8 @@ class ChaseWaypointsAgent(Agent):
 def main(headless, num_episodes):
     env = gym.make(
         "smarts.env:intersection-v0",
-        headless=False,
-        sumo_headless=True,
+        headless=True,
+        sumo_headless=False,
         visdom=False,
     )
 
@@ -33,31 +33,18 @@ def main(headless, num_episodes):
         observation = env.reset()
         episode.record_scenario(env.scenario_log)
 
-        import time
-        first = 0
-        done = False
         print("==============================================")
+        done = False
         while not done:
-            if first == 0:
-                print("Step count == ", env._smarts.step_count)
-                first = 1
             agent_action = agent.act(observation)
             observation, reward, done, info = env.step(agent_action)
             episode.record_step(observation, reward, done, info)
-            # time.sleep(0.1)
 
-        print(observation.events)
-        print(info.keys())
-        print(info["env_obs"].events.collisions)
-        print("Step count == ", env._smarts.step_count)
-        print(
-            "Score ==",
-            info["score"],
-            "Pos ==",
-            observation.ego["pos"],
-        )
-        time.sleep(10)
-
+        print("Events:", observation.events)
+        print("Collisions:", info["env_obs"].events.collisions)
+        print("Score ==", info["score"])
+        print("Pos ==", observation.ego["pos"])
+        time.sleep(5)
 
     env.close()
 

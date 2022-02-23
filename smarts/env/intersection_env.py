@@ -189,7 +189,7 @@ class _InfoScore(gym.Wrapper):
 
         for agent_id in obs.keys():
             reached_goal = obs[agent_id].events["reached_goal"]
-            # Set `score=1` if ego agent successfully navigates the left-turn 
+            # Set `score=1` if ego agent successfully navigates the left-turn
             # intersection and reaches the end of mission route, else `score=0`.
             info[agent_id]["score"] = reached_goal
 
