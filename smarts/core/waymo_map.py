@@ -680,7 +680,7 @@ class WaymoMap(RoadMap):
 
         @lru_cache(maxsize=4)
         def shape(
-                self, buffer_width: float = 0.0, default_width: Optional[float] = None
+            self, buffer_width: float = 0.0, default_width: Optional[float] = None
         ) -> Polygon:
             """Returns a polygon representing this lane, buffered by buffered_width (which must be non-negative),
             where buffer_width is a buffer around the perimeter of the polygon."""
@@ -1266,9 +1266,7 @@ class WaymoMap(RoadMap):
         via: Optional[Sequence[RoadMap.Road]] = None,
         max_to_gen: int = 1,
     ) -> List[RoadMap.Route]:
-        assert (
-            max_to_gen == 1
-        ), "multiple route generation not yet supported for Waymo"
+        assert max_to_gen == 1, "multiple route generation not yet supported for Waymo"
         new_route = WaymoMap.Route(self)
         result = [new_route]
 
