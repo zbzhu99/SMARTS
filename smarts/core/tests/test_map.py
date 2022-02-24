@@ -919,7 +919,7 @@ if __name__ == "__main__":
         for x, y in lane._lane_polygon:
             xs.append(x)
             ys.append(y)
-        if lane.contains_point(Point(x=2785.00, y=-2644.00, z=0)):
+        if lane.contains_point(Point(x=2778.00, y=-2639.5, z=0)):
             print(lane_id + ", " + lane.road.road_id)
             plt.plot(xs, ys, "r-")
         else:
