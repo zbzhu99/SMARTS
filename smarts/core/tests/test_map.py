@@ -782,6 +782,21 @@ def test_waymo_map():
     assert l87_4.road.composite_road == l87_4.road
     # TODO: no composites in this test scenario?
 
+    # route generation
+    r_156 = road_map.road_by_id("waymo_road-156")
+    r_58_0_R = road_map.road_by_id("waymo_road-156")
+
+    route_52_to_56 = road_map.generate_routes(r_156, r_56_0_R)
+    assert [r.road_id for r in route_52_to_56[0].roads] == [
+        "52_0_R",
+        "58_0_R",
+        "56_0_R",
+    ]
+    assert (
+            route_52_to_56[0].road_length
+            == r_156.length + r_58_0_R.length + r_56_0_R.length
+    )
+
     # Lanepoints
     lanepoints = road_map._lanepoints
     point = Point(2715.0, -2763.5, 0)
@@ -898,13 +913,15 @@ if __name__ == "__main__":
     #     plt.scatter(xwp, ywp, s=1, c="r")
 
     for lane_id, lane in road_map._lanes.items():
-        plot_lane(lane._lane_dict)
-        # plot_boundaries(lane_feat, features)
-        xs, ys = [], []
-        for x, y in lane._lane_polygon:
-            xs.append(x)
-            ys.append(y)
-        plt.plot(xs, ys, "b-")
+        if lane_id == "156" or "156" in [ol.lane_id for ol in lane.outgoing_lanes]:
+            print(lane.road.road_id)
+            plot_lane(lane._lane_dict)
+            # plot_boundaries(lane_feat, features)
+            xs, ys = [], []
+            for x, y in lane._lane_polygon:
+                xs.append(x)
+                ys.append(y)
+            plt.plot(xs, ys, "b-")
 
         # Plot lanepoints
         # if lane.is_drivable:
