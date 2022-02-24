@@ -792,7 +792,7 @@ def test_waymo_map():
         'waymo_road-113-121',
         'waymo_road-113_4',
         'waymo_road-113_23-114_30',
-        'waymo_road-112'
+        'waymo_road-112',
         'waymo_road-107-108-101-108',
         'waymo_road-101_4',
         'waymo_road-101_8',
