@@ -815,7 +815,7 @@ def test_waymo_map():
 
     # distance between points along route
     start_point = Point(x=2778.00, y=-2639.5, z=0)
-    end_point = point = Point(2714.0, -2764.5, 0)
+    end_point = Point(2714.0, -2764.5, 0)
     assert round(route_120_to_100[0].distance_between(start_point, end_point), 2) == 72.4
 
     # project along route
