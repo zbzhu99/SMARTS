@@ -814,13 +814,13 @@ def test_waymo_map():
     assert lane_ids_under_wps == {"107", "107_19", "107_20", "107_3", "107_5", "111"}
 
     # distance between points along route
-    # start_point = Point(x=17.56, y=-1.67, z=0.0)
-    # end_point = Point(x=89.96, y=2.15, z=0.0)
-    # assert round(route_120_to_100[0].distance_between(start_point, end_point), 2) == 72.4
+    start_point = Point(x=2778.00, y=-2639.5, z=0)
+    end_point = point = Point(2714.0, -2764.5, 0)
+    assert round(route_120_to_100[0].distance_between(start_point, end_point), 2) == 72.4
 
     # project along route
-    # candidates = route_120_to_100[0].project_along(start_point, 70)
-    # assert len(candidates) == 3
+    candidates = route_120_to_100[0].project_along(start_point, 200)
+    assert len(candidates) == 3
 
     # Lanepoints
     lanepoints = road_map._lanepoints
