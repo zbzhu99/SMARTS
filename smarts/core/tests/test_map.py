@@ -913,14 +913,16 @@ if __name__ == "__main__":
     #     plt.scatter(xwp, ywp, s=1, c="r")
 
     for lane_id, lane in road_map._lanes.items():
+        plot_lane(lane._lane_dict)
+        # plot_boundaries(lane_feat, features)
+        xs, ys = [], []
+        for x, y in lane._lane_polygon:
+            xs.append(x)
+            ys.append(y)
         if lane_id == "156" or "156" in [ol.lane_id for ol in lane.outgoing_lanes]:
             print(lane.road.road_id)
-            plot_lane(lane._lane_dict)
-            # plot_boundaries(lane_feat, features)
-            xs, ys = [], []
-            for x, y in lane._lane_polygon:
-                xs.append(x)
-                ys.append(y)
+            plt.plot(xs, ys, "r-")
+        else:
             plt.plot(xs, ys, "b-")
 
         # Plot lanepoints
