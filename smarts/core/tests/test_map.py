@@ -784,17 +784,16 @@ def test_waymo_map():
 
     # route generation
     r_100 = road_map.road_by_id("waymo_road-100")
-    r_125 = road_map.road_by_id("waymo_road-125")
+    r_120 = road_map.road_by_id("waymo_road-120")
 
-    route_125_to_100 = road_map.generate_routes(r_125, r_100)
-    assert [r.road_id for r in route_125_to_100[0].roads] == [
+    route_120_to_100 = road_map.generate_routes(r_120, r_100)
+    assert [r.road_id for r in route_120_to_100[0].roads] == [
         "waymo_road-100",
-        "waymo_road-125",
-        "56_0_R",
+        "waymo_road-120",
     ]
     assert (
-            route_125_to_100[0].road_length
-            == r_100.length + r_125.length + r_56_0_R.length
+            route_120_to_100[0].road_length
+            == r_100.length + r_120.length
     )
 
     # Lanepoints
