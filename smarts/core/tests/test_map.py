@@ -811,7 +811,8 @@ def test_waymo_map():
     lane_ids_under_wps = set()
     for wp in waypoints_for_route[0]:
         lane_ids_under_wps.add(wp.lane_id)
-    assert lane_ids_under_wps == {"107", "107_19", "107_20", "107_3", "107_5", "111"}
+    assert lane_ids_under_wps == {'100', '101', '101_34', '101_36', '101_4', '101_8', '112', '113', '113_23',
+                                  '113_4', '120'}
 
     # distance between points along route
     start_point = Point(x=2778.00, y=-2639.5, z=0)
