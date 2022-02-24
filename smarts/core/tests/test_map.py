@@ -805,9 +805,9 @@ def test_waymo_map():
     # waypoints generation along route
     lp_120 = road_map._lanepoints._lanepoints_by_lane_id["120"]
     lp_pose = lp_120[0].lp.pose
-    waypoints_for_route = road_map.waypoint_paths(lp_pose, 300, route=route_120_to_100[0])
+    waypoints_for_route = road_map.waypoint_paths(lp_pose, 500, route=route_120_to_100[0])
     assert len(waypoints_for_route) == 1
-    assert len(waypoints_for_route[0]) == 61
+    assert len(waypoints_for_route[0]) == 501
     lane_ids_under_wps = set()
     for wp in waypoints_for_route[0]:
         lane_ids_under_wps.add(wp.lane_id)
