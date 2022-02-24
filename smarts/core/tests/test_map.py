@@ -919,7 +919,7 @@ if __name__ == "__main__":
         for x, y in lane._lane_polygon:
             xs.append(x)
             ys.append(y)
-        if lane_id == "156":
+        if lane_id == "100":
             plt.plot(xs, ys, "r-")
         else:
             plt.plot(xs, ys, "b-")
