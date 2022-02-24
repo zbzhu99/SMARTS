@@ -800,7 +800,7 @@ def test_waymo_map():
         'waymo_road-110_24-101_36',
         'waymo_road-100'
     ]
-    assert route_120_to_100[0].road_length == 200
+    assert route_120_to_100[0].road_length == 223.15809203789289
 
     # waypoints generation along route
     lp_1_0_R = road_map._lanepoints._lanepoints_by_lane_id["1_0_R_-1"]
