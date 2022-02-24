@@ -821,7 +821,7 @@ def test_waymo_map():
 
     # project along route
     candidates = route_120_to_100[0].project_along(start_point, 200)
-    assert len(candidates) == 3
+    assert len(candidates) == 1
 
     # Lanepoints
     lanepoints = road_map._lanepoints
