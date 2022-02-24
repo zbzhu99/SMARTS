@@ -919,8 +919,7 @@ if __name__ == "__main__":
         for x, y in lane._lane_polygon:
             xs.append(x)
             ys.append(y)
-        if lane_id == "156" or "156" in [ol.lane_id for ol in lane.outgoing_lanes]:
-            print(lane.road.road_id)
+        if lane_id == "156":
             plt.plot(xs, ys, "r-")
         else:
             plt.plot(xs, ys, "b-")
