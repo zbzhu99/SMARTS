@@ -89,14 +89,15 @@ setup(
             "opencv-python==4.1.2.30",
             "opencv-python-headless==4.1.2.30",
             "ray[rllib]==1.0.1.post1",
-            "tensorflow>=2.4.0",
+            "tensorflow==2.4.0",
             "torch==1.4.0",
             "torchvision==0.5.0",
         ],
-        "waymo": ["tensorflow==2.4.0",
+        "waymo": [
                   "waymo-open-dataset-tf-2-4-0",
                   "numpy==1.20.0",
-                  "typing-extensions==3.10.0.0"],
+                  "typing-extensions==3.10.0.0"
+        ],
     },
     entry_points={"console_scripts": ["scl=cli.cli:scl"]},
 )
