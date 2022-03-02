@@ -95,7 +95,6 @@ setup(
         ],
         "waymo": [
                   "waymo-open-dataset-tf-2-4-0",
-                  "numpy>=1.20.0",
         ],
     },
     entry_points={"console_scripts": ["scl=cli.cli:scl"]},
