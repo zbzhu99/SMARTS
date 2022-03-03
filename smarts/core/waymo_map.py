@@ -117,15 +117,11 @@ class WaymoMap(RoadMap):
         def __init__(
             self,
             feat_id: str,
-            lane_dict: Dict[str, Any] = None,
+            lane_dict: Dict[str, Any] = {},
             start_pt: int = 0,
             end_pt: int = -1,
-            sub_segs: Sequence["WaymoMap._LaneSegment"] = None,
+            sub_segs: Sequence["WaymoMap._LaneSegment"] = [],
         ):
-            if lane_dict is None:
-                lane_dict = {}
-            if sub_segs is None:
-                sub_segs = []
             self.lane_dict = lane_dict
             self.sub_segs = sub_segs
             self.feat_id = feat_id
@@ -141,16 +137,15 @@ class WaymoMap(RoadMap):
             self._shift_and_clip("left")
             self._shift_and_clip("right")
 
-        @property
+        @cached_property
         def seg_id(self) -> str:
             """The segment ID"""
             seg_id = f"{self.feat_id}"
             if self.start_pt > 0:
                 # try to keep seg_ids the same as lane ids when not doing segmentation
                 seg_id += f"_{self.start_pt}"
-            if self.sub_segs is not None or len(self.sub_segs) != 0:
-                for ss in range(1, len(self.sub_segs)):
-                    seg_id += f"_{self.sub_segs[ss].end_pt}"
+            for ss in range(1, len(self.sub_segs)):
+                seg_id += f"_{self.sub_segs[ss].end_pt}"
             return seg_id
 
         def _shift_and_clip(self, side: str):
@@ -205,7 +200,7 @@ class WaymoMap(RoadMap):
             self,
             split_pt: int,
             prev_seg: "WaymoMap._LaneSegment",
-            sub_segs: Optional[Sequence] = None,
+            sub_segs: Optional[Sequence] = [],
         ) -> "WaymoMap._LaneSegment":
             """Create a new segment at a given split index"""
 
