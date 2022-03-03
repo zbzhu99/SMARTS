@@ -145,8 +145,9 @@ class WaymoMap(RoadMap):
             if self.start_pt > 0:
                 # try to keep seg_ids the same as lane ids when not doing segmentation
                 seg_id += f"_{self.start_pt}"
-            for ss in range(1, len(self.sub_segs)):
-                seg_id += f"_{self.sub_segs[ss].end_pt}"
+            if self.sub_segs:
+                for ss in range(1, len(self.sub_segs)):
+                    seg_id += f"_{self.sub_segs[ss].end_pt}"
             return seg_id
 
         def _shift_and_clip(self, side: str):
