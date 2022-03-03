@@ -117,19 +117,23 @@ class WaymoMap(RoadMap):
         def __init__(
             self,
             feat_id: str,
-            lane_dict: Dict[str, Any] = {},
+            lane_dict: Dict[str, Any] = None,
             start_pt: int = 0,
             end_pt: int = -1,
-            sub_segs: Sequence["WaymoMap._LaneSegment"] = [],
+            sub_segs: Sequence["WaymoMap._LaneSegment"] = None,
         ):
+            if lane_dict is None:
+                lane_dict = {}
+            if sub_segs is None:
+                sub_segs = []
+            self.lane_dict = lane_dict
+            self.sub_segs = sub_segs
             self.feat_id = feat_id
             self.start_pt = start_pt
             if end_pt < 0:
                 self.end_pt = len(lane_dict.get("polyline", []))
             else:
                 self.end_pt = end_pt
-            self.lane_dict = lane_dict
-            self.sub_segs = sub_segs
             if sub_segs:
                 self.lane_dict["sublanes"] = [ss.seg_id for ss in sub_segs]
                 for ss in sub_segs:
@@ -140,7 +144,6 @@ class WaymoMap(RoadMap):
         @cached_property
         def seg_id(self) -> str:
             """The segment ID"""
-
             seg_id = f"{self.feat_id}"
             if self.start_pt > 0:
                 # try to keep seg_ids the same as lane ids when not doing segmentation
