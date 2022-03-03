@@ -148,7 +148,7 @@ class WaymoMap(RoadMap):
             if self.start_pt > 0:
                 # try to keep seg_ids the same as lane ids when not doing segmentation
                 seg_id += f"_{self.start_pt}"
-            if self.sub_segs is not None:
+            if self.sub_segs is not None or len(self.sub_segs) != 0:
                 for ss in range(1, len(self.sub_segs)):
                     seg_id += f"_{self.sub_segs[ss].end_pt}"
             return seg_id
