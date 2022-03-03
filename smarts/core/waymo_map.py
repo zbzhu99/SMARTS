@@ -141,7 +141,7 @@ class WaymoMap(RoadMap):
             self._shift_and_clip("left")
             self._shift_and_clip("right")
 
-        @cached_property
+        @property
         def seg_id(self) -> str:
             """The segment ID"""
             seg_id = f"{self.feat_id}"
