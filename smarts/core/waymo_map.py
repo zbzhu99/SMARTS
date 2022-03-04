@@ -472,7 +472,7 @@ class WaymoMap(RoadMap):
             try:
                 assert ln_seg_id, f"{ln.feature_id}"
             except AssertionError:
-                raise AssertionError(f"{ln_seg_id}, {ln.feature_id}")
+                return
             ln_lane_dict = lanedicts[ln_seg_id]
             lns_to_do.append(ln_lane_dict)
             lane = self._lanes.setdefault(
