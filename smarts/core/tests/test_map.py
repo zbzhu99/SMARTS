@@ -941,7 +941,7 @@ def plot_boundaries(lane, features):
 
 
 if __name__ == "__main__":
-    scenario_id = "4f30f060069bbeb9"
+    scenario_id = "fe6141aeb4061824"
     # scenario_id = "c84cde79e51b087c"
     dataset_root = os.path.join(Path(__file__).parent, "maps/")
     dataset_file = (
