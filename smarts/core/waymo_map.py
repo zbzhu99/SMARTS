@@ -242,11 +242,11 @@ class WaymoMap(RoadMap):
             # Geometry computations that require the original lane polylines
             lane_pts = [np.array([p.x, p.y]) for p in waymo_lane_dict["polyline"]]
             waymo_lane_dict["_normals"] = self._calculate_normals(lane_pts)
-            boundary_widths = self._raycast_boundaries(waymo_lane_dict, lane_pts)
-            if boundary_widths is None:
-                left_widths, right_widths = [0] * len(lane_pts), [0] * len(lane_pts)
-            else:
-                left_widths, right_widths = boundary_widths
+            left_widths, right_widths = self._raycast_boundaries(waymo_lane_dict, lane_pts)
+            # if boundary_widths is None:
+            #     left_widths, right_widths = [0] * len(lane_pts), [0] * len(lane_pts)
+            # else:
+            #     left_widths, right_widths = boundary_widths
 
             max_width = max(
                 left_widths[0],
@@ -469,7 +469,10 @@ class WaymoMap(RoadMap):
                 ln_seg_id = self._adj_seg_id(
                     lane_dict["_feature_id"], ln.feature_id, lanedicts
                 )
-            assert ln_seg_id, f"{ln.feature_id}"
+            try:
+                assert ln_seg_id, f"{ln.feature_id}"
+            except AssertionError:
+                raise AssertionError(f"{ln_seg_id}, {ln.feature_id}")
             ln_lane_dict = lanedicts[ln_seg_id]
             lns_to_do.append(ln_lane_dict)
             lane = self._lanes.setdefault(
