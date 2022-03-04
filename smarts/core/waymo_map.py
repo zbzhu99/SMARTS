@@ -242,7 +242,12 @@ class WaymoMap(RoadMap):
             # Geometry computations that require the original lane polylines
             lane_pts = [np.array([p.x, p.y]) for p in waymo_lane_dict["polyline"]]
             waymo_lane_dict["_normals"] = self._calculate_normals(lane_pts)
-            left_widths, right_widths = self._raycast_boundaries(waymo_lane_dict, lane_pts)
+            boundary_widths = self._raycast_boundaries(waymo_lane_dict, lane_pts)
+            if boundary_widths is None:
+                left_widths, right_widths = [0] * len(lane_pts), [0] * len(lane_pts)
+            else:
+                left_widths, right_widths = boundary_widths
+
             max_width = max(
                 left_widths[0],
                 left_widths[-1],
@@ -325,8 +330,6 @@ class WaymoMap(RoadMap):
         return normals
 
     def _raycast_boundaries(self, lane_dict, lane_pts, ray_dist=20.0) -> Optional[Tuple[List[float], List[float]]]:
-        if len(lane_pts) == 0:
-            print("no lane_pts")
         n_pts = len(lane_pts)
         left_widths = [0] * n_pts
         right_widths = [0] * n_pts
