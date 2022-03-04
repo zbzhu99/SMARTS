@@ -324,7 +324,9 @@ class WaymoMap(RoadMap):
             normals[i] = normal
         return normals
 
-    def _raycast_boundaries(self, lane_dict, lane_pts, ray_dist=20.0) -> Optional[Tuple[List[float], List[float]]]:   
+    def _raycast_boundaries(self, lane_dict, lane_pts, ray_dist=20.0) -> Optional[Tuple[List[float], List[float]]]:
+        if len(lane_pts) == 0:
+            print("no lane_pts")
         n_pts = len(lane_pts)
         left_widths = [0] * n_pts
         right_widths = [0] * n_pts
