@@ -1029,7 +1029,7 @@ class WaymoMap(RoadMap):
         @property
         def is_junction(self) -> bool:
             # TODO
-            raise NotImplementedError()
+            return False  # for now Waymo does not indicate whether a road is in junction or not, so we assume no junctions
 
         @cached_property
         def length(self) -> float:
