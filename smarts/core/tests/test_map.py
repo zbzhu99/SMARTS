@@ -1005,6 +1005,7 @@ if __name__ == "__main__":
     #     xwp, ywp = get_wp_coords(waypoints)
     #     plt.scatter(xwp, ywp, s=1, c="r")
 
+    # ids for scenario 4f30f060069bbeb9
     ids = [
         # "80_0",
         # "89_0",
