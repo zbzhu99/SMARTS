@@ -11,7 +11,7 @@ seed(4)
 
 rand_routes = [t.RandomRoute() for _ in range(15)]
 
-# SECS_PER_HOUR = 60.0 * 60.0
+# SECS_PER_HOUR = 60.0 * 60.0 
 # secs_btw_adding = 40
 flow_prob = 1/14
 actor = t.TrafficActor(name="car",vehicle_type='passenger')
