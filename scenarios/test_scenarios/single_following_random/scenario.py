@@ -19,7 +19,6 @@ flow = [t.Flow(
         for _ in range(20)]
 
 traffic = t.Traffic(
-    # flows=flow1+flow2+flow3+flow4+flow5+flow6+flow7+flow8
     flows=flow
 )
 
