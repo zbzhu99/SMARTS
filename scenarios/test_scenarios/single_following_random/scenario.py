@@ -96,7 +96,7 @@ flow = [t.Flow(
             rate = 1,
             actors={t.TrafficActor("car"): 1},
         ) 
-        for _ in range(30)]
+        for _ in range(17)]
 
 traffic = t.Traffic(
     # flows=flow1+flow2+flow3+flow4+flow5+flow6+flow7+flow8
