@@ -114,7 +114,7 @@ def plot_scenario(path: str, scenario_id: str):
     ax.set_title(f"Scenario {scenario_id}")
     ax.axis("equal")
     plot_map(map_features)
-    plt.legend(loc="bottom right")
+    plt.legend(loc="lower right")
     mng = plt.get_current_fig_manager()
     mng.resize(1000, 1000)
     # mng.resize(*mng.window.maxsize())
