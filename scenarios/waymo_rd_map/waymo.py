@@ -66,31 +66,45 @@ def get_traffic_light_lanes(scenario) -> List[str]:
     return tls_lanes
 
 
-def plot_map(map_features):
+def plot_map(map_features) -> List[Line2D]:
+    handles = []
     lanes = map_features["lane"]
     lane_points = [convert_polyline(lane.polyline) for lane in lanes]
     # lanes = list(filter(lambda lane: max(lane[1]) > 8150, lanes))
     for xs, ys in lane_points:
         plt.plot(xs, ys, linestyle=":", color="gray")
+    handles.append(Line2D([0], [0], linestyle=":", color="gray", label='Lane Polyline'))
+
     for road_line in map_features["road_line"]:
         xs, ys = convert_polyline(road_line.polyline)
         if road_line.type in [1, 4, 5]:
             plt.plot(xs, ys, "y--")
         else:
             plt.plot(xs, ys, "y-")
+    handles.append(Line2D([0], [0], linestyle="-", color="yellow", label='Single Road Line'))
+    handles.append(Line2D([0], [0], linestyle="--", color="yellow", label='Double Road Line'))
+
     for road_edge in map_features["road_edge"]:
         xs, ys = convert_polyline(road_edge.polyline)
         plt.plot(xs, ys, "k-")
+    handles.append(Line2D([0], [0], linestyle="-", color="black", label='Road Edge'))
+
     for crosswalk in map_features["crosswalk"]:
         xs, ys = convert_polyline(crosswalk.polygon)
         plt.plot(xs, ys, 'k--')
+    handles.append(Line2D([0], [0], linestyle="--", color="black", label='Crosswalk'))
+
     for speed_bump in map_features["speed_bump"]:
         xs, ys = convert_polyline(speed_bump.polygon)
         plt.plot(xs, ys, 'k:')
+    handles.append(Line2D([0], [0], linestyle=":", color="black", label='Speed Bump'))
+
     for stop_sign in map_features["stop_sign"]:
         plt.scatter(
             stop_sign.position.x, stop_sign.position.y, marker="o", c="#ff0000", alpha=1
         )
+    handles.append(Line2D([], [], color='red', marker='o', linestyle='None', markersize=5, label='Stop Sign'))
+    return handles
 
 
 def plot_scenario(path: str, scenario_id: str):
@@ -114,11 +128,7 @@ def plot_scenario(path: str, scenario_id: str):
     fig, ax = plt.subplots()
     ax.set_title(f"Scenario {scenario_id}")
     ax.axis("equal")
-    plot_map(map_features)
-    lane_line = Line2D([0], [0], linestyle=":", color="gray", label='Lane Polyline')
-    s_road_line = Line2D([0], [0], "y-", label='Single Road Line')
-    d_road_line = Line2D([0], [0], "y--", label='Double Road Line')
-    handles = [lane_line, s_road_line, d_road_line]
+    handles = plot_map(map_features)
     plt.legend(handles=handles)
     mng = plt.get_current_fig_manager()
     mng.resize(1000, 1000)
