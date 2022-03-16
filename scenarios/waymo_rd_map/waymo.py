@@ -70,50 +70,29 @@ def plot_map(map_features):
     lane_points = [convert_polyline(lane.polyline) for lane in lanes]
     # lanes = list(filter(lambda lane: max(lane[1]) > 8150, lanes))
     for xs, ys in lane_points:
-        plt.plot(xs, ys, linestyle=":", color="gray")
+        plt.plot(xs, ys, linestyle=":", color="gray", label="lane centre-line")
     for road_line in map_features["road_line"]:
         xs, ys = convert_polyline(road_line.polyline)
         if road_line.type in [1, 4, 5]:
-            plt.plot(xs, ys, "y--")
+            plt.plot(xs, ys, "y--", label="Single Road Line")
         else:
-            plt.plot(xs, ys, "y-")
+            plt.plot(xs, ys, "y-", label="Double Road Line")
     for road_edge in map_features["road_edge"]:
         xs, ys = convert_polyline(road_edge.polyline)
-        plt.plot(xs, ys, "k-")
+        plt.plot(xs, ys, "k-", label="Road Edge")
     for crosswalk in map_features["crosswalk"]:
         xs, ys = convert_polyline(crosswalk.polygon)
-        plt.plot(xs, ys, 'k--')
+        plt.plot(xs, ys, 'k--', label="Crosswalk")
     for speed_bump in map_features["speed_bump"]:
         xs, ys = convert_polyline(speed_bump.polygon)
-        plt.plot(xs, ys, 'k:')
+        plt.plot(xs, ys, 'k:', label="Speed Bump")
     for stop_sign in map_features["stop_sign"]:
         plt.scatter(
-            stop_sign.position.x, stop_sign.position.y, marker="o", c="#ff0000", alpha=1
+            stop_sign.position.x, stop_sign.position.y, marker="o", c="#ff0000", alpha=1, label="Stop Sign"
         )
 
 
-def plot_lane(lane):
-    xs, ys = convert_polyline(lane.polyline)
-    plt.plot(xs, ys, linestyle="-", c="gray")
-    # plt.scatter(xs, ys, s=12, c="gray")
-    # plt.scatter(xs[0], ys[0], s=12, c="red")
-
-
-def plot_road_line(road_line):
-    xs, ys = convert_polyline(road_line.polyline)
-    plt.plot(xs, ys, "y-")
-    plt.scatter(xs, ys, s=12, c="y")
-    # plt.scatter(xs[0], ys[0], s=12, c="red")
-
-
-def plot_road_edge(road_edge):
-    xs, ys = convert_polyline(road_edge.polyline)
-    plt.plot(xs, ys, "k-")
-    plt.scatter(xs, ys, s=12, c="black")
-    # plt.scatter(xs[0], ys[0], s=12, c="red")
-
-
-def plot(path: str, scenario_id: str):
+def plot_scenario(path: str, scenario_id: str):
     # Find scenario from path with given scenario_id
     dataset = read_tfrecord_file(path)
     scenario = None
@@ -135,7 +114,7 @@ def plot(path: str, scenario_id: str):
     ax.set_title(f"Scenario {scenario_id}")
     ax.axis("equal")
     plot_map(map_features)
-
+    plt.legend(loc="bottom right")
     mng = plt.get_current_fig_manager()
     mng.resize(1000, 1000)
     # mng.resize(*mng.window.maxsize())
@@ -204,4 +183,4 @@ if __name__ == "__main__":
         scenario_hashes = dump_plots(args.outdir, args.file)
         print(scenario_hashes)
     else:
-        plot(args.file, args.plot[0])
+        plot_scenario(args.file, args.plot[0])
