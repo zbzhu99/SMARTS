@@ -70,25 +70,25 @@ def plot_map(map_features):
     lane_points = [convert_polyline(lane.polyline) for lane in lanes]
     # lanes = list(filter(lambda lane: max(lane[1]) > 8150, lanes))
     for xs, ys in lane_points:
-        plt.plot(xs, ys, linestyle=":", color="gray", label="lane centre-line")
+        plt.plot(xs, ys, linestyle=":", color="gray")
     for road_line in map_features["road_line"]:
         xs, ys = convert_polyline(road_line.polyline)
         if road_line.type in [1, 4, 5]:
-            plt.plot(xs, ys, "y--", label="Single Road Line")
+            plt.plot(xs, ys, "y--")
         else:
-            plt.plot(xs, ys, "y-", label="Double Road Line")
+            plt.plot(xs, ys, "y-")
     for road_edge in map_features["road_edge"]:
         xs, ys = convert_polyline(road_edge.polyline)
-        plt.plot(xs, ys, "k-", label="Road Edge")
+        plt.plot(xs, ys, "k-")
     for crosswalk in map_features["crosswalk"]:
         xs, ys = convert_polyline(crosswalk.polygon)
-        plt.plot(xs, ys, 'k--', label="Crosswalk")
+        plt.plot(xs, ys, 'k--')
     for speed_bump in map_features["speed_bump"]:
         xs, ys = convert_polyline(speed_bump.polygon)
-        plt.plot(xs, ys, 'k:', label="Speed Bump")
+        plt.plot(xs, ys, 'k:')
     for stop_sign in map_features["stop_sign"]:
         plt.scatter(
-            stop_sign.position.x, stop_sign.position.y, marker="o", c="#ff0000", alpha=1, label="Stop Sign"
+            stop_sign.position.x, stop_sign.position.y, marker="o", c="#ff0000", alpha=1
         )
 
 
