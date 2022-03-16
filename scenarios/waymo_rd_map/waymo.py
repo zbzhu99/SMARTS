@@ -66,7 +66,7 @@ def get_traffic_light_lanes(scenario) -> List[str]:
 
 
 def plot_map(map_features):
-    lanes = map_features["lane"]
+    lanes = map_features["lane"][:1]
     lane_points = [convert_polyline(lane.polyline) for lane in lanes]
     # lanes = list(filter(lambda lane: max(lane[1]) > 8150, lanes))
     for xs, ys in lane_points:
@@ -80,12 +80,12 @@ def plot_map(map_features):
     for road_edge in map_features["road_edge"]:
         xs, ys = convert_polyline(road_edge.polyline)
         plt.plot(xs, ys, "k-")
-    # for crosswalk in map_features["crosswalk"]:
-    #     xs, ys = convert_polyline(crosswalk.polygon)
-    #     plt.plot(xs, ys, 'k--')
-    # for speed_bump in map_features["speed_bump"]:
-    #     xs, ys = convert_polyline(speed_bump.polygon)
-    #     plt.plot(xs, ys, 'k:')
+    for crosswalk in map_features["crosswalk"]:
+        xs, ys = convert_polyline(crosswalk.polygon)
+        plt.plot(xs, ys, 'k--')
+    for speed_bump in map_features["speed_bump"]:
+        xs, ys = convert_polyline(speed_bump.polygon)
+        plt.plot(xs, ys, 'k:')
     for stop_sign in map_features["stop_sign"]:
         plt.scatter(
             stop_sign.position.x, stop_sign.position.y, marker="o", c="#ff0000", alpha=1
