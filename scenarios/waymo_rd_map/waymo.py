@@ -51,7 +51,7 @@ def get_map_features_for_scenario(scenario) -> Dict:
             if key == "lane":
                 lanes.append((getattr(map_feature, key), map_feature.id))
     # tls_lanes = get_traffic_light_lanes(scenario)
-    return map_features, lanes
+    return map_features
 
 
 def get_traffic_light_lanes(scenario) -> List[str]:
