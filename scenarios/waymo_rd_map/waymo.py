@@ -27,7 +27,7 @@ import os
 from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+from matplotlib.lines import Line2D
 from waymo_open_dataset.protos import scenario_pb2
 
 from smarts.core.utils.file import read_tfrecord_file
@@ -115,9 +115,8 @@ def plot_scenario(path: str, scenario_id: str):
     ax.set_title(f"Scenario {scenario_id}")
     ax.axis("equal")
     plot_map(map_features)
-    lane_patch = mpatches.Patch(linestyle=":", color="gray", label='Lane Polyline')
-    s_roadline_patch = mpatches.Patch(color="yellow", linestyle="--", label='Single Road Line')
-    handles = [lane_patch, s_roadline_patch]
+    lane_line = Line2D([0], [0], linestyle=":", color="gray", label='Lane Polyline')
+    handles = [lane_line]
     plt.legend(handles=handles)
     mng = plt.get_current_fig_manager()
     mng.resize(1000, 1000)
