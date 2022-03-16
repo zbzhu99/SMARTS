@@ -66,7 +66,7 @@ def get_traffic_light_lanes(scenario) -> List[str]:
 
 
 def plot_map(map_features):
-    lanes = map_features["lane"][:1]
+    lanes = map_features["lane"]
     lane_points = [convert_polyline(lane.polyline) for lane in lanes]
     # lanes = list(filter(lambda lane: max(lane[1]) > 8150, lanes))
     for xs, ys in lane_points:
