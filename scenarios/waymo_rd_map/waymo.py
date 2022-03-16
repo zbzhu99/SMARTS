@@ -116,7 +116,9 @@ def plot_scenario(path: str, scenario_id: str):
     ax.axis("equal")
     plot_map(map_features)
     lane_line = Line2D([0], [0], linestyle=":", color="gray", label='Lane Polyline')
-    handles = [lane_line]
+    s_road_line = Line2D([0], [0], "y-", label='Single Road Line')
+    d_road_line = Line2D([0], [0], "y--", label='Single Road Line')
+    handles = [lane_line, s_road_line, d_road_line]
     plt.legend(handles=handles)
     mng = plt.get_current_fig_manager()
     mng.resize(1000, 1000)
