@@ -116,8 +116,8 @@ def plot_scenario(path: str, scenario_id: str):
     ax.axis("equal")
     plot_map(map_features)
     lane_patch = mpatches.Patch(linestyle=":", color="gray", label='Lane Polyline')
-    single_roadline_patch = mpatches.Patch(linestyle="y--", label='Single Road Line')
-    handles = [lane_patch, single_roadline_patch]
+    s_roadline_patch = mpatches.Patch(color="yellow", linestyle="--", label='Single Road Line')
+    handles = [lane_patch, s_roadline_patch]
     plt.legend(handles=handles)
     mng = plt.get_current_fig_manager()
     mng.resize(1000, 1000)
