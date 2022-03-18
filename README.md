@@ -53,7 +53,7 @@ for _ in range(1000):
 
 # Contents
 - [SMARTS](#smarts)
-- [Multi-agent experiment as simple as ...](#multi-agent-experiment-as-simple-as-)
+- [Multi-agent experiment as simple as ...](#multi-agent-experiment-as-simple-as)
 - [Contents](#contents)
 - [Documentation](#documentation)
 - [Setup](#setup)

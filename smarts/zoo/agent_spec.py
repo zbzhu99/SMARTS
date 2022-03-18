@@ -29,6 +29,9 @@ warnings.simplefilter("once")
 
 logger = logging.getLogger(__name__)
 
+from smarts.core.agent import Agent
+from smarts.core.agent_interface import AgentInterface
+
 
 @dataclass
 class AgentSpec:
@@ -52,9 +55,6 @@ class AgentSpec:
 
     Refer to the Agent documentation.
     """
-
-    from smarts.core.agent import Agent
-    from smarts.core.agent_interface import AgentInterface
 
     # This is optional because sometimes when building re-useable specs,
     # you don't know the agent interface ahead of time.
