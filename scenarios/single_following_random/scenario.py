@@ -17,7 +17,7 @@ flow = [
         rate=1,
         actors={t.TrafficActor("car"): 1},
     )
-    for _ in range(20)
+    for _ in range(100)
 ]
 
 flow_lead = [
