@@ -123,6 +123,8 @@ def driving_smarts_2023_env(
         f"Agent_{i}": resolved_agent_interface for i in range(env_specs["num_agent"])
     }
 
+    social_vehicle_interface = get_social_vehicle_interface()
+
     visualization_client_builder = None
     if not headless:
         visualization_client_builder = partial(
@@ -138,6 +140,7 @@ def driving_smarts_2023_env(
     env = HiWayEnvV1(
         scenarios=[env_specs["scenario"]],
         agent_interfaces=agent_interfaces,
+        social_vehicle_interface=social_vehicle_interface,
         sim_name="Driving_Smarts_2023",
         headless=headless,
         seed=seed,
@@ -149,6 +152,36 @@ def driving_smarts_2023_env(
         env = LimitRelativeTargetPose(env)
 
     return env
+
+
+def get_social_vehicle_interface():
+    done_criteria = DoneCriteria(
+        collision=True,
+        off_road=True,
+        off_route=False,
+        on_shoulder=False,
+        wrong_way=False,
+        not_moving=False,
+        agents_alive=None,
+        interest=None,
+    )
+    max_episode_steps = 1000
+    # waypoints_lookahead = 80
+    # neighborhood_radius = 80
+    return AgentInterface(
+        accelerometer=True,
+        # action=agent_interface.action,
+        done_criteria=done_criteria,
+        # drivable_area_grid_map=agent_interface.drivable_area_grid_map,
+        lane_positions=True,
+        max_episode_steps=max_episode_steps,
+        # neighborhood_vehicle_states=NeighborhoodVehicles(radius=neighborhood_radius),
+        # occupancy_grid_map=agent_interface.occupancy_grid_map,
+        # top_down_rgb=agent_interface.top_down_rgb,
+        # road_waypoints=agent_interface.road_waypoints,
+        # waypoint_paths=Waypoints(lookahead=waypoints_lookahead),
+        # signals=agent_interface.signals,
+    )
 
 
 def resolve_agent_interface(agent_interface: AgentInterface):

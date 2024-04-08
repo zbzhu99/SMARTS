@@ -40,6 +40,7 @@ from smarts.core import seed as smarts_seed
 from smarts.core.agent_interface import AgentInterface
 from smarts.core.local_traffic_provider import LocalTrafficProvider
 from smarts.core.scenario import Scenario
+from smarts.core.plan import Plan
 from smarts.env.configs.hiway_env_configs import (
     EnvReturnMode,
     ScenarioOrder,
@@ -119,6 +120,7 @@ class HiWayEnvV1(gym.Env):
         self,
         scenarios: Sequence[str],
         agent_interfaces: Dict[str, Union[Dict[str, Any], AgentInterface]],
+        social_vehicle_interface: AgentInterface,
         sim_name: Optional[str] = None,
         scenarios_order: ScenarioOrder = ScenarioOrder.default,
         headless: bool = False,
@@ -145,6 +147,8 @@ class HiWayEnvV1(gym.Env):
             for a_id, a_interface in agent_interfaces.items()
         }
         self._dones_registered = 0
+
+        self._social_vehicle_interface = social_vehicle_interface
 
         scenarios = [str(Path(scenario).resolve()) for scenario in scenarios]
         self._scenarios_iterator = Scenario.scenario_variations(
@@ -255,6 +259,20 @@ class HiWayEnvV1(gym.Env):
         formatted_action = self._action_formatter.format(action)
         observations, rewards, dones, extras = self._smarts.step(formatted_action)
 
+        neighorhood_vehicle_obs = {}
+        for agent_id, obs in observations.items():
+            neighborhood_vehicle_ids = [v.id for v in obs.neighborhood_vehicle_states]
+            for veh_id in neighborhood_vehicle_ids:
+                if not self._smarts.sensor_manager.sensors_for_actor_id(veh_id):
+                    self._smarts.vehicle_index.start_agent_observation(
+                        self._smarts,
+                        veh_id,
+                        veh_id,
+                        self._social_vehicle_interface,
+                        Plan(self._smarts.road_map),
+                    )
+            neighorhood_vehicle_obs[agent_id], _ = self._smarts.observe_from(neighborhood_vehicle_ids, self._social_vehicle_interface)
+
         info = {
             agent_id: {
                 "score": agent_score,
@@ -262,6 +280,7 @@ class HiWayEnvV1(gym.Env):
                 "done": dones[agent_id],
                 "reward": rewards[agent_id],
                 "map_source": self._smarts.scenario.road_map.source,
+                "neighborhood_vehicle_obs": neighorhood_vehicle_obs[agent_id],
             }
             for agent_id, agent_score in extras["scores"].items()
         }
@@ -348,6 +367,21 @@ class HiWayEnvV1(gym.Env):
         observations = self._smarts.reset(
             scenario, start_time=options.get("start_time", 0)
         )
+
+        neighorhood_vehicle_obs = {}
+        for agent_id, obs in observations.items():
+            neighborhood_vehicle_ids = [v.id for v in obs.neighborhood_vehicle_states]
+            for veh_id in neighborhood_vehicle_ids:
+                if not self._smarts.sensor_manager.sensors_for_actor_id(veh_id):
+                    self._smarts.vehicle_index.start_agent_observation(
+                        self._smarts,
+                        veh_id,
+                        veh_id,
+                        self._social_vehicle_interface,
+                        Plan(self._smarts.road_map),
+                    )
+            neighorhood_vehicle_obs[agent_id], _ = self._smarts.observe_from(neighborhood_vehicle_ids, self._social_vehicle_interface)
+
         info = {
             agent_id: {
                 "score": 0,
@@ -355,6 +389,7 @@ class HiWayEnvV1(gym.Env):
                 "done": False,
                 "reward": 0,
                 "map_source": self._smarts.scenario.road_map.source,
+                "neighborhood_vehicle_obs": neighorhood_vehicle_obs[agent_id],
             }
             for agent_id, agent_obs in observations.items()
         }
