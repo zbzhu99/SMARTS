@@ -39,8 +39,8 @@ from smarts.core import current_seed
 from smarts.core import seed as smarts_seed
 from smarts.core.agent_interface import AgentInterface
 from smarts.core.local_traffic_provider import LocalTrafficProvider
-from smarts.core.scenario import Scenario
 from smarts.core.plan import Plan
+from smarts.core.scenario import Scenario
 from smarts.env.configs.hiway_env_configs import (
     EnvReturnMode,
     ScenarioOrder,
@@ -271,7 +271,9 @@ class HiWayEnvV1(gym.Env):
                         self._social_vehicle_interface,
                         Plan(self._smarts.road_map),
                     )
-            neighorhood_vehicle_obs[agent_id], _ = self._smarts.observe_from(neighborhood_vehicle_ids, self._social_vehicle_interface)
+            neighorhood_vehicle_obs[agent_id], _ = self._smarts.observe_from(
+                neighborhood_vehicle_ids, self._social_vehicle_interface
+            )
 
         info = {
             agent_id: {
@@ -380,7 +382,9 @@ class HiWayEnvV1(gym.Env):
                         self._social_vehicle_interface,
                         Plan(self._smarts.road_map),
                     )
-            neighorhood_vehicle_obs[agent_id], _ = self._smarts.observe_from(neighborhood_vehicle_ids, self._social_vehicle_interface)
+            neighorhood_vehicle_obs[agent_id], _ = self._smarts.observe_from(
+                neighborhood_vehicle_ids, self._social_vehicle_interface
+            )
 
         info = {
             agent_id: {
